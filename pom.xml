@@ -5,6 +5,8 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <modules>
-  	<module>martlet_feed</module>
-  </modules>
+
+  <module>martlet_trade</module>
+  <module>martlet_feed</module>
+</modules>
 </project>

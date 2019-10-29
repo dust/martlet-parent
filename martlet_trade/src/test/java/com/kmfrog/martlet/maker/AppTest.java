@@ -1,4 +1,4 @@
-package com.kmfrog.martlet.trade;
+package com.kmfrog.martlet.maker;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

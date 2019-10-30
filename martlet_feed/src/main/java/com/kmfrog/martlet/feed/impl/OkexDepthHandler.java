@@ -18,12 +18,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author dust
  */
-public class OkexWebSocketHandler extends BaseWebSocketHandler {
+public class OkexDepthHandler extends BaseWebSocketHandler {
 
     private static final String WS_URL = "wss://real.okex.com:8443/ws/v3";
     private final Map<String, WsDataListener> listenersMap;
 
-    public OkexWebSocketHandler(String[] symbols, WsDataListener[] listeners) {
+    public OkexDepthHandler(String[] symbols, WsDataListener[] listeners) {
         listenersMap = new ConcurrentHashMap<>();
         symbolNames = ConcurrentHashMap.newKeySet();
         for (int i = 0; i < symbols.length; i++) {
@@ -62,9 +62,10 @@ public class OkexWebSocketHandler extends BaseWebSocketHandler {
 
     @Override
     protected void resubscribe(Instrument instrument, BaseInstrumentDepth depth) {
-        String unsub = String.format("{\"op\": \"unsubscribe\", \"args\": [\"spot/depth:%s\"]}", instrument.asString());
+        String symbolName = instrument.asString();
+        String unsub = String.format("{\"op\": \"unsubscribe\", \"args\": [\"spot/depth:%s\"]}", symbolName);
         send(unsub);
-        String sub = String.format("{\"op\": \"subscribe\", \"args\": [\"spot/depth:%s\"]}", instrument.asString());
+        String sub = String.format("{\"op\": \"subscribe\", \"args\": [\"spot/depth:%s\"]}", symbolName);
         send(sub);
     }
 

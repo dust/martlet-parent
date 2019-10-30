@@ -12,13 +12,13 @@ import com.alibaba.fastjson.parser.DefaultJSONParser;
 import com.kmfrog.martlet.feed.BaseWebSocketHandler;
 import com.kmfrog.martlet.feed.WsDataListener;
 
-public class BhexWebSocketHandler extends BaseWebSocketHandler {
+public class BhexDepthHandler extends BaseWebSocketHandler {
 
     static final String WS_URL = "wss://wsapi.tac.vip/openapi/quote/ws/v1";
 
     final Map<String, WsDataListener> listenersMap;
 
-    public BhexWebSocketHandler(String[] symbols, WsDataListener[] listeners) {
+    public BhexDepthHandler(String[] symbols, WsDataListener[] listeners) {
         super();
         this.listenersMap = new ConcurrentHashMap<>();
         this.symbolNames = ConcurrentHashMap.newKeySet();

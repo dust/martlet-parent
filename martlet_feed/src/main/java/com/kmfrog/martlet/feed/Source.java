@@ -8,9 +8,9 @@ package com.kmfrog.martlet.feed;
 public enum Source {
     
     Binance,
+    Okex,
     Huobi,
     CoinbasePro,
-    Okex,
     Bhex
 
 }

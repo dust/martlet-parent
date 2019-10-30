@@ -14,13 +14,12 @@ import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.OrderBook;
-import com.kmfrog.martlet.book.Side;
-import com.kmfrog.martlet.feed.impl.BinanceInstrumentDepth;
-import com.kmfrog.martlet.feed.impl.BinanceWebSocketHandler;
+import com.kmfrog.martlet.feed.impl.BinanceInstrumentTrade;
+import com.kmfrog.martlet.feed.impl.BinanceTradeHandler;
+import com.kmfrog.martlet.feed.impl.HuobiDepthHandler;
 import com.kmfrog.martlet.feed.impl.HuobiInstrumentDepth;
-import com.kmfrog.martlet.feed.impl.HuobiWebSocketHandler;
+import com.kmfrog.martlet.feed.impl.OkexDepthHandler;
 import com.kmfrog.martlet.feed.impl.OkexInstrumentDepth;
-import com.kmfrog.martlet.feed.impl.OkexWebSocketHandler;
 import com.kmfrog.martlet.feed.net.FeedBroadcast;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
@@ -97,16 +96,21 @@ public class App implements Controller {
 
         App app = new App();
         Instrument bnbbtc = new Instrument("BTCUSDT", 8, 8);
-        app.makesureAggregateOrderBook(bnbbtc);
-        IOrderBook btcBook = app.makesureOrderBook(Source.Binance, bnbbtc.asLong());
-        //
-        BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, btcBook, Source.Binance, app);
-        //// BinanceInstrumentDepth eth = new BinanceInstrumentDepth(bnbeth, bnbethBook, Source.Binance, app);
-        app.startSnapshotTask(String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10", "BTCUSDT"), btc);
-        //// app.startSnapshotTask("BNBETH", eth);
-        BaseWebSocketHandler handler = new BinanceWebSocketHandler(
-                "wss://stream.binance.com:9443/stream?streams=%s@depth", new String[] { "btcusdt" },
-                new BinanceInstrumentDepth[] { btc });
+        Instrument bnbeth = new Instrument("ETHUSDT", 8, 8);
+//        app.makesureAggregateOrderBook(bnbbtc);
+//        IOrderBook btcBook = app.makesureOrderBook(Source.Binance, bnbbtc.asLong());
+        
+//        BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, btcBook, Source.Binance, app);
+//         BinanceInstrumentDepth eth = new BinanceInstrumentDepth(bnbeth, bnbethBook, Source.Binance, app);
+//        app.startSnapshotTask(String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10", "BTCUSDT"), btc);
+//         app.startSnapshotTask("BNBETH", eth);
+//        BaseWebSocketHandler handler = new BinanceWebSocketHandler(
+//                "wss://stream.binance.com:9443/stream?streams=%s@depth", new String[] { "btcusdt" },
+//                new BinanceInstrumentDepth[] { btc });
+//        app.startWebSocket(Source.Binance, handler);
+        
+        BaseInstrumentTrade btcTrade = new BinanceInstrumentTrade(bnbbtc, Source.Binance, app);
+        BaseWebSocketHandler handler = new BinanceTradeHandler("wss://stream.binance.com:9443/stream?streams=%s@aggTrade", new String[] {"ethusdt"}, new BaseInstrumentTrade[] {btcTrade});
         app.startWebSocket(Source.Binance, handler);
 
         // Instrument btcusdt = new Instrument("BTCUSDT", 8, 8);
@@ -114,7 +118,7 @@ public class App implements Controller {
         //
         IOrderBook hbBtcUsdt = app.makesureOrderBook(Source.Huobi, bnbbtc.asLong());
         HuobiInstrumentDepth hbBtc = new HuobiInstrumentDepth(bnbbtc, hbBtcUsdt, Source.Huobi, app);
-        BaseWebSocketHandler hbHandler = new HuobiWebSocketHandler(new String[] { "btcusdt" },
+        BaseWebSocketHandler hbHandler = new HuobiDepthHandler(new String[] { "btcusdt" },
                 new HuobiInstrumentDepth[] { hbBtc });
         app.startWebSocket(Source.Huobi, hbHandler);
 
@@ -126,7 +130,7 @@ public class App implements Controller {
         // app.startWebSocket(Source.Bhex, hbexHandler);
         IOrderBook okexBtcUsdt = app.makesureOrderBook(Source.Okex, bnbbtc.asLong());
         OkexInstrumentDepth okexDepth = new OkexInstrumentDepth(bnbbtc, okexBtcUsdt, Source.Okex, app);
-        OkexWebSocketHandler okexHandler = new OkexWebSocketHandler(new String[] { "BTC-USDT" },
+        OkexDepthHandler okexHandler = new OkexDepthHandler(new String[] { "BTC-USDT" },
                 new OkexInstrumentDepth[] { okexDepth });
         app.startWebSocket(Source.Okex, okexHandler);
 
@@ -139,9 +143,9 @@ public class App implements Controller {
             // btcBook.getLastUpdateTs());
             System.out.println("\n#####\n");
 
-            app.websocketDaemons.get(Source.Okex).keepAlive();
+//            app.websocketDaemons.get(Source.Okex).keepAlive();
             // okexBtcUsdt.dump(Side.BUY, System.out);
-            okexHandler.dumpStats(System.out);
+//            okexHandler.dumpStats(System.out);
             // now = System.currentTimeMillis();
             // System.out.format("\nOK: %d|%d\n", now - okexBtcUsdt.getLastReceivedTs(), okexBtcUsdt.getLastReceivedTs()
             // - okexBtcUsdt.getLastUpdateTs());
@@ -151,8 +155,8 @@ public class App implements Controller {
             // app.websocketDaemons.get(Source.Bhex).keepAlive();
 
             // hbBtcUsdt.dump(Side.BUY, System.out);
-            hbHandler.dumpStats(System.out);
-            app.websocketDaemons.get(Source.Huobi).keepAlive();
+//            hbHandler.dumpStats(System.out);
+//            app.websocketDaemons.get(Source.Huobi).keepAlive();
             // now = System.currentTimeMillis();
             // System.out.format("\nHB: %d|%d\n", now - hbBtcUsdt.getLastReceivedTs(), hbBtcUsdt.getLastReceivedTs() -
             // hbBtcUsdt.getLastUpdateTs());
@@ -161,15 +165,15 @@ public class App implements Controller {
 
             // executor.submit(new AggregateRunnable(app.makesureAggregateOrderBook(bnbbtc.asLong()), new Source[]
             // {Source.Binance, Source.Okex, Source.Huobi}, app));
-            if (app.aggWorkers.containsKey(bnbbtc.asLong())) {
-                app.aggWorkers.get(bnbbtc.asLong()).dumpStats(System.out);
-            }
-            System.out.println("\n====\n");
-            AggregateOrderBook aggBook = app.makesureAggregateOrderBook(bnbbtc);
-            System.out.format("%d|%d, %d|%d, %d|%d, %d|%d\n\n", btcBook.getBestBidPrice(), btcBook.getBestAskPrice(),
-                    hbBtcUsdt.getBestBidPrice(), hbBtcUsdt.getBestAskPrice(), okexBtcUsdt.getBestBidPrice(),
-                    okexBtcUsdt.getBestAskPrice(), aggBook.getBestBidPrice(), aggBook.getBestAskPrice());
-            System.out.format("\n\n%s\n", aggBook.dumpPlainText(Side.BUY, 8, 8, 5));
+//            if (app.aggWorkers.containsKey(bnbbtc.asLong())) {
+//                app.aggWorkers.get(bnbbtc.asLong()).dumpStats(System.out);
+//            }
+//            System.out.println("\n====\n");
+//            AggregateOrderBook aggBook = app.makesureAggregateOrderBook(bnbbtc);
+//            System.out.format("%d|%d, %d|%d, %d|%d, %d|%d\n\n", btcBook.getBestBidPrice(), btcBook.getBestAskPrice(),
+//                    hbBtcUsdt.getBestBidPrice(), hbBtcUsdt.getBestAskPrice(), okexBtcUsdt.getBestBidPrice(),
+//                    okexBtcUsdt.getBestAskPrice(), aggBook.getBestBidPrice(), aggBook.getBestAskPrice());
+//            System.out.format("\n\n%s\n", aggBook.dumpPlainText(Side.BUY, 8, 8, 5));
         }
     }
 
@@ -187,6 +191,15 @@ public class App implements Controller {
         } catch (InterruptedException e) {
             logger.warn(e.getMessage(), e);
         }
+    }
+    
+    
+
+    @Override
+    public void logTrade(Source src, Instrument instrument, long id, long price, long volume, long cnt, long isBuy,
+            long ts) {
+        System.out.format("%s|%s, %d@%d\n", src.name(), instrument.asString(), price, volume);
+        
     }
 
     @Override

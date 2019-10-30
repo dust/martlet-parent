@@ -12,14 +12,14 @@ import com.alibaba.fastjson.parser.DefaultJSONParser;
 import com.kmfrog.martlet.feed.BaseWebSocketHandler;
 import com.kmfrog.martlet.feed.WsDataListener;
 
-public class HuobiWebSocketHandler extends BaseWebSocketHandler {
+public class HuobiDepthHandler extends BaseWebSocketHandler {
 
     private static final String WS_URL = "wss://api.huobi.pro/ws";
     private static final String CH_NAME_FMT = "market.%s.depth.step0";
     private Map<String, WsDataListener> listenersMap;
     private AtomicLong lastTs;
 
-    public HuobiWebSocketHandler(String[] symbols, WsDataListener[] listeners) {
+    public HuobiDepthHandler(String[] symbols, WsDataListener[] listeners) {
         super();
         lastTs = new AtomicLong(0L);
         listenersMap = new ConcurrentHashMap<>();

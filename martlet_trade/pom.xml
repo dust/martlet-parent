@@ -6,10 +6,10 @@
     <groupId>com.kmfrog.martlet</groupId>
     <artifactId>martlet-parent</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
-  <groupId>com.kmfrog.martlet</groupId>
+  
   <artifactId>martlet_trade</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
   <name>martlet_trade</name>
   <url>http://maven.apache.org</url>
   <properties>
@@ -23,7 +23,11 @@
 	</properties>
 
 	<dependencies>
-
+		<dependency>
+			<groupId>com.kmfrog.martlet</groupId>
+			<artifactId>martlet-feed</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.zeromq</groupId>
 			<artifactId>jeromq</artifactId>

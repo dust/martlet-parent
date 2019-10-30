@@ -10,14 +10,13 @@ import com.alibaba.fastjson.parser.DefaultJSONParser;
 import com.kmfrog.martlet.feed.BaseWebSocketHandler;
 import com.kmfrog.martlet.feed.WsDataListener;
 
-public class BinanceWebSocketHandler extends BaseWebSocketHandler {
-
+public class BinanceTradeHandler extends BaseWebSocketHandler {
+    
     String wsUrlFmt;
     Map<String, WsDataListener> listenersMap;
+    
 
-
-    public BinanceWebSocketHandler(String wsUrlFmt, String[] symbols, WsDataListener[] listeners) {
-        super();
+    public BinanceTradeHandler(String wsUrlFmt, String[] symbols, WsDataListener[] listeners) {
         this.wsUrlFmt = wsUrlFmt;
         listenersMap = new ConcurrentHashMap<>();
         symbolNames = ConcurrentHashMap.newKeySet();
@@ -26,29 +25,30 @@ public class BinanceWebSocketHandler extends BaseWebSocketHandler {
             listenersMap.put(String.format("%s@depth", symbols[i]), listeners[i]);
         }
     }
-    
+
     @Override
     public String getWebSocketUrl() {
-        return String.format(wsUrlFmt, String.join("@depth/", symbolNames));
+        return String.format(wsUrlFmt, String.join("@aggTrade/", symbolNames));
     }
 
     @Override
-    public void onMessage(Session sess, String msg) {
+    protected void onMessage(Session session, String msg) {
         DefaultJSONParser parser = new DefaultJSONParser(msg);
-//         System.out.println("\n################\n");
-//         System.out.println(msg);
-//         System.out.println("\n################\n");
-        try {
-            JSONObject root = parser.parseObject();
-            String symbolName = root.getString("stream");
-            if (listenersMap.containsKey(symbolName)) {
-                listenersMap.get(symbolName).onJSON(root.getJSONObject("data"), false);
-            }
-        } catch (Exception ex) {
-            logger.warn(ex.getMessage(), ex);
-        } finally {
-            parser.close();
-        }
+//      System.out.println("\n################\n");
+//      System.out.println(msg);
+//      System.out.println("\n################\n");
+     try {
+         JSONObject root = parser.parseObject();
+         String symbolName = root.getString("stream");
+         if (listenersMap.containsKey(symbolName)) {
+             listenersMap.get(symbolName).onJSON(root.getJSONObject("data"), false);
+         }
+     } catch (Exception ex) {
+         logger.warn(ex.getMessage(), ex);
+     } finally {
+         parser.close();
+     }
+
     }
 
 }

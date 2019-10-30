@@ -43,4 +43,18 @@ public interface Controller {
     void onDeviate(Source source, Instrument instrument, IOrderBook book, long bestBid, long bestAsk, long lastUpdate,
             long lastReceived);
 
+    /**
+     * 
+     * 记录trade流日志。
+     * @param src
+     * @param instrument
+     * @param id  流水id
+     * @param price 流水价格
+     * @param volume
+     * @param cnt
+     * @param isBuy
+     * @param ts
+     */
+    void logTrade(Source src, Instrument instrument, long id, long price, long volume, long cnt, long isBuy, long ts);
+
 }

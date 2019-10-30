@@ -219,6 +219,7 @@ public class OrderBook implements IOrderBook {
 
     public String getPlainText(int pricePrecision, int volumePrecision, int maxLevel) {
         StringBuilder sb = new StringBuilder();
+        sb.append(instrument).append(SEPARATOR);
         sb.append(lastUpdate).append(SEPARATOR).append(lastReceived).append(SEPARATOR);
         sb.append('[');
         sb.append(dumpPlainText(Side.BUY, pricePrecision, volumePrecision, maxLevel));

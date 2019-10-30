@@ -32,16 +32,18 @@ public class OkexInstrumentDepth extends BaseInstrumentDepth {
 
         lock.lock();
         try {
-            if (ts < lastTimestamp.get() && !isSnapshot) {
-                // 第一个推送或过期的推送， 并且不是快照数据（全量）。
+            if (ts < lastTimestamp.get() || (lastTimestamp.get()==0 && !isSnapshot)) {
+                // 过期的推送或第一个推送并且不是快照数据（全量）。跳过。
                 return;
             }
+            
             JSONArray bids = root.getJSONArray("bids");
             JSONArray asks = root.getJSONArray("asks");
 
             if (isSnapshot) {
-                book.clear(Side.BUY, source.ordinal());
-                book.clear(Side.SELL, source.ordinal());
+                int src = source.ordinal();
+                book.clear(Side.BUY, src);
+                book.clear(Side.SELL, src);
             }
 
             updatePriceLevel(Side.BUY, bids);
@@ -50,12 +52,14 @@ public class OkexInstrumentDepth extends BaseInstrumentDepth {
             lastTimestamp.set(ts);
             book.setLastUpdateTs(ts);
             
-            //因为orderbook总是一个全量数据，所以每次都是重设。
+            //因为order book（在更新后）总是一个全量数据，所以每次都是重设。
             controller.resetBook(source, instrument, book);
 
         } finally {
             lock.unlock();
         }
+        
+        //检查数据是否包含简单错误。
         checkData();
     }
 

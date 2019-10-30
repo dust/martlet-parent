@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.kmfrog.martlet.feed.impl.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,12 +15,6 @@ import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.OrderBook;
-import com.kmfrog.martlet.feed.impl.BinanceInstrumentTrade;
-import com.kmfrog.martlet.feed.impl.BinanceTradeHandler;
-import com.kmfrog.martlet.feed.impl.HuobiDepthHandler;
-import com.kmfrog.martlet.feed.impl.HuobiInstrumentDepth;
-import com.kmfrog.martlet.feed.impl.OkexDepthHandler;
-import com.kmfrog.martlet.feed.impl.OkexInstrumentDepth;
 import com.kmfrog.martlet.feed.net.FeedBroadcast;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
@@ -107,6 +102,73 @@ public class App implements Controller {
         WebSocketDaemon wsDaemon = new WebSocketDaemon(handler);
         depthWsDaemons.put(source, wsDaemon);
         wsDaemon.keepAlive();
+    }
+
+    /**
+     * 开始多来源的深度接收。
+     * @param instruments 多交易对及其配置。
+     */
+    void startDepth(Instrument[] instruments){
+        String[] binanceSymbolNames = new String[instruments.length];
+        BinanceInstrumentDepth[] binanceListeners = new BinanceInstrumentDepth[instruments.length];
+
+        String[] huobiSymbolNames = new String[instruments.length];
+        WsDataListener[] huobiListeners = new WsDataListener[instruments.length];
+
+        String[] okexSymbolNames = new String[instruments.length];
+        WsDataListener[] okexListeners = new WsDataListener[instruments.length];
+
+
+        for (int i=0; i<instruments.length; i++) {
+            Instrument instrument = instruments[i];
+            long lngInst = instrument.asLong();
+            String strInst = instrument.asString();
+
+            huobiSymbolNames[i] = strInst;
+            IOrderBook huobiBook = makesureOrderBook(Source.Huobi, lngInst);
+            huobiListeners[i]= new HuobiInstrumentDepth(instrument, huobiBook, Source.Huobi, this);
+
+            okexSymbolNames[i] = getOkexSymbol(instrument);
+            IOrderBook okexBook = makesureOrderBook(Source.Okex, lngInst);
+            okexListeners[i] = new OkexInstrumentDepth(instrument, okexBook, Source.Okex, this);
+
+
+            binanceSymbolNames[i] = strInst;
+            IOrderBook binanceBook = makesureOrderBook(Source.Binance, lngInst);
+            binanceListeners[i] = new BinanceInstrumentDepth(instrument, binanceBook, Source.Binance, this);
+            String binanceSnapshotUrl = String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10", strInst);
+            executor.submit(new RestSnapshotRunnable(binanceSnapshotUrl, "GET", null, null, binanceListeners[i]));
+        }
+
+        BaseWebSocketHandler binanceDepthHandler = new BinanceDepthHandler("wss://stream.binance.com:9443/stream?streams=%s@depth", binanceSymbolNames, binanceListeners);
+        WebSocketDaemon binanceDepthWs = new WebSocketDaemon(binanceDepthHandler);
+        depthWsDaemons.put(Source.Binance, binanceDepthWs);
+        binanceDepthWs.keepAlive();
+
+        BaseWebSocketHandler huobiDepthHandler = new HuobiDepthHandler(huobiSymbolNames, huobiListeners);
+        WebSocketDaemon huobiDepthWs = new WebSocketDaemon(huobiDepthHandler);
+        depthWsDaemons.put(Source.Huobi, huobiDepthWs);
+        huobiDepthWs.keepAlive();
+
+        BaseWebSocketHandler okexDepthHandler = new OkexDepthHandler(okexSymbolNames, okexListeners);
+        WebSocketDaemon okexDepthWs = new WebSocketDaemon(okexDepthHandler);
+        depthWsDaemons.put(Source.Okex, okexDepthWs);
+        okexDepthWs.keepAlive();
+
+
+    }
+
+    static String getOkexSymbol(Instrument instrument){
+        String symbol = instrument.asString().toUpperCase();
+        int length = symbol.length();
+        if(symbol.endsWith("USDT")){
+            return String.format("%s-USDT", symbol.substring(0, length -4));
+        }
+        else if(symbol.endsWith("XRP") || symbol.endsWith("BTC") || symbol.endsWith("ETH")){  // ABCXRP, 0
+            return String.format("%s-%s", symbol.substring(0, length -3), symbol.substring(length -3, length));
+        }
+        throw new IllegalArgumentException("illegal argument: "+instrument.asString());
+
     }
 
     public static void main(String[] args) throws InterruptedException, ExecutionException {

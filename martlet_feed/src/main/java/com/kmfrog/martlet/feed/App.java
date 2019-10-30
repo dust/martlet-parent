@@ -32,36 +32,48 @@ public class App implements Controller {
 
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-    /**
-     * 所有交易对的聚合订单表。
-     */
-    private final Long2ObjectArrayMap<AggregateOrderBook> books;
-    /**
-     * 来源:单一订单簿(k:v)的集合。方便从来源检索单一订单簿。
-     */
-    private final Map<Source, Long2ObjectArrayMap<IOrderBook>> multiSrcBooks;
     private static ExecutorService executor = Executors
             .newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("MartletAppExecutor-%d").build());
-    /**
-     * 聚合工作线程。{instrument.asLong : worker}
-     */
+
+    /** 所有交易对的聚合订单表。 **/
+    private final Long2ObjectArrayMap<AggregateOrderBook> aggBooks;
+
+    /** 来源:单一订单簿(k:v)的集合。方便从来源检索单一订单簿。 **/
+    private final Map<Source, Long2ObjectArrayMap<IOrderBook>> multiSrcBooks;
+
+    /** 聚合工作线程。{instrument.asLong : worker} **/
     private final Map<Long, InstrumentAggregation> aggWorkers;
-    /**
-     * websocket集合。来源为key.
-     */
-    private final Map<Source, WebSocketDaemon> websocketDaemons;
+
+    /** 深度websocket集合。来源为key. **/
+    private final Map<Source, WebSocketDaemon> depthWsDaemons;
     
-    private final FeedBroadcast broadcast;
+    /** trade流websocket集合。`key`值为来源 **/
+    private final Map<Source, WebSocketDaemon> tradeWsDaemons;
+
+    /** 深度ZMQ广播 **/
+    private final FeedBroadcast depthBroadcast;
+    
+    /** 实时交易广播 **/
+    private final FeedBroadcast tradeBroadcast;
 
     public App() {
-        books = new Long2ObjectArrayMap<>();
-        broadcast = new FeedBroadcast("localhost", 5188, 1);
+        depthBroadcast = new FeedBroadcast("localhost", 5188, 1);
+        tradeBroadcast = new FeedBroadcast("localhost", 5288, 1);
 
         multiSrcBooks = new ConcurrentHashMap<>();
-        websocketDaemons = new ConcurrentHashMap<>();
+        aggBooks = new Long2ObjectArrayMap<>();
         aggWorkers = new ConcurrentHashMap<>();
+        
+        tradeWsDaemons = new ConcurrentHashMap<>();
+        depthWsDaemons = new ConcurrentHashMap<>();
     }
 
+    /**
+     * 获得某个来源，指定`instrument`的订单簿。
+     * @param src
+     * @param instrument
+     * @return
+     */
     IOrderBook makesureOrderBook(Source src, long instrument) {
         Long2ObjectArrayMap<IOrderBook> srcBooks = multiSrcBooks.computeIfAbsent(src, (key) -> {
             Long2ObjectArrayMap<IOrderBook> sameSrcBooks = new Long2ObjectArrayMap<>();
@@ -71,10 +83,15 @@ public class App implements Controller {
         return srcBooks.computeIfAbsent(instrument, (key) -> new OrderBook(key));
     }
 
+    /**
+     * 获得指·`instrument`的聚合订单簿。
+     * @param instrument
+     * @return
+     */
     AggregateOrderBook makesureAggregateOrderBook(Instrument instrument) {
-        AggregateOrderBook book = books.computeIfAbsent(instrument.asLong(), (key) -> new AggregateOrderBook(key));
+        AggregateOrderBook book = aggBooks.computeIfAbsent(instrument.asLong(), (key) -> new AggregateOrderBook(key));
         if (!aggWorkers.containsKey(instrument.asLong())) {
-            InstrumentAggregation worker = new InstrumentAggregation(instrument, book, broadcast, this);
+            InstrumentAggregation worker = new InstrumentAggregation(instrument, book, depthBroadcast, this);
             aggWorkers.put(instrument.asLong(), worker);
             worker.start();
         }
@@ -88,7 +105,7 @@ public class App implements Controller {
 
     void startWebSocket(Source source, BaseWebSocketHandler handler) {
         WebSocketDaemon wsDaemon = new WebSocketDaemon(handler);
-        websocketDaemons.put(source, wsDaemon);
+        depthWsDaemons.put(source, wsDaemon);
         wsDaemon.keepAlive();
     }
 
@@ -97,20 +114,23 @@ public class App implements Controller {
         App app = new App();
         Instrument bnbbtc = new Instrument("BTCUSDT", 8, 8);
         Instrument bnbeth = new Instrument("ETHUSDT", 8, 8);
-//        app.makesureAggregateOrderBook(bnbbtc);
-//        IOrderBook btcBook = app.makesureOrderBook(Source.Binance, bnbbtc.asLong());
-        
-//        BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, btcBook, Source.Binance, app);
-//         BinanceInstrumentDepth eth = new BinanceInstrumentDepth(bnbeth, bnbethBook, Source.Binance, app);
-//        app.startSnapshotTask(String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10", "BTCUSDT"), btc);
-//         app.startSnapshotTask("BNBETH", eth);
-//        BaseWebSocketHandler handler = new BinanceWebSocketHandler(
-//                "wss://stream.binance.com:9443/stream?streams=%s@depth", new String[] { "btcusdt" },
-//                new BinanceInstrumentDepth[] { btc });
-//        app.startWebSocket(Source.Binance, handler);
-        
+        // app.makesureAggregateOrderBook(bnbbtc);
+        // IOrderBook btcBook = app.makesureOrderBook(Source.Binance, bnbbtc.asLong());
+
+        // BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, btcBook, Source.Binance, app);
+        // BinanceInstrumentDepth eth = new BinanceInstrumentDepth(bnbeth, bnbethBook, Source.Binance, app);
+        // app.startSnapshotTask(String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10", "BTCUSDT"),
+        // btc);
+        // app.startSnapshotTask("BNBETH", eth);
+        // BaseWebSocketHandler handler = new BinanceWebSocketHandler(
+        // "wss://stream.binance.com:9443/stream?streams=%s@depth", new String[] { "btcusdt" },
+        // new BinanceInstrumentDepth[] { btc });
+        // app.startWebSocket(Source.Binance, handler);
+
         BaseInstrumentTrade btcTrade = new BinanceInstrumentTrade(bnbbtc, Source.Binance, app);
-        BaseWebSocketHandler handler = new BinanceTradeHandler("wss://stream.binance.com:9443/stream?streams=%s@aggTrade", new String[] {"ethusdt"}, new BaseInstrumentTrade[] {btcTrade});
+        BaseWebSocketHandler handler = new BinanceTradeHandler(
+                "wss://stream.binance.com:9443/stream?streams=%s@aggTrade", new String[] { "ethusdt" },
+                new BaseInstrumentTrade[] { btcTrade });
         app.startWebSocket(Source.Binance, handler);
 
         // Instrument btcusdt = new Instrument("BTCUSDT", 8, 8);
@@ -143,9 +163,9 @@ public class App implements Controller {
             // btcBook.getLastUpdateTs());
             System.out.println("\n#####\n");
 
-//            app.websocketDaemons.get(Source.Okex).keepAlive();
+            // app.websocketDaemons.get(Source.Okex).keepAlive();
             // okexBtcUsdt.dump(Side.BUY, System.out);
-//            okexHandler.dumpStats(System.out);
+            // okexHandler.dumpStats(System.out);
             // now = System.currentTimeMillis();
             // System.out.format("\nOK: %d|%d\n", now - okexBtcUsdt.getLastReceivedTs(), okexBtcUsdt.getLastReceivedTs()
             // - okexBtcUsdt.getLastUpdateTs());
@@ -155,34 +175,36 @@ public class App implements Controller {
             // app.websocketDaemons.get(Source.Bhex).keepAlive();
 
             // hbBtcUsdt.dump(Side.BUY, System.out);
-//            hbHandler.dumpStats(System.out);
-//            app.websocketDaemons.get(Source.Huobi).keepAlive();
+            // hbHandler.dumpStats(System.out);
+            // app.websocketDaemons.get(Source.Huobi).keepAlive();
             // now = System.currentTimeMillis();
             // System.out.format("\nHB: %d|%d\n", now - hbBtcUsdt.getLastReceivedTs(), hbBtcUsdt.getLastReceivedTs() -
             // hbBtcUsdt.getLastUpdateTs());
             System.out.println("\n====\n");
-            
 
             // executor.submit(new AggregateRunnable(app.makesureAggregateOrderBook(bnbbtc.asLong()), new Source[]
             // {Source.Binance, Source.Okex, Source.Huobi}, app));
-//            if (app.aggWorkers.containsKey(bnbbtc.asLong())) {
-//                app.aggWorkers.get(bnbbtc.asLong()).dumpStats(System.out);
-//            }
-//            System.out.println("\n====\n");
-//            AggregateOrderBook aggBook = app.makesureAggregateOrderBook(bnbbtc);
-//            System.out.format("%d|%d, %d|%d, %d|%d, %d|%d\n\n", btcBook.getBestBidPrice(), btcBook.getBestAskPrice(),
-//                    hbBtcUsdt.getBestBidPrice(), hbBtcUsdt.getBestAskPrice(), okexBtcUsdt.getBestBidPrice(),
-//                    okexBtcUsdt.getBestAskPrice(), aggBook.getBestBidPrice(), aggBook.getBestAskPrice());
-//            System.out.format("\n\n%s\n", aggBook.dumpPlainText(Side.BUY, 8, 8, 5));
+            // if (app.aggWorkers.containsKey(bnbbtc.asLong())) {
+            // app.aggWorkers.get(bnbbtc.asLong()).dumpStats(System.out);
+            // }
+            // System.out.println("\n====\n");
+            // AggregateOrderBook aggBook = app.makesureAggregateOrderBook(bnbbtc);
+            // System.out.format("%d|%d, %d|%d, %d|%d, %d|%d\n\n", btcBook.getBestBidPrice(), btcBook.getBestAskPrice(),
+            // hbBtcUsdt.getBestBidPrice(), hbBtcUsdt.getBestAskPrice(), okexBtcUsdt.getBestBidPrice(),
+            // okexBtcUsdt.getBestAskPrice(), aggBook.getBestBidPrice(), aggBook.getBestAskPrice());
+            // System.out.format("\n\n%s\n", aggBook.dumpPlainText(Side.BUY, 8, 8, 5));
         }
     }
+
+    
 
     public void reset(Source mkt, Instrument instrument, BaseInstrumentDepth depth, boolean isSubscribe,
             boolean isConnect) {
         // this.startSnapshotTask(instrument.asString().toUpperCase(), depth);
-        websocketDaemons.get(mkt).reset(instrument, depth, isSubscribe, isConnect);
+        depthWsDaemons.get(mkt).reset(instrument, depth, isSubscribe, isConnect);
     }
 
+    
     public void resetBook(Source mkt, Instrument instrument, IOrderBook book) {
         try {
             if (aggWorkers.containsKey(instrument.asLong())) {
@@ -192,14 +214,12 @@ public class App implements Controller {
             logger.warn(e.getMessage(), e);
         }
     }
-    
-    
 
     @Override
     public void logTrade(Source src, Instrument instrument, long id, long price, long volume, long cnt, long isBuy,
             long ts) {
         System.out.format("%s|%s, %d@%d\n", src.name(), instrument.asString(), price, volume);
-        
+
     }
 
     @Override

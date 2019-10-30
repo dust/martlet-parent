@@ -25,9 +25,9 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
 //    private final int MAX_DEPTH = 100;
     private ReentrantLock lock = new ReentrantLock();
 
-    public BinanceInstrumentDepth(Instrument instrument, IOrderBook book, Source source,
+    public BinanceInstrumentDepth(Instrument instrument, IOrderBook book,
             Controller controller) {
-        super(instrument, book, source, controller);
+        super(instrument, book, Source.Binance, controller);
         lastUpdateId = new AtomicLong(0);
         lastSnapshotId = new AtomicLong(0);
     }

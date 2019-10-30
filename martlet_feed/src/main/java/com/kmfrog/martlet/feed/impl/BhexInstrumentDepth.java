@@ -18,9 +18,9 @@ public class BhexInstrumentDepth extends BaseInstrumentDepth {
     private final AtomicLong lastUpdateId;
     private final Lock lock;
 
-    public BhexInstrumentDepth(Instrument instrument, IOrderBook book, Source source,
+    public BhexInstrumentDepth(Instrument instrument, IOrderBook book,
             Controller controller) {
-        super(instrument, book, source, controller);
+        super(instrument, book, Source.Bhex, controller);
         
         lastUpdateId = new AtomicLong(0L);
         lock = new ReentrantLock();

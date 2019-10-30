@@ -10,8 +10,8 @@ import com.kmfrog.martlet.feed.Source;
 
 public class BinanceInstrumentTrade extends BaseInstrumentTrade {
 
-    public BinanceInstrumentTrade(Instrument instrument, Source source, Controller app) {
-        super(instrument, source, app);
+    public BinanceInstrumentTrade(Instrument instrument, Controller app) {
+        super(instrument, Source.Binance, app);
     }
 
     @Override

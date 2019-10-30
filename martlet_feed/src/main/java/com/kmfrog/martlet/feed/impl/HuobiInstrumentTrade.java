@@ -13,8 +13,8 @@ public class HuobiInstrumentTrade extends BaseInstrumentTrade {
     
     
 
-    public HuobiInstrumentTrade(Instrument instrument, Source source, Controller app) {
-        super(instrument, source, app);
+    public HuobiInstrumentTrade(Instrument instrument, Controller app) {
+        super(instrument, Source.Huobi, app);
     }
 
     @Override

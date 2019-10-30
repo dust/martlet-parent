@@ -126,16 +126,16 @@ public class App implements Controller {
 
             huobiSymbolNames[i] = strInst;
             IOrderBook huobiBook = makesureOrderBook(Source.Huobi, lngInst);
-            huobiListeners[i]= new HuobiInstrumentDepth(instrument, huobiBook, Source.Huobi, this);
+            huobiListeners[i]= new HuobiInstrumentDepth(instrument, huobiBook, this);
 
             okexSymbolNames[i] = getOkexSymbol(instrument);
             IOrderBook okexBook = makesureOrderBook(Source.Okex, lngInst);
-            okexListeners[i] = new OkexInstrumentDepth(instrument, okexBook, Source.Okex, this);
+            okexListeners[i] = new OkexInstrumentDepth(instrument, okexBook, this);
 
 
             binanceSymbolNames[i] = strInst;
             IOrderBook binanceBook = makesureOrderBook(Source.Binance, lngInst);
-            binanceListeners[i] = new BinanceInstrumentDepth(instrument, binanceBook, Source.Binance, this);
+            binanceListeners[i] = new BinanceInstrumentDepth(instrument, binanceBook, this);
             String binanceSnapshotUrl = String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10", strInst);
             executor.submit(new RestSnapshotRunnable(binanceSnapshotUrl, "GET", null, null, binanceListeners[i]));
         }
@@ -189,7 +189,7 @@ public class App implements Controller {
         // new BinanceInstrumentDepth[] { btc });
         // app.startWebSocket(Source.Binance, handler);
 
-        BaseInstrumentTrade btcTrade = new BinanceInstrumentTrade(bnbbtc, Source.Binance, app);
+        BaseInstrumentTrade btcTrade = new BinanceInstrumentTrade(bnbbtc, app);
         BaseWebSocketHandler handler = new BinanceTradeHandler(
                 "wss://stream.binance.com:9443/stream?streams=%s@aggTrade", new String[] { "ethusdt" },
                 new BaseInstrumentTrade[] { btcTrade });
@@ -199,7 +199,7 @@ public class App implements Controller {
         // AggregateOrderBook btcBook = app.makesureOrderBook(btcusdt.asLong());
         //
         IOrderBook hbBtcUsdt = app.makesureOrderBook(Source.Huobi, bnbbtc.asLong());
-        HuobiInstrumentDepth hbBtc = new HuobiInstrumentDepth(bnbbtc, hbBtcUsdt, Source.Huobi, app);
+        HuobiInstrumentDepth hbBtc = new HuobiInstrumentDepth(bnbbtc, hbBtcUsdt, app);
         BaseWebSocketHandler hbHandler = new HuobiDepthHandler(new String[] { "btcusdt" },
                 new HuobiInstrumentDepth[] { hbBtc });
         app.startWebSocket(Source.Huobi, hbHandler);
@@ -211,7 +211,7 @@ public class App implements Controller {
         // BhexInstrumentDepth[] {xieDepth});
         // app.startWebSocket(Source.Bhex, hbexHandler);
         IOrderBook okexBtcUsdt = app.makesureOrderBook(Source.Okex, bnbbtc.asLong());
-        OkexInstrumentDepth okexDepth = new OkexInstrumentDepth(bnbbtc, okexBtcUsdt, Source.Okex, app);
+        OkexInstrumentDepth okexDepth = new OkexInstrumentDepth(bnbbtc, okexBtcUsdt, app);
         OkexDepthHandler okexHandler = new OkexDepthHandler(new String[] { "BTC-USDT" },
                 new OkexInstrumentDepth[] { okexDepth });
         app.startWebSocket(Source.Okex, okexHandler);

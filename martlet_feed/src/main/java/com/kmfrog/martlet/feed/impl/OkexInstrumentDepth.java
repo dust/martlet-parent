@@ -20,8 +20,8 @@ public class OkexInstrumentDepth extends BaseInstrumentDepth {
     // private final AtomicLong lastChecksum;
     private ReentrantLock lock = new ReentrantLock();
 
-    public OkexInstrumentDepth(Instrument instrument, IOrderBook book, Source source, Controller controller) {
-        super(instrument, book, source, controller);
+    public OkexInstrumentDepth(Instrument instrument, IOrderBook book, Controller controller) {
+        super(instrument, book, Source.Okex, controller);
     }
 
     @Override

@@ -16,9 +16,9 @@ public class HuobiInstrumentDepth extends BaseInstrumentDepth {
     // private final int MAX_DEPTH = 100;
     private ReentrantLock lock = new ReentrantLock();
 
-    public HuobiInstrumentDepth(Instrument instrument, IOrderBook book, Source source,
+    public HuobiInstrumentDepth(Instrument instrument, IOrderBook book,
             Controller controller) {
-        super(instrument, book, source, controller);
+        super(instrument, book, Source.Huobi, controller);
     }
 
     @Override

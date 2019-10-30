@@ -11,8 +11,8 @@ import com.kmfrog.martlet.feed.Source;
 
 public class OkexInstrumentTrade extends BaseInstrumentTrade {
 
-    public OkexInstrumentTrade(Instrument instrument, Source source, Controller app) {
-        super(instrument, source, app);
+    public OkexInstrumentTrade(Instrument instrument, Controller app) {
+        super(instrument, Source.Okex, app);
     }
     
     public void onJSON(JSONObject obj, boolean isSnapshot) {

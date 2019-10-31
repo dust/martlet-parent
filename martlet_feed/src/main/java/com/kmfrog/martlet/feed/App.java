@@ -6,7 +6,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.kmfrog.martlet.feed.impl.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +14,18 @@ import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.OrderBook;
+import com.kmfrog.martlet.feed.impl.BinanceDepthHandler;
+import com.kmfrog.martlet.feed.impl.BinanceInstrumentDepth;
+import com.kmfrog.martlet.feed.impl.BinanceInstrumentTrade;
+import com.kmfrog.martlet.feed.impl.BinanceTradeHandler;
+import com.kmfrog.martlet.feed.impl.HuobiDepthHandler;
+import com.kmfrog.martlet.feed.impl.HuobiInstrumentDepth;
+import com.kmfrog.martlet.feed.impl.HuobiInstrumentTrade;
+import com.kmfrog.martlet.feed.impl.HuobiTradeHandler;
+import com.kmfrog.martlet.feed.impl.OkexDepthHandler;
+import com.kmfrog.martlet.feed.impl.OkexInstrumentDepth;
+import com.kmfrog.martlet.feed.impl.OkexInstrumentTrade;
+import com.kmfrog.martlet.feed.impl.OkexTradeHandler;
 import com.kmfrog.martlet.feed.net.FeedBroadcast;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
@@ -38,6 +49,9 @@ public class App implements Controller {
 
     /** 聚合工作线程。{instrument.asLong : worker} **/
     private final Map<Long, InstrumentAggregation> aggWorkers;
+
+    /** trade流，推送线程 **/
+    private TradePusher tradePusher;
 
     /** 深度websocket集合。来源为key. **/
     private final Map<Source, WebSocketDaemon> depthWsDaemons;
@@ -79,7 +93,7 @@ public class App implements Controller {
     }
 
     /**
-     * 获得指·`instrument`的聚合订单簿。
+     * 获得指·`instrument`的聚合订单簿。并确认聚合工作线程开始工作。
      * @param instrument
      * @return
      */
@@ -98,9 +112,9 @@ public class App implements Controller {
         executor.submit(r);
     }
 
-    void startWebSocket(Source source, BaseWebSocketHandler handler) {
+    static void startWebSocket(Map<Source, WebSocketDaemon> daemons, Source source, BaseWebSocketHandler handler) {
         WebSocketDaemon wsDaemon = new WebSocketDaemon(handler);
-        depthWsDaemons.put(source, wsDaemon);
+        daemons.put(source, wsDaemon);
         wsDaemon.keepAlive();
     }
 
@@ -138,24 +152,64 @@ public class App implements Controller {
             binanceListeners[i] = new BinanceInstrumentDepth(instrument, binanceBook, this);
             String binanceSnapshotUrl = String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10", strInst);
             executor.submit(new RestSnapshotRunnable(binanceSnapshotUrl, "GET", null, null, binanceListeners[i]));
+            
+            //确认聚合订单簿及聚合线程开始工作。
+            makesureAggregateOrderBook(instrument);
         }
 
         BaseWebSocketHandler binanceDepthHandler = new BinanceDepthHandler("wss://stream.binance.com:9443/stream?streams=%s@depth", binanceSymbolNames, binanceListeners);
-        WebSocketDaemon binanceDepthWs = new WebSocketDaemon(binanceDepthHandler);
-        depthWsDaemons.put(Source.Binance, binanceDepthWs);
-        binanceDepthWs.keepAlive();
+        startWebSocket(depthWsDaemons, Source.Binance, binanceDepthHandler);
 
         BaseWebSocketHandler huobiDepthHandler = new HuobiDepthHandler(huobiSymbolNames, huobiListeners);
-        WebSocketDaemon huobiDepthWs = new WebSocketDaemon(huobiDepthHandler);
-        depthWsDaemons.put(Source.Huobi, huobiDepthWs);
-        huobiDepthWs.keepAlive();
+        startWebSocket(depthWsDaemons, Source.Huobi, huobiDepthHandler); 
 
         BaseWebSocketHandler okexDepthHandler = new OkexDepthHandler(okexSymbolNames, okexListeners);
-        WebSocketDaemon okexDepthWs = new WebSocketDaemon(okexDepthHandler);
-        depthWsDaemons.put(Source.Okex, okexDepthWs);
-        okexDepthWs.keepAlive();
+        startWebSocket(depthWsDaemons, Source.Okex, okexDepthHandler);
+    }
+    
+    void startTrade(Instrument[] instruments) {
+        String[] binanceSymbolNames = new String[instruments.length];
+        WsDataListener[] binanceListeners = new WsDataListener[instruments.length];
 
+        String[] huobiSymbolNames = new String[instruments.length];
+        WsDataListener[] huobiListeners = new WsDataListener[instruments.length];
 
+        String[] okexSymbolNames = new String[instruments.length];
+        WsDataListener[] okexListeners = new WsDataListener[instruments.length];
+
+        for (int i=0; i<instruments.length; i++) {
+            Instrument instrument = instruments[i];
+            String strInst = instrument.asString();
+
+            huobiSymbolNames[i] = strInst.toLowerCase();
+            huobiListeners[i]= new HuobiInstrumentTrade(instrument, this);
+
+            okexSymbolNames[i] = getOkexSymbol(instrument);
+            okexListeners[i] = new OkexInstrumentTrade(instrument, this);
+
+            binanceSymbolNames[i] = strInst.toLowerCase();
+            binanceListeners[i] = new BinanceInstrumentTrade(instrument, this);
+        }
+
+        if(tradePusher !=null){
+            tradePusher.quit();
+            try {
+                tradePusher.join(100);
+            } catch (InterruptedException e) {
+                logger.warn(e.getMessage(), e);
+            }
+        }
+        tradePusher = new TradePusher(tradeBroadcast, this);
+        tradePusher.start();
+
+        BaseWebSocketHandler binanceTradeHandler = new BinanceTradeHandler("wss://stream.binance.com:9443/stream?streams=%s@aggTrade", binanceSymbolNames, binanceListeners);
+        startWebSocket(tradeWsDaemons, Source.Binance, binanceTradeHandler);
+
+        BaseWebSocketHandler huobiTradeHandler = new HuobiTradeHandler(huobiSymbolNames, huobiListeners);
+        startWebSocket(tradeWsDaemons, Source.Huobi, huobiTradeHandler);
+
+        BaseWebSocketHandler okexTradeHandler = new OkexTradeHandler(okexSymbolNames, okexListeners);
+        startWebSocket(tradeWsDaemons, Source.Okex, okexTradeHandler);
     }
 
     static String getOkexSymbol(Instrument instrument){
@@ -174,52 +228,16 @@ public class App implements Controller {
     public static void main(String[] args) throws InterruptedException, ExecutionException {
 
         App app = new App();
-        Instrument bnbbtc = new Instrument("BTCUSDT", 8, 8);
+        Instrument btcUsdt = new Instrument("BTCUSDT", 8, 8);
         Instrument bnbeth = new Instrument("ETHUSDT", 8, 8);
-        // app.makesureAggregateOrderBook(bnbbtc);
-        // IOrderBook btcBook = app.makesureOrderBook(Source.Binance, bnbbtc.asLong());
-
-        // BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, btcBook, Source.Binance, app);
-        // BinanceInstrumentDepth eth = new BinanceInstrumentDepth(bnbeth, bnbethBook, Source.Binance, app);
-        // app.startSnapshotTask(String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10", "BTCUSDT"),
-        // btc);
-        // app.startSnapshotTask("BNBETH", eth);
-        // BaseWebSocketHandler handler = new BinanceWebSocketHandler(
-        // "wss://stream.binance.com:9443/stream?streams=%s@depth", new String[] { "btcusdt" },
-        // new BinanceInstrumentDepth[] { btc });
-        // app.startWebSocket(Source.Binance, handler);
-
-        BaseInstrumentTrade btcTrade = new BinanceInstrumentTrade(bnbbtc, app);
-        BaseWebSocketHandler handler = new BinanceTradeHandler(
-                "wss://stream.binance.com:9443/stream?streams=%s@aggTrade", new String[] { "ethusdt" },
-                new BaseInstrumentTrade[] { btcTrade });
-        app.startWebSocket(Source.Binance, handler);
-
-        // Instrument btcusdt = new Instrument("BTCUSDT", 8, 8);
-        // AggregateOrderBook btcBook = app.makesureOrderBook(btcusdt.asLong());
-        //
-        IOrderBook hbBtcUsdt = app.makesureOrderBook(Source.Huobi, bnbbtc.asLong());
-        HuobiInstrumentDepth hbBtc = new HuobiInstrumentDepth(bnbbtc, hbBtcUsdt, app);
-        BaseWebSocketHandler hbHandler = new HuobiDepthHandler(new String[] { "btcusdt" },
-                new HuobiInstrumentDepth[] { hbBtc });
-        app.startWebSocket(Source.Huobi, hbHandler);
-
-        // Instrument xie = new Instrument("XIEPTCN", 4, 4);
-        // AggregateOrderBook xieBook = app.makesureOrderBook(xie.asLong());
-        // BhexInstrumentDepth xieDepth = new BhexInstrumentDepth(xie, xieBook, Source.Bhex, app);
-        // BaseWebSocketHandler hbexHandler = new BhexWebSocketHandler(new String[] {"XIEPTCN"}, new
-        // BhexInstrumentDepth[] {xieDepth});
-        // app.startWebSocket(Source.Bhex, hbexHandler);
-        IOrderBook okexBtcUsdt = app.makesureOrderBook(Source.Okex, bnbbtc.asLong());
-        OkexInstrumentDepth okexDepth = new OkexInstrumentDepth(bnbbtc, okexBtcUsdt, app);
-        OkexDepthHandler okexHandler = new OkexDepthHandler(new String[] { "BTC-USDT" },
-                new OkexInstrumentDepth[] { okexDepth });
-        app.startWebSocket(Source.Okex, okexHandler);
+        Instrument[] instruments = new Instrument[] {btcUsdt};
+        app.startDepth(instruments);
+        app.startTrade(instruments);
 
         while (true) {
             Thread.sleep(10000L);
             // btcBook.dump(Side.BUY, System.out);
-            handler.dumpStats(System.out);
+//            handler.dumpStats(System.out);
             // long now = System.currentTimeMillis();
             // System.out.format("\nBA: %d|%d\n", now - btcBook.getLastReceivedTs(), btcBook.getLastReceivedTs() -
             // btcBook.getLastUpdateTs());
@@ -258,15 +276,17 @@ public class App implements Controller {
         }
     }
 
-    
 
+
+    @Override
     public void reset(Source mkt, Instrument instrument, BaseInstrumentDepth depth, boolean isSubscribe,
-            boolean isConnect) {
+                      boolean isConnect) {
         // this.startSnapshotTask(instrument.asString().toUpperCase(), depth);
         depthWsDaemons.get(mkt).reset(instrument, depth, isSubscribe, isConnect);
     }
 
-    
+
+    @Override
     public void resetBook(Source mkt, Instrument instrument, IOrderBook book) {
         try {
             if (aggWorkers.containsKey(instrument.asLong())) {
@@ -279,8 +299,8 @@ public class App implements Controller {
 
     @Override
     public void logTrade(Source src, Instrument instrument, long id, long price, long volume, long cnt, long isBuy,
-            long ts) {
-        System.out.format("%s|%s, %d@%d\n", src.name(), instrument.asString(), price, volume);
+            long ts, long recvTs) {
+        System.out.format("%s|%s, %d@%d\n", src.name(), instrument.asString(),  volume, price);
 
     }
 

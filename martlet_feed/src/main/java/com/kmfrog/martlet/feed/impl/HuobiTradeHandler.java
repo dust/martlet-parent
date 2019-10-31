@@ -59,9 +59,9 @@ public class HuobiTradeHandler extends BaseWebSocketHandler {
             logger.debug("onMessage: {}", msg);
         }
         DefaultJSONParser parser = new DefaultJSONParser(msg);
-        // System.out.println("\n################\n");
-        // System.out.println(msg);
-        // System.out.println("\n################\n");
+//         System.out.println("\n################\n");
+//         System.out.println(msg);
+//         System.out.println("\n################\n");
         try {
             JSONObject root = parser.parseObject();
             if (!root.containsKey("ts")) {

@@ -26,7 +26,7 @@ public class BinanceInstrumentTrade extends BaseInstrumentTrade {
             lastTimestamp.set(ts);
         }
         lastReceived.set(System.currentTimeMillis());
-        controller.logTrade(source, instrument, id, price, volume, cnt, isBuy, ts);
+        controller.logTrade(source, instrument, id, price, volume, cnt, isBuy, ts, lastReceived.get());
         
     }
     

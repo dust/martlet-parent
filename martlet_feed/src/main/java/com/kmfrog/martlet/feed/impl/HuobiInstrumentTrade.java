@@ -29,7 +29,11 @@ public class HuobiInstrumentTrade extends BaseInstrumentTrade {
             long cnt = 0;
             long isBuy = "buy".equals(obj.getString("direction")) ? 1 : 0;
             long ts = obj.getLongValue("ts");
-            controller.logTrade(source, instrument, id, price, volume, cnt, isBuy, ts);
+            if(ts > lastTimestamp.get()) {
+                lastTimestamp.set(ts);
+            }
+            lastReceived.set(System.currentTimeMillis());
+            controller.logTrade(source, instrument, id, price, volume, cnt, isBuy, ts, lastReceived.get());
         }
     }
     

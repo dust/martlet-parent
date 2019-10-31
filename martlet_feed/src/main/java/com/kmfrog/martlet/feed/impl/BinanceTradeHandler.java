@@ -22,7 +22,7 @@ public class BinanceTradeHandler extends BaseWebSocketHandler {
         symbolNames = ConcurrentHashMap.newKeySet();
         for (int i = 0; i < symbols.length; i++) {
             symbolNames.add(symbols[i]);
-            listenersMap.put(String.format("%s@depth", symbols[i]), listeners[i]);
+            listenersMap.put(String.format("%s@aggTrade", symbols[i]), listeners[i]);
         }
     }
 

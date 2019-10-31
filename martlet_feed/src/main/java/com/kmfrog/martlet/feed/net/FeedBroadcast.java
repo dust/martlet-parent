@@ -1,5 +1,6 @@
 package com.kmfrog.martlet.feed.net;
 
+import org.apache.commons.lang3.StringUtils;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 
@@ -23,9 +24,13 @@ public class FeedBroadcast {
         
     }
     
-    
     public void sendDepth(IOrderBook book, int pricePrecision, int volumePrecision, int maxLevel) {
         publisher.send(book.getPlainText(pricePrecision, volumePrecision, maxLevel));
+    }
+    
+    public void sendTadeLog(long[] tradeLog) {
+        // source, instrument(long), id, price, volume, cnt, isBuy, ts, lastReceived
+        publisher.send(StringUtils.join(tradeLog, ","));
     }
     
     public void destory() {

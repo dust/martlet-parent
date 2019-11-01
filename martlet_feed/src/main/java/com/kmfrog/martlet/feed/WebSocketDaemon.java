@@ -2,6 +2,7 @@ package com.kmfrog.martlet.feed;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.Set;
 
 import org.eclipse.jetty.websocket.api.Session;
@@ -74,6 +75,10 @@ public class WebSocketDaemon {
 
     public void reset(Instrument instrument, BaseInstrumentDepth depth, boolean isSubscribe, boolean isConnect) {
         handler.reset(instrument, depth, isSubscribe, isConnect);
+    }
+
+    public void dumpStats(PrintStream ps){
+        handler.dumpStats(ps);
     }
 
 }

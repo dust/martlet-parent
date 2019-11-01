@@ -56,6 +56,6 @@ public interface Controller {
      * @param ts
      * @param recvTs
      */
-    void logTrade(Source src, Instrument instrument, long id, long price, long volume, long cnt, long isBuy, long ts, long recvTs);
+    void logTrade(Source src, Instrument instrument, long id, long price, long volume, long cnt, boolean isBuy, long ts, long recvTs);
 
 }

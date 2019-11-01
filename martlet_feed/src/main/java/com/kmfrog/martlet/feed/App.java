@@ -6,14 +6,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.kmfrog.martlet.book.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.kmfrog.martlet.book.AggregateOrderBook;
-import com.kmfrog.martlet.book.IOrderBook;
-import com.kmfrog.martlet.book.Instrument;
-import com.kmfrog.martlet.book.OrderBook;
 import com.kmfrog.martlet.feed.impl.BinanceDepthHandler;
 import com.kmfrog.martlet.feed.impl.BinanceInstrumentDepth;
 import com.kmfrog.martlet.feed.impl.BinanceInstrumentTrade;
@@ -32,7 +29,6 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 
 /**
  * Hello world!
- *
  */
 public class App implements Controller {
 
@@ -41,28 +37,44 @@ public class App implements Controller {
     private static ExecutorService executor = Executors
             .newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("MartletAppExecutor-%d").build());
 
-    /** 所有交易对的聚合订单表。 **/
+    /**
+     * 所有交易对的聚合订单表。
+     **/
     private final Long2ObjectArrayMap<AggregateOrderBook> aggBooks;
 
-    /** 来源:单一订单簿(k:v)的集合。方便从来源检索单一订单簿。 **/
+    /**
+     * 来源:单一订单簿(k:v)的集合。方便从来源检索单一订单簿。
+     **/
     private final Map<Source, Long2ObjectArrayMap<IOrderBook>> multiSrcBooks;
 
-    /** 聚合工作线程。{instrument.asLong : worker} **/
+    /**
+     * 聚合工作线程。{instrument.asLong : worker}
+     **/
     private final Map<Long, InstrumentAggregation> aggWorkers;
 
-    /** trade流，推送线程 **/
+    /**
+     * trade流，推送线程
+     **/
     private TradePusher tradePusher;
 
-    /** 深度websocket集合。来源为key. **/
+    /**
+     * 深度websocket集合。来源为key.
+     **/
     private final Map<Source, WebSocketDaemon> depthWsDaemons;
-    
-    /** trade流websocket集合。`key`值为来源 **/
+
+    /**
+     * trade流websocket集合。`key`值为来源
+     **/
     private final Map<Source, WebSocketDaemon> tradeWsDaemons;
 
-    /** 深度ZMQ广播 **/
+    /**
+     * 深度ZMQ广播
+     **/
     private final FeedBroadcast depthBroadcast;
-    
-    /** 实时交易广播 **/
+
+    /**
+     * 实时交易广播
+     **/
     private final FeedBroadcast tradeBroadcast;
 
     public App() {
@@ -72,13 +84,14 @@ public class App implements Controller {
         multiSrcBooks = new ConcurrentHashMap<>();
         aggBooks = new Long2ObjectArrayMap<>();
         aggWorkers = new ConcurrentHashMap<>();
-        
+
         tradeWsDaemons = new ConcurrentHashMap<>();
         depthWsDaemons = new ConcurrentHashMap<>();
     }
 
     /**
      * 获得某个来源，指定`instrument`的订单簿。
+     *
      * @param src
      * @param instrument
      * @return
@@ -94,6 +107,7 @@ public class App implements Controller {
 
     /**
      * 获得指·`instrument`的聚合订单簿。并确认聚合工作线程开始工作。
+     *
      * @param instrument
      * @return
      */
@@ -120,9 +134,10 @@ public class App implements Controller {
 
     /**
      * 开始多来源的深度接收。
+     *
      * @param instruments 多交易对及其配置。
      */
-    void startDepth(Instrument[] instruments){
+    void startDepth(Instrument[] instruments) {
         String[] binanceSymbolNames = new String[instruments.length];
         BinanceInstrumentDepth[] binanceListeners = new BinanceInstrumentDepth[instruments.length];
 
@@ -133,26 +148,26 @@ public class App implements Controller {
         WsDataListener[] okexListeners = new WsDataListener[instruments.length];
 
 
-        for (int i=0; i<instruments.length; i++) {
+        for (int i = 0; i < instruments.length; i++) {
             Instrument instrument = instruments[i];
             long lngInst = instrument.asLong();
             String strInst = instrument.asString();
 
-            huobiSymbolNames[i] = strInst;
+            huobiSymbolNames[i] = strInst.toLowerCase();
             IOrderBook huobiBook = makesureOrderBook(Source.Huobi, lngInst);
-            huobiListeners[i]= new HuobiInstrumentDepth(instrument, huobiBook, this);
+            huobiListeners[i] = new HuobiInstrumentDepth(instrument, huobiBook, this);
 
             okexSymbolNames[i] = getOkexSymbol(instrument);
             IOrderBook okexBook = makesureOrderBook(Source.Okex, lngInst);
             okexListeners[i] = new OkexInstrumentDepth(instrument, okexBook, this);
 
 
-            binanceSymbolNames[i] = strInst;
+            binanceSymbolNames[i] = strInst.toLowerCase();
             IOrderBook binanceBook = makesureOrderBook(Source.Binance, lngInst);
             binanceListeners[i] = new BinanceInstrumentDepth(instrument, binanceBook, this);
             String binanceSnapshotUrl = String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10", strInst);
             executor.submit(new RestSnapshotRunnable(binanceSnapshotUrl, "GET", null, null, binanceListeners[i]));
-            
+
             //确认聚合订单簿及聚合线程开始工作。
             makesureAggregateOrderBook(instrument);
         }
@@ -161,12 +176,12 @@ public class App implements Controller {
         startWebSocket(depthWsDaemons, Source.Binance, binanceDepthHandler);
 
         BaseWebSocketHandler huobiDepthHandler = new HuobiDepthHandler(huobiSymbolNames, huobiListeners);
-        startWebSocket(depthWsDaemons, Source.Huobi, huobiDepthHandler); 
+        startWebSocket(depthWsDaemons, Source.Huobi, huobiDepthHandler);
 
         BaseWebSocketHandler okexDepthHandler = new OkexDepthHandler(okexSymbolNames, okexListeners);
         startWebSocket(depthWsDaemons, Source.Okex, okexDepthHandler);
     }
-    
+
     void startTrade(Instrument[] instruments) {
         String[] binanceSymbolNames = new String[instruments.length];
         WsDataListener[] binanceListeners = new WsDataListener[instruments.length];
@@ -177,12 +192,12 @@ public class App implements Controller {
         String[] okexSymbolNames = new String[instruments.length];
         WsDataListener[] okexListeners = new WsDataListener[instruments.length];
 
-        for (int i=0; i<instruments.length; i++) {
+        for (int i = 0; i < instruments.length; i++) {
             Instrument instrument = instruments[i];
             String strInst = instrument.asString();
 
             huobiSymbolNames[i] = strInst.toLowerCase();
-            huobiListeners[i]= new HuobiInstrumentTrade(instrument, this);
+            huobiListeners[i] = new HuobiInstrumentTrade(instrument, this);
 
             okexSymbolNames[i] = getOkexSymbol(instrument);
             okexListeners[i] = new OkexInstrumentTrade(instrument, this);
@@ -191,7 +206,7 @@ public class App implements Controller {
             binanceListeners[i] = new BinanceInstrumentTrade(instrument, this);
         }
 
-        if(tradePusher !=null){
+        if (tradePusher != null) {
             tradePusher.quit();
             try {
                 tradePusher.join(100);
@@ -212,16 +227,15 @@ public class App implements Controller {
         startWebSocket(tradeWsDaemons, Source.Okex, okexTradeHandler);
     }
 
-    static String getOkexSymbol(Instrument instrument){
+    static String getOkexSymbol(Instrument instrument) {
         String symbol = instrument.asString().toUpperCase();
         int length = symbol.length();
-        if(symbol.endsWith("USDT")){
-            return String.format("%s-USDT", symbol.substring(0, length -4));
+        if (symbol.endsWith("USDT")) {
+            return String.format("%s-USDT", symbol.substring(0, length - 4));
+        } else if (symbol.endsWith("XRP") || symbol.endsWith("BTC") || symbol.endsWith("ETH")) {  // ABCXRP, 0
+            return String.format("%s-%s", symbol.substring(0, length - 3), symbol.substring(length - 3, length));
         }
-        else if(symbol.endsWith("XRP") || symbol.endsWith("BTC") || symbol.endsWith("ETH")){  // ABCXRP, 0
-            return String.format("%s-%s", symbol.substring(0, length -3), symbol.substring(length -3, length));
-        }
-        throw new IllegalArgumentException("illegal argument: "+instrument.asString());
+        throw new IllegalArgumentException("illegal argument: " + instrument.asString());
 
     }
 
@@ -230,52 +244,51 @@ public class App implements Controller {
         App app = new App();
         Instrument btcUsdt = new Instrument("BTCUSDT", 8, 8);
         Instrument bnbeth = new Instrument("ETHUSDT", 8, 8);
-        Instrument[] instruments = new Instrument[] {btcUsdt};
+        Instrument[] instruments = new Instrument[]{btcUsdt};
         app.startDepth(instruments);
         app.startTrade(instruments);
 
         while (true) {
             Thread.sleep(10000L);
-            // btcBook.dump(Side.BUY, System.out);
-//            handler.dumpStats(System.out);
+            app.depthWsDaemons.get(Source.Binance).keepAlive();
+            app.depthWsDaemons.get(Source.Binance).dumpStats(System.out);
             // long now = System.currentTimeMillis();
-            // System.out.format("\nBA: %d|%d\n", now - btcBook.getLastReceivedTs(), btcBook.getLastReceivedTs() -
-            // btcBook.getLastUpdateTs());
+            // System.out.format("\nBA: %d|%d\n", now - binanceBook.getLastReceivedTs(), binanceBook.getLastReceivedTs() -
+            // binanceBook.getLastUpdateTs());
             System.out.println("\n#####\n");
 
-            // app.websocketDaemons.get(Source.Okex).keepAlive();
-            // okexBtcUsdt.dump(Side.BUY, System.out);
-            // okexHandler.dumpStats(System.out);
-            // now = System.currentTimeMillis();
-            // System.out.format("\nOK: %d|%d\n", now - okexBtcUsdt.getLastReceivedTs(), okexBtcUsdt.getLastReceivedTs()
-            // - okexBtcUsdt.getLastUpdateTs());
+            app.depthWsDaemons.get(Source.Okex).keepAlive();
+            app.depthWsDaemons.get(Source.Okex).dumpStats(System.out);
+
             System.out.println("\n====\n");
 
             // xieBook.dump(Side.BUY, System.out);
             // app.websocketDaemons.get(Source.Bhex).keepAlive();
 
-            // hbBtcUsdt.dump(Side.BUY, System.out);
-            // hbHandler.dumpStats(System.out);
-            // app.websocketDaemons.get(Source.Huobi).keepAlive();
+            // hbBook.dump(Side.BUY, System.out);
+            app.depthWsDaemons.get(Source.Huobi).dumpStats(System.out);
+            app.depthWsDaemons.get(Source.Huobi).keepAlive();
             // now = System.currentTimeMillis();
-            // System.out.format("\nHB: %d|%d\n", now - hbBtcUsdt.getLastReceivedTs(), hbBtcUsdt.getLastReceivedTs() -
-            // hbBtcUsdt.getLastUpdateTs());
+            // System.out.format("\nHB: %d|%d\n", now - hbBook.getLastReceivedTs(), hbBook.getLastReceivedTs() -
+            // hbBook.getLastUpdateTs());
             System.out.println("\n====\n");
 
-            // executor.submit(new AggregateRunnable(app.makesureAggregateOrderBook(bnbbtc.asLong()), new Source[]
-            // {Source.Binance, Source.Okex, Source.Huobi}, app));
-            // if (app.aggWorkers.containsKey(bnbbtc.asLong())) {
-            // app.aggWorkers.get(bnbbtc.asLong()).dumpStats(System.out);
-            // }
-            // System.out.println("\n====\n");
-            // AggregateOrderBook aggBook = app.makesureAggregateOrderBook(bnbbtc);
-            // System.out.format("%d|%d, %d|%d, %d|%d, %d|%d\n\n", btcBook.getBestBidPrice(), btcBook.getBestAskPrice(),
-            // hbBtcUsdt.getBestBidPrice(), hbBtcUsdt.getBestAskPrice(), okexBtcUsdt.getBestBidPrice(),
-            // okexBtcUsdt.getBestAskPrice(), aggBook.getBestBidPrice(), aggBook.getBestAskPrice());
-            // System.out.format("\n\n%s\n", aggBook.dumpPlainText(Side.BUY, 8, 8, 5));
+
+            if (app.aggWorkers.containsKey(btcUsdt.asLong())) {
+                app.aggWorkers.get(btcUsdt.asLong()).dumpStats(System.out);
+            }
+            System.out.println("\n====\n");
+            AggregateOrderBook aggBook = app.makesureAggregateOrderBook(btcUsdt);
+            IOrderBook binanceBook = app.makesureOrderBook(Source.Binance, btcUsdt.asLong());
+            IOrderBook hbBook = app.makesureOrderBook(Source.Huobi, btcUsdt.asLong());
+            IOrderBook okexBook = app.makesureOrderBook(Source.Okex, btcUsdt.asLong());
+
+            System.out.format("%d|%d, %d|%d, %d|%d, %d|%d\n\n", binanceBook.getBestBidPrice(), binanceBook.getBestAskPrice(),
+                    hbBook.getBestBidPrice(), hbBook.getBestAskPrice(), okexBook.getBestBidPrice(),
+                    okexBook.getBestAskPrice(), aggBook.getBestBidPrice(), aggBook.getBestAskPrice());
+            System.out.format("\n\n%s\n", aggBook.dumpPlainText(Side.BUY, 8, 8, 5));
         }
     }
-
 
 
     @Override
@@ -298,15 +311,15 @@ public class App implements Controller {
     }
 
     @Override
-    public void logTrade(Source src, Instrument instrument, long id, long price, long volume, long cnt, long isBuy,
-            long ts, long recvTs) {
-        System.out.format("%s|%s, %d@%d\n", src.name(), instrument.asString(),  volume, price);
+    public void logTrade(Source src, Instrument instrument, long id, long price, long volume, long cnt, boolean isBuy,
+                         long ts, long recvTs) {
+        tradePusher.put(src, instrument, id, price, volume, cnt, isBuy, ts, recvTs);
 
     }
 
     @Override
     public void onDeviate(Source source, Instrument instrument, IOrderBook book, long bestBid, long bestAsk,
-            long lastUpdate, long lastReceived) {
+                          long lastUpdate, long lastReceived) {
     }
 
 }

@@ -17,9 +17,8 @@ import com.kmfrog.martlet.feed.net.FeedBroadcast;
 
 /**
  * 基于推送事件队列的聚合工作线程。
- * 
- * @author dust Oct 23, 2019
  *
+ * @author dust Oct 23, 2019
  */
 public class InstrumentAggregation extends Thread {
 
@@ -35,7 +34,7 @@ public class InstrumentAggregation extends Thread {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public InstrumentAggregation(Instrument instrument, AggregateOrderBook book,FeedBroadcast broadcast, Controller app) {
+    public InstrumentAggregation(Instrument instrument, AggregateOrderBook book, FeedBroadcast broadcast, Controller app) {
         this.instrument = instrument;
         this.app = app;
         this.broadcast = broadcast;
@@ -54,12 +53,12 @@ public class InstrumentAggregation extends Thread {
                 if (BaseWebSocketHandler.DBG) {
                     start = System.currentTimeMillis();
                 }
-                
+
                 // 先清理当前来源的订单项。
                 int src = req.source.ordinal();
                 aggBook.clear(Side.BUY, src);
                 aggBook.clear(Side.SELL, src);
-                
+
                 // 检查偏离度。time/price level
                 if (!checkDeviate(req.source, req.book)) {
                     continue;
@@ -70,7 +69,7 @@ public class InstrumentAggregation extends Thread {
                     aggBook.setLastUpdateTs(req.book.getLastUpdateTs());
                     aggBook.aggregate(src, req.book);
                 }
-                
+
                 broadcast.sendDepth(aggBook, instrument.getPriceFractionDigits(), instrument.getSizeFractionDigits(), 5);
 
                 if (BaseWebSocketHandler.DBG) {
@@ -122,14 +121,14 @@ public class InstrumentAggregation extends Thread {
                 return 1;
             }
 
-            int result = Long.valueOf(book.getLastUpdateTs()).compareTo(Long.valueOf(o.book.getLastUpdateTs()));
-            if (result != 0) {
-                return result;
+            long diff = book.getLastUpdateTs() - o.book.getLastUpdateTs();
+            if (diff != 0) {
+                return diff > 0 ? 1 : -1;
             }
 
-            result = Long.valueOf(book.getLastReceivedTs()).compareTo(Long.valueOf(o.book.getLastUpdateTs()));
-            if (result != 0) {
-                return result;
+            diff = book.getLastReceivedTs() - o.book.getLastReceivedTs();
+            if (diff != 0) {
+                return diff > 0 ? 1 : -1;
             }
 
             // 不会有等于的情况，因为不可能有更新时间（update timestamp)相同的推送。

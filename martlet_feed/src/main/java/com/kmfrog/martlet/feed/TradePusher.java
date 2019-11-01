@@ -6,6 +6,8 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.kmfrog.martlet.book.Instrument;
+import com.kmfrog.martlet.feed.domain.TradeLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +17,7 @@ public class TradePusher extends Thread {
 
     private final AtomicBoolean isQuit;
     private final Controller app;
-    private final BlockingQueue<long[]> queue;
+    private final BlockingQueue<TradeLog> queue;
     private final FeedBroadcast broadcast;
 
     protected final AtomicLong times = new AtomicLong(0L);
@@ -30,10 +32,11 @@ public class TradePusher extends Thread {
         queue = new PriorityBlockingQueue<>();
     }
 
+    @Override
     public void run() {
         while (!isQuit.get()) {
             try {
-                long[] tradeLog = queue.take();
+                TradeLog tradeLog = queue.take();
                 long start = 0;
                 if (BaseWebSocketHandler.DBG) {
                     start = System.currentTimeMillis();
@@ -41,7 +44,7 @@ public class TradePusher extends Thread {
                 
 //                if(!)
                 
-                broadcast.sendTadeLog(tradeLog);
+                broadcast.sendTadeLog(tradeLog.toLongArray());
 
                 if (BaseWebSocketHandler.DBG) {
                     tt.addAndGet(System.currentTimeMillis() - start);
@@ -56,6 +59,16 @@ public class TradePusher extends Thread {
             }
         }
 
+    }
+
+    public void put(Source src, Instrument instrument, long id, long price, long volume, long cnt, boolean isBuy,
+                    long ts, long recvTs){
+        TradeLog log = new TradeLog(src, instrument.asLong(), id, price, volume, cnt, isBuy, ts, recvTs);
+        try {
+            queue.put(log);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void quit() {

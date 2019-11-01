@@ -39,7 +39,7 @@ public class MktDataFeed extends Thread{
                 try {
                     String str = subscriber.recvStr();
                     if(System.currentTimeMillis() % 100 == 0) {
-                    System.out.println(str);
+
                     }
                 }
                 catch(ZMQException zex) {

@@ -20,7 +20,7 @@ public class OkexInstrumentTrade extends BaseInstrumentTrade {
         long price = obj.getBigDecimal("price").multiply(BigDecimal.valueOf(instrument.getPriceFactor())).longValue();
         long volume = obj.getBigDecimal("size").multiply(BigDecimal.valueOf(instrument.getSizeFactor())).longValue();
         long cnt = 0;
-        long isBuy = "buy".equals(obj.getString("side")) ? 1 : 0;
+        boolean isBuy = "buy".equals(obj.getString("side"));
         long ts = obj.getLongValue("timestamp");
         if (ts > lastTimestamp.get()) {
             lastTimestamp.set(ts);

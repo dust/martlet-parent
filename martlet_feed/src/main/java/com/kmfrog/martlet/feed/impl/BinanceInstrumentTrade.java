@@ -20,7 +20,7 @@ public class BinanceInstrumentTrade extends BaseInstrumentTrade {
         long price = root.getBigDecimal("p").multiply(BigDecimal.valueOf(instrument.getPriceFactor())).longValue();
         long volume = root.getBigDecimal("q").multiply(BigDecimal.valueOf(instrument.getSizeFactor())).longValue();
         long cnt = root.getLongValue("l") - root.getLongValue("f");
-        long isBuy = root.getBoolean("m") ? 0 : 1;
+        boolean isBuy = root.getBoolean("m");
         long ts = root.getLongValue("T");
         if(ts > lastTimestamp.get()) {
             lastTimestamp.set(ts);

@@ -78,12 +78,27 @@ public class MultiSrc {
 
     public String dumpPlainText(int volumePrecision) {
         StringBuilder sb = new StringBuilder();
+        sb.append('"');
         srcSizeMap.forEach((k, v) -> {
-            if (sb.length() > 0) {
+            if (sb.length() > 1) {  // "
                 sb.append(C.THIRD_SEPARATOR);
             }
             sb.append(k).append(C.SECOND_SEPARATOR).append(Fmt.fmtNum(v, volumePrecision));
         });
+        sb.append('"');
+        return sb.toString();
+    }
+    
+    public String dumpOriginText() {
+        StringBuilder sb = new StringBuilder();
+        sb.append('"');
+        srcSizeMap.forEach((k, v) -> {
+            if (sb.length() > 1) {  // "
+                sb.append(C.THIRD_SEPARATOR);
+            }
+            sb.append(k).append(C.SECOND_SEPARATOR).append(v);
+        });
+        sb.append('"');
         return sb.toString();
     }
 

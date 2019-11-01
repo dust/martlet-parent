@@ -6,7 +6,7 @@ package com.kmfrog.martlet.feed;
  *
  */
 public enum Source {
-    
+    Mix,
     Binance,
     Okex,
     Huobi,

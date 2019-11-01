@@ -2,6 +2,8 @@ package com.kmfrog.martlet.book;
 
 import java.io.PrintStream;
 
+import com.kmfrog.martlet.feed.Source;
+
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
 
 /**
@@ -26,13 +28,22 @@ public interface IOrderBook {
 
     /**
      * 以简洁文本平铺整个order book
-     * {last_update_ts},{last_received_ts},[[price_level1, volume, source;size|source2;size2|...],
+     * {source},{instrument},{last_update_ts},{last_received_ts},[[price_level1, volume, source;size|source2;size2|...],
+     * @param source
      * @param pricePrecision
      * @param volumePrecision
      * @param maxLevel
      * @return
      */
-    String getPlainText(int pricePrecision, int volumePrecision, int maxLevel);
+    String getPlainText(Source src, int pricePrecision, int volumePrecision, int maxLevel);
+    
+    /**
+     * 以原始文本平铺整个order book. price, size都是long
+     * @param src
+     * @param maxLevel
+     * @return
+     */
+    String getOriginText(Source src, int maxLevel);
     
     /**
      * 简洁平铺某一侧的order book.
@@ -43,6 +54,14 @@ public interface IOrderBook {
      * @return
      */
     String dumpPlainText(Side side, int pricePrecision, int volumePrecision, int maxLevel);
+    
+    /**
+     * 平铺某一侧的order book原始数据。price,size都为long
+     * @param side
+     * @param maxLevel
+     * @return
+     */
+    String dumpOriginText(Side side, int maxLevel);
     
     /**
      * 将参数中的变化量累计到订单档位，不存在此档位时会新增。

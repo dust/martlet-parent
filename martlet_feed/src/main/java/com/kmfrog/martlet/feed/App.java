@@ -6,11 +6,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.kmfrog.martlet.book.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.kmfrog.martlet.book.AggregateOrderBook;
+import com.kmfrog.martlet.book.IOrderBook;
+import com.kmfrog.martlet.book.Instrument;
+import com.kmfrog.martlet.book.OrderBook;
+import com.kmfrog.martlet.book.RollingTimeSpan;
+import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.feed.impl.BinanceDepthHandler;
 import com.kmfrog.martlet.feed.impl.BinanceInstrumentDepth;
 import com.kmfrog.martlet.feed.impl.BinanceInstrumentTrade;
@@ -24,6 +29,7 @@ import com.kmfrog.martlet.feed.impl.OkexInstrumentDepth;
 import com.kmfrog.martlet.feed.impl.OkexInstrumentTrade;
 import com.kmfrog.martlet.feed.impl.OkexTradeHandler;
 import com.kmfrog.martlet.feed.net.FeedBroadcast;
+import com.paritytrading.foundation.ASCII;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 
@@ -76,6 +82,9 @@ public class App implements Controller {
      * 实时交易广播
      **/
     private final FeedBroadcast tradeBroadcast;
+    
+    //test
+    private final RollingTimeSpan<TradeLog> hbTradeSpan = new RollingTimeSpan<>(10000, null);
 
     public App() {
         depthBroadcast = new FeedBroadcast("localhost", 5188, 1);
@@ -286,7 +295,9 @@ public class App implements Controller {
             System.out.format("%d|%d, %d|%d, %d|%d, %d|%d\n\n", binanceBook.getBestBidPrice(), binanceBook.getBestAskPrice(),
                     hbBook.getBestBidPrice(), hbBook.getBestAskPrice(), okexBook.getBestBidPrice(),
                     okexBook.getBestAskPrice(), aggBook.getBestBidPrice(), aggBook.getBestAskPrice());
-            System.out.format("\n\n%s\n", aggBook.dumpPlainText(Side.BUY, 8, 8, 5));
+            System.out.format("\n\n%s\n", aggBook.getOriginText(Source.Mix, 5));
+            System.out.println("\n\n");
+            System.out.println("HB.avg" + app.hbTradeSpan.avg() + "|"+app.hbTradeSpan.latest()+"|"+app.hbTradeSpan.last());
         }
     }
 
@@ -314,6 +325,9 @@ public class App implements Controller {
     public void logTrade(Source src, Instrument instrument, long id, long price, long volume, long cnt, boolean isBuy,
                          long ts, long recvTs) {
         tradePusher.put(src, instrument, id, price, volume, cnt, isBuy, ts, recvTs);
+        if(src==Source.Huobi && instrument.asLong() == ASCII.packLong("BTCUSDT")) {
+            hbTradeSpan.add(new TradeLog(src, instrument.asLong(), id, price, volume, cnt, isBuy, ts, recvTs));
+        }
 
     }
 

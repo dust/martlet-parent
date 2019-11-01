@@ -27,7 +27,7 @@ public class HuobiInstrumentTrade extends BaseInstrumentTrade {
             long price = obj.getBigDecimal("price").multiply(BigDecimal.valueOf(instrument.getPriceFactor())).longValue();
             long volume = obj.getBigDecimal("amount").multiply(BigDecimal.valueOf(instrument.getSizeFactor())).longValue();
             long cnt = 0;
-            long isBuy = "buy".equals(obj.getString("direction")) ? 1 : 0;
+            boolean isBuy = "buy".equals(obj.getString("direction"));
             long ts = obj.getLongValue("ts");
             if(ts > lastTimestamp.get()) {
                 lastTimestamp.set(ts);

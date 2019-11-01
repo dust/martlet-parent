@@ -8,6 +8,7 @@ import javax.sound.midi.Instrument;
 
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.feed.DataChangeListener;
+import com.kmfrog.martlet.feed.domain.TradeLog;
 
 public class InstrumentMaker implements Runnable, DataChangeListener {
 
@@ -41,7 +42,7 @@ public class InstrumentMaker implements Runnable, DataChangeListener {
     }
 
     @Override
-    public void onTrade(Instrument instrument, Object tradeLog) {
+    public void onTrade(Instrument instrument, TradeLog tradeLog) {
 
     }
 

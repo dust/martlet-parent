@@ -8,6 +8,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.util.Fmt;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -49,6 +50,7 @@ public class AggregateOrderBook implements IOrderBook {
      * 
      * @return
      */
+    @Override
     public long getInstrument() {
         return instrument;
     }
@@ -72,6 +74,7 @@ public class AggregateOrderBook implements IOrderBook {
      * 
      * @return
      */
+    @Override
     public long getBestBidPrice() {
         bidLock.readLock().lock();
         try {
@@ -90,6 +93,7 @@ public class AggregateOrderBook implements IOrderBook {
      * 
      * @return
      */
+    @Override
     public LongSortedSet getBidPrices() {
         bidLock.readLock().lock();
         try {
@@ -105,6 +109,7 @@ public class AggregateOrderBook implements IOrderBook {
      * @param price
      * @return
      */
+    @Override
     public long getBidSize(long price) {
         bidLock.readLock().lock();
         try {
@@ -133,6 +138,7 @@ public class AggregateOrderBook implements IOrderBook {
      * 
      * @return
      */
+    @Override
     public long getBestAskPrice() {
         askLock.readLock().lock();
         try {
@@ -166,6 +172,7 @@ public class AggregateOrderBook implements IOrderBook {
     /**
      * Get an ask level size.
      */
+    @Override
     public long getAskSize(long price) {
         askLock.readLock().lock();
         try {
@@ -178,6 +185,7 @@ public class AggregateOrderBook implements IOrderBook {
     /**
      * Get the ask prices.
      */
+    @Override
     public LongSortedSet getAskPrices() {
         askLock.readLock().lock();
         try {
@@ -207,6 +215,7 @@ public class AggregateOrderBook implements IOrderBook {
         }
     }
 
+    @Override
     public boolean replace(Side side, long price, long quantity, int source) {
         // bids or asks
         Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
@@ -234,6 +243,7 @@ public class AggregateOrderBook implements IOrderBook {
         }
     }
 
+    @Override
     public boolean incr(Side side, long price, long quantity, int source) {
         Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
 
@@ -268,6 +278,7 @@ public class AggregateOrderBook implements IOrderBook {
      * @param source
      * @return
      */
+    @Override
     public boolean clear(Side side, int source) {
         Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
 
@@ -332,17 +343,33 @@ public class AggregateOrderBook implements IOrderBook {
         }
     }
 
-    public String getPlainText(int pricePrecision, int volumePrecision, int maxLevel) {
+    @Override
+    public String getPlainText(Source src, int pricePrecision, int volumePrecision, int maxLevel) {
         StringBuilder sb = new StringBuilder();
+        sb.append('[').append(src.ordinal()).append(SEPARATOR).append(instrument).append(SEPARATOR);
         sb.append(lastUpdate).append(SEPARATOR).append(lastReceived).append(SEPARATOR);
         sb.append('[');
         sb.append(dumpPlainText(Side.BUY, pricePrecision, volumePrecision, maxLevel));
         sb.append(']').append(SEPARATOR).append('[');
         sb.append(dumpPlainText(Side.SELL, pricePrecision, volumePrecision, maxLevel));
-        sb.append(']');
+        sb.append(']').append(']');
+        return sb.toString();
+    }
+    
+    @Override
+    public String getOriginText(Source src, int maxLevel) {
+        StringBuilder sb = new StringBuilder();
+        sb.append('[').append(src.ordinal()).append(SEPARATOR).append(instrument).append(SEPARATOR);
+        sb.append(lastUpdate).append(SEPARATOR).append(lastReceived).append(SEPARATOR);
+        sb.append('[');
+        sb.append(dumpOriginText(Side.BUY, maxLevel));
+        sb.append(']').append(SEPARATOR).append('[');
+        sb.append(dumpOriginText(Side.SELL, maxLevel));
+        sb.append(']').append(']');
         return sb.toString();
     }
 
+    @Override
     public String dumpPlainText(Side side, int pricePrecision, int volumePrecision, int maxLevel) {
         StringBuilder sb = new StringBuilder();
         Lock lock = side == Side.BUY ? bidLock.readLock() : askLock.readLock();
@@ -369,7 +396,36 @@ public class AggregateOrderBook implements IOrderBook {
         }
         return sb.toString();
     }
+    
+    @Override
+    public String dumpOriginText(Side side, int maxLevel) {
+        StringBuilder sb = new StringBuilder();
+        Lock lock = side == Side.BUY ? bidLock.readLock() : askLock.readLock();
 
+        lock.lock();
+        try {
+            Long2ObjectRBTreeMap<MultiSrc> levels = getLevels(side);
+            int index = 0;
+            for (ObjectBidirectionalIterator<Long2ObjectMap.Entry<MultiSrc>> iter = levels.long2ObjectEntrySet()
+                    .iterator(); iter.hasNext() && index < maxLevel;) {
+
+                Long2ObjectMap.Entry<MultiSrc> entry = iter.next();
+                if (sb.length() > 0) {
+                    sb.append(SEPARATOR);
+                }
+                MultiSrc v = entry.getValue();
+                sb.append('[').append(entry.getLongKey()).append(SEPARATOR)
+                        .append(v.size()).append(SEPARATOR).append(v.dumpOriginText())
+                        .append(']');
+                index++;
+            }
+        } finally {
+            lock.unlock();
+        }
+        return sb.toString();
+    }
+
+    @Override
     public void dump(Side side, PrintStream writer) {
         Lock lock = side == Side.BUY ? bidLock.readLock() : askLock.readLock();
 

@@ -6,11 +6,11 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.kmfrog.martlet.book.Instrument;
-import com.kmfrog.martlet.feed.domain.TradeLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kmfrog.martlet.book.Instrument;
+import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.feed.net.FeedBroadcast;
 
 public class TradePusher extends Thread {

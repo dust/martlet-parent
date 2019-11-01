@@ -34,7 +34,8 @@ public class InstrumentAggregation extends Thread {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public InstrumentAggregation(Instrument instrument, AggregateOrderBook book, FeedBroadcast broadcast, Controller app) {
+    public InstrumentAggregation(Instrument instrument, AggregateOrderBook book, FeedBroadcast broadcast,
+            Controller app) {
         this.instrument = instrument;
         this.app = app;
         this.broadcast = broadcast;
@@ -70,7 +71,8 @@ public class InstrumentAggregation extends Thread {
                     aggBook.aggregate(src, req.book);
                 }
 
-                broadcast.sendDepth(aggBook, instrument.getPriceFractionDigits(), instrument.getSizeFractionDigits(), 5);
+                broadcast.sendDepth(Source.Mix, aggBook, instrument.getPriceFractionDigits(),
+                        instrument.getSizeFractionDigits(), 5);
 
                 if (BaseWebSocketHandler.DBG) {
                     tt.addAndGet(System.currentTimeMillis() - start);
@@ -121,14 +123,27 @@ public class InstrumentAggregation extends Thread {
                 return 1;
             }
 
-            long diff = book.getLastUpdateTs() - o.book.getLastUpdateTs();
-            if (diff != 0) {
-                return diff > 0 ? 1 : -1;
+            if (book == null && o.book != null) {
+                System.out.println("%%%%%");
+                Thread.dumpStack();
+                return -1;
             }
 
-            diff = book.getLastReceivedTs() - o.book.getLastReceivedTs();
-            if (diff != 0) {
-                return diff > 0 ? 1 : -1;
+            if (book != null && o.book == null) {
+                System.out.println("######");
+                Thread.dumpStack();
+                return 1;
+            }
+            if (book != null && o.book != null) {
+                long diff = book.getLastUpdateTs() - o.book.getLastUpdateTs();
+                if (diff != 0) {
+                    return diff > 0 ? 1 : -1;
+                }
+
+                diff = book.getLastReceivedTs() - o.book.getLastReceivedTs();
+                if (diff != 0) {
+                    return diff > 0 ? 1 : -1;
+                }
             }
 
             // 不会有等于的情况，因为不可能有更新时间（update timestamp)相同的推送。

@@ -25,17 +25,17 @@ public class FeedBroadcast {
 
     }
 
-    public void sendDepth(Source src, IOrderBook book, int pricePrecision, int volumePrecision, int maxLevel) {
+    public synchronized void sendDepth(Source src, IOrderBook book, int pricePrecision, int volumePrecision, int maxLevel) {
         // publisher.send(book.getPlainText(src, pricePrecision, volumePrecision, maxLevel));
         publisher.send(book.getOriginText(src, maxLevel));
     }
 
-    public void sendTadeLog(long[] tradeLog) {
+    public synchronized void sendTadeLog(long[] tradeLog) {
         // source, instrument(long), id, price, volume, cnt, isBuy, ts, lastReceived
         publisher.send(StringUtils.join(tradeLog, ","));
     }
 
-    public void destory() {
+    public synchronized void destory() {
         publisher.close();
         ctx.close();
     }

@@ -8,6 +8,9 @@ import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 
+import com.kmfrog.martlet.book.IOrderBook;
+import com.kmfrog.martlet.util.FeedUtils;
+
 /**
  * 
  * @author dust Oct 28, 2019
@@ -38,8 +41,9 @@ public class MktDataFeed extends Thread{
             while(!isQuit.get()) {
                 try {
                     String str = subscriber.recvStr();
-                    if(System.currentTimeMillis() % 100 == 0) {
-
+                    IOrderBook book = FeedUtils.parseZMQDepth(str);
+                    if(System.currentTimeMillis() % 100 == 1) {
+                    System.out.println(book.getOriginText(Source.Mix, 5));
                     }
                 }
                 catch(ZMQException zex) {

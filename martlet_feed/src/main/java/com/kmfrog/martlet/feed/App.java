@@ -84,7 +84,7 @@ public class App implements Controller {
     private final FeedBroadcast tradeBroadcast;
     
     //test
-    private final RollingTimeSpan<TradeLog> hbTradeSpan = new RollingTimeSpan<>(10000, null);
+    private final RollingTimeSpan<TradeLog> hbTradeSpan = new RollingTimeSpan<>(10000);
 
     public App() {
         depthBroadcast = new FeedBroadcast("localhost", 5188, 1);
@@ -252,8 +252,8 @@ public class App implements Controller {
 
         App app = new App();
         Instrument btcUsdt = new Instrument("BTCUSDT", 8, 8);
-        Instrument bnbeth = new Instrument("ETHUSDT", 8, 8);
-        Instrument[] instruments = new Instrument[]{btcUsdt};
+        Instrument ethusdt = new Instrument("ETHUSDT", 8, 8);
+        Instrument[] instruments = new Instrument[]{btcUsdt, ethusdt};
         app.startDepth(instruments);
         app.startTrade(instruments);
 
@@ -287,18 +287,28 @@ public class App implements Controller {
                 app.aggWorkers.get(btcUsdt.asLong()).dumpStats(System.out);
             }
             System.out.println("\n====\n");
-            AggregateOrderBook aggBook = app.makesureAggregateOrderBook(btcUsdt);
-            IOrderBook binanceBook = app.makesureOrderBook(Source.Binance, btcUsdt.asLong());
-            IOrderBook hbBook = app.makesureOrderBook(Source.Huobi, btcUsdt.asLong());
-            IOrderBook okexBook = app.makesureOrderBook(Source.Okex, btcUsdt.asLong());
-
-            System.out.format("%d|%d, %d|%d, %d|%d, %d|%d\n\n", binanceBook.getBestBidPrice(), binanceBook.getBestAskPrice(),
-                    hbBook.getBestBidPrice(), hbBook.getBestAskPrice(), okexBook.getBestBidPrice(),
-                    okexBook.getBestAskPrice(), aggBook.getBestBidPrice(), aggBook.getBestAskPrice());
-            System.out.format("\n\n%s\n", aggBook.getOriginText(Source.Mix, 5));
-            System.out.println("\n\n");
-            System.out.println("HB.avg" + app.hbTradeSpan.avg() + "|"+app.hbTradeSpan.latest()+"|"+app.hbTradeSpan.last());
+            
+            if (app.aggWorkers.containsKey(ethusdt.asLong())) {
+                app.aggWorkers.get(ethusdt.asLong()).dumpStats(System.out);
+            }
+            System.out.println("\n########\n");
+            printSymbol(app, btcUsdt);
+            printSymbol(app, ethusdt);
+            System.out.println("HB.avg" + app.hbTradeSpan.avg() + "|"+app.hbTradeSpan.last()+"|"+app.hbTradeSpan.first());
         }
+    }
+
+    private static void printSymbol(App app, Instrument instrument) {
+        AggregateOrderBook aggBook = app.makesureAggregateOrderBook(instrument);
+        IOrderBook binanceBook = app.makesureOrderBook(Source.Binance, instrument.asLong());
+        IOrderBook hbBook = app.makesureOrderBook(Source.Huobi, instrument.asLong());
+        IOrderBook okexBook = app.makesureOrderBook(Source.Okex, instrument.asLong());
+
+        System.out.format("%d|%d, %d|%d, %d|%d, %d|%d\n\n", binanceBook.getBestBidPrice(), binanceBook.getBestAskPrice(),
+                hbBook.getBestBidPrice(), hbBook.getBestAskPrice(), okexBook.getBestBidPrice(),
+                okexBook.getBestAskPrice(), aggBook.getBestBidPrice(), aggBook.getBestAskPrice());
+        System.out.format("\n\n%s\n", aggBook.getOriginText(Source.Mix, 5));
+        System.out.println("\n\n");
     }
 
 

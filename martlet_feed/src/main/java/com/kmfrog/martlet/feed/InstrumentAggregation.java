@@ -13,6 +13,7 @@ import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.Side;
+import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.feed.net.FeedBroadcast;
 
 /**
@@ -27,21 +28,23 @@ public class InstrumentAggregation extends Thread {
     private final Controller app;
     private final BlockingQueue<AggregateRequest> queue;
     private final AggregateOrderBook aggBook;
-    private final FeedBroadcast broadcast;
+    private final Pusher pusher;
+    private final int maxLevel;
 
     protected final AtomicLong times = new AtomicLong(0L);
     protected final AtomicLong tt = new AtomicLong(0L);
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public InstrumentAggregation(Instrument instrument, AggregateOrderBook book, FeedBroadcast broadcast,
-            Controller app) {
+    public InstrumentAggregation(Instrument instrument, AggregateOrderBook book, Pusher pusher,
+            Controller app, int maxLevel) {
         this.instrument = instrument;
         this.app = app;
-        this.broadcast = broadcast;
+        this.pusher = pusher;
         isQuit = new AtomicBoolean(false);
         queue = new PriorityBlockingQueue<>();
         aggBook = book;
+        this.maxLevel = maxLevel;
     }
 
     @Override
@@ -70,9 +73,8 @@ public class InstrumentAggregation extends Thread {
                     aggBook.setLastUpdateTs(req.book.getLastUpdateTs());
                     aggBook.aggregate(src, req.book);
                 }
-
-                broadcast.sendDepth(Source.Mix, aggBook, instrument.getPriceFractionDigits(),
-                        instrument.getSizeFractionDigits(), 5);
+                
+                pusher.put(req.book.getOriginText(Source.Mix, maxLevel));
 
                 if (BaseWebSocketHandler.DBG) {
                     tt.addAndGet(System.currentTimeMillis() - start);

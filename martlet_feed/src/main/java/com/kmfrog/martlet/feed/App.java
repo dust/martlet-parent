@@ -6,10 +6,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.kmfrog.martlet.C;
 import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
@@ -29,7 +31,7 @@ import com.kmfrog.martlet.feed.impl.OkexInstrumentDepth;
 import com.kmfrog.martlet.feed.impl.OkexInstrumentTrade;
 import com.kmfrog.martlet.feed.impl.OkexTradeHandler;
 import com.kmfrog.martlet.feed.net.FeedBroadcast;
-import com.paritytrading.foundation.ASCII;
+import com.kmfrog.martlet.util.ASCII;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 
@@ -61,7 +63,12 @@ public class App implements Controller {
     /**
      * trade流，推送线程
      **/
-    private TradePusher tradePusher;
+    private Pusher tradePusher;
+    
+    /**
+     * 深度推送线程
+     */
+    private final Pusher depthPusher;
 
     /**
      * 深度websocket集合。来源为key.
@@ -76,19 +83,24 @@ public class App implements Controller {
     /**
      * 深度ZMQ广播
      **/
-    private final FeedBroadcast depthBroadcast;
+    private final FeedBroadcast depthFeed;
 
     /**
      * 实时交易广播
      **/
-    private final FeedBroadcast tradeBroadcast;
+    private final FeedBroadcast tradeFeed;
+    
     
     //test
     private final RollingTimeSpan<TradeLog> hbTradeSpan = new RollingTimeSpan<>(10000);
 
     public App() {
-        depthBroadcast = new FeedBroadcast("localhost", 5188, 1);
-        tradeBroadcast = new FeedBroadcast("localhost", 5288, 1);
+        depthFeed = new FeedBroadcast("localhost", 5188, 1);
+        tradeFeed = new FeedBroadcast("localhost", 5288, 1);
+        depthPusher = new Pusher(depthFeed, this);
+        tradePusher = new Pusher(tradeFeed, this);
+        depthPusher.start();
+        tradePusher.start();
 
         multiSrcBooks = new ConcurrentHashMap<>();
         aggBooks = new Long2ObjectArrayMap<>();
@@ -123,7 +135,7 @@ public class App implements Controller {
     AggregateOrderBook makesureAggregateOrderBook(Instrument instrument) {
         AggregateOrderBook book = aggBooks.computeIfAbsent(instrument.asLong(), (key) -> new AggregateOrderBook(key));
         if (!aggWorkers.containsKey(instrument.asLong())) {
-            InstrumentAggregation worker = new InstrumentAggregation(instrument, book, depthBroadcast, this);
+            InstrumentAggregation worker = new InstrumentAggregation(instrument, book, depthPusher, this, C.MAX_LEVEL);
             aggWorkers.put(instrument.asLong(), worker);
             worker.start();
         }
@@ -223,7 +235,7 @@ public class App implements Controller {
                 logger.warn(e.getMessage(), e);
             }
         }
-        tradePusher = new TradePusher(tradeBroadcast, this);
+        tradePusher = new Pusher(tradeFeed, this);
         tradePusher.start();
 
         BaseWebSocketHandler binanceTradeHandler = new BinanceTradeHandler("wss://stream.binance.com:9443/stream?streams=%s@aggTrade", binanceSymbolNames, binanceListeners);
@@ -334,7 +346,8 @@ public class App implements Controller {
     @Override
     public void logTrade(Source src, Instrument instrument, long id, long price, long volume, long cnt, boolean isBuy,
                          long ts, long recvTs) {
-        tradePusher.put(src, instrument, id, price, volume, cnt, isBuy, ts, recvTs);
+        TradeLog log = new TradeLog(src, instrument.asLong(), id, price, volume, cnt, isBuy, ts, recvTs);
+        tradePusher.put(StringUtils.join(log.toLongArray(), C.SEPARATOR));
         if(src==Source.Huobi && instrument.asLong() == ASCII.packLong("BTCUSDT")) {
             hbTradeSpan.add(new TradeLog(src, instrument.asLong(), id, price, volume, cnt, isBuy, ts, recvTs));
         }

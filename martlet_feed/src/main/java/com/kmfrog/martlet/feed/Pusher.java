@@ -9,15 +9,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kmfrog.martlet.book.Instrument;
-import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.feed.net.FeedBroadcast;
 
-public class TradePusher extends Thread {
+public class Pusher extends Thread {
 
     private final AtomicBoolean isQuit;
     private final Controller app;
-    private final BlockingQueue<TradeLog> queue;
+    private final BlockingQueue<String> queue;
     private final FeedBroadcast broadcast;
 
     protected final AtomicLong times = new AtomicLong(0L);
@@ -25,7 +23,7 @@ public class TradePusher extends Thread {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public TradePusher(FeedBroadcast broadcast, Controller app) {
+    public Pusher(FeedBroadcast broadcast, Controller app) {
         this.app = app;
         this.broadcast = broadcast;
         isQuit = new AtomicBoolean(false);
@@ -36,22 +34,19 @@ public class TradePusher extends Thread {
     public void run() {
         while (!isQuit.get()) {
             try {
-                TradeLog tradeLog = queue.take();
+                String msg = queue.take();
                 long start = 0;
                 if (BaseWebSocketHandler.DBG) {
                     start = System.currentTimeMillis();
                 }
-                
-//                if(!)
-                
-                broadcast.sendTadeLog(tradeLog.toLongArray());
 
                 if (BaseWebSocketHandler.DBG) {
                     tt.addAndGet(System.currentTimeMillis() - start);
                     times.incrementAndGet();
                 }
-                
-                
+
+                broadcast.sendMsg(msg);
+
             } catch (InterruptedException e) {
                 logger.warn("{}({}), {}", e.getMessage());
             } catch (Exception ex) {
@@ -61,11 +56,9 @@ public class TradePusher extends Thread {
 
     }
 
-    public void put(Source src, Instrument instrument, long id, long price, long volume, long cnt, boolean isBuy,
-                    long ts, long recvTs){
-        TradeLog log = new TradeLog(src, instrument.asLong(), id, price, volume, cnt, isBuy, ts, recvTs);
+    public void put(String msg) {
         try {
-            queue.put(log);
+            queue.put(msg);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -78,11 +71,6 @@ public class TradePusher extends Thread {
 
     void dumpStats(PrintStream ps) {
         ps.format("\n TradePusher, %d|%d\n", tt.get(), times.get());
-    }
-    
-    private boolean checkDeviate(long[] tradeLog) {
-        
-        return true;
     }
 
 }

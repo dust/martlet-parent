@@ -3,7 +3,7 @@ package com.kmfrog.martlet.book;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.LongStream;
 
-import com.kmfrog.martlet.book.RollingTimeSpan.Timestamp;
+import com.kmfrog.martlet.feed.domain.InstrumentTimeSpan;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -14,7 +14,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
  * @author dust Oct 31, 2019
  *
  */
-public class RollingTimeSpan<T extends Timestamp> {
+public class RollingTimeSpan<T extends InstrumentTimeSpan> {
 
     private final long windowMillis;
     private final ObjectList<T> rolling;
@@ -87,12 +87,6 @@ public class RollingTimeSpan<T extends Timestamp> {
         } finally {
             lock.writeLock().unlock();
         }
-    }
-
-    public static interface Timestamp {
-        long getTimestamp();
-
-        long getPrice();
     }
 
 }

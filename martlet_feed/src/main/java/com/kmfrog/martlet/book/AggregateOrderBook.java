@@ -45,6 +45,22 @@ public class AggregateOrderBook implements IOrderBook {
         this.askLock = new ReentrantReadWriteLock();
     }
 
+    @Override
+    public void destroy() {
+        bidLock.writeLock().lock();
+        try {
+            bids.clear();
+        } finally {
+            bidLock.writeLock().unlock();
+        }
+        askLock.writeLock().lock();
+        try {
+            asks.clear();
+        } finally {
+            askLock.writeLock().unlock();
+        }
+    }
+
     /**
      * Get the instrument
      * 
@@ -53,6 +69,11 @@ public class AggregateOrderBook implements IOrderBook {
     @Override
     public long getInstrument() {
         return instrument;
+    }
+
+    @Override
+    public long getSourceValue() {
+        return Source.Mix.ordinal();
     }
 
     /**
@@ -83,6 +104,20 @@ public class AggregateOrderBook implements IOrderBook {
             }
 
             return bids.firstLongKey();
+        } finally {
+            bidLock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public long getWorstBidPrice() {
+        bidLock.readLock().lock();
+        try {
+            if (bids.isEmpty()) {
+                return 0;
+            }
+
+            return bids.lastLongKey();
         } finally {
             bidLock.readLock().unlock();
         }
@@ -147,6 +182,20 @@ public class AggregateOrderBook implements IOrderBook {
             }
 
             return asks.firstLongKey();
+        } finally {
+            askLock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public long getWorstAskPrice() {
+        askLock.readLock().lock();
+        try {
+            if (asks.isEmpty()) {
+                return 0;
+            }
+
+            return asks.lastLongKey();
         } finally {
             askLock.readLock().unlock();
         }
@@ -355,7 +404,7 @@ public class AggregateOrderBook implements IOrderBook {
         sb.append(']').append(']');
         return sb.toString();
     }
-    
+
     @Override
     public String getOriginText(Source src, int maxLevel) {
         StringBuilder sb = new StringBuilder();
@@ -387,8 +436,8 @@ public class AggregateOrderBook implements IOrderBook {
                 }
                 MultiSrc v = entry.getValue();
                 sb.append('[').append(Fmt.fmtNum(entry.getLongKey(), pricePrecision)).append(SEPARATOR)
-                        .append(Fmt.fmtNum(v.size(), volumePrecision)).append(SEPARATOR).append(v.dumpPlainText(volumePrecision))
-                        .append(']');
+                        .append(Fmt.fmtNum(v.size(), volumePrecision)).append(SEPARATOR)
+                        .append(v.dumpPlainText(volumePrecision)).append(']');
                 index++;
             }
         } finally {
@@ -396,7 +445,7 @@ public class AggregateOrderBook implements IOrderBook {
         }
         return sb.toString();
     }
-    
+
     @Override
     public String dumpOriginText(Side side, int maxLevel) {
         StringBuilder sb = new StringBuilder();
@@ -414,9 +463,8 @@ public class AggregateOrderBook implements IOrderBook {
                     sb.append(SEPARATOR);
                 }
                 MultiSrc v = entry.getValue();
-                sb.append('[').append(entry.getLongKey()).append(SEPARATOR)
-                        .append(v.size()).append(SEPARATOR).append(v.dumpOriginText())
-                        .append(']');
+                sb.append('[').append(entry.getLongKey()).append(SEPARATOR).append(v.size()).append(SEPARATOR)
+                        .append(v.dumpOriginText()).append(']');
                 index++;
             }
         } finally {
@@ -442,6 +490,23 @@ public class AggregateOrderBook implements IOrderBook {
 
     private Long2ObjectRBTreeMap<MultiSrc> getLevels(Side side) {
         return side == Side.BUY ? bids : asks;
+    }
+    
+    @Override
+    public int compareTo(IOrderBook o) {
+        if (o == this) {
+            return 0;
+        }
+
+        if (o == null) {
+            return 1;
+        }
+
+        if (getLastUpdateTs() != o.getLastUpdateTs()) {
+            return (int) (getLastUpdateTs() - o.getLastUpdateTs());
+        }
+
+        return (int) (getLastReceivedTs() - o.getLastReceivedTs());
     }
 
 }

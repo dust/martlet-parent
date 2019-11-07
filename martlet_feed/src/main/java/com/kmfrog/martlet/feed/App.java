@@ -120,10 +120,10 @@ public class App implements Controller {
     IOrderBook makesureOrderBook(Source src, long instrument) {
         Long2ObjectArrayMap<IOrderBook> srcBooks = multiSrcBooks.computeIfAbsent(src, (key) -> {
             Long2ObjectArrayMap<IOrderBook> sameSrcBooks = new Long2ObjectArrayMap<>();
-            sameSrcBooks.put(instrument, new OrderBook(instrument));
+            sameSrcBooks.put(instrument, new OrderBook(src, instrument));
             return sameSrcBooks;
         });
-        return srcBooks.computeIfAbsent(instrument, (key) -> new OrderBook(key));
+        return srcBooks.computeIfAbsent(instrument, (key) -> new OrderBook(src, key));
     }
 
     /**
@@ -338,6 +338,7 @@ public class App implements Controller {
             if (aggWorkers.containsKey(instrument.asLong())) {
                 aggWorkers.get(instrument.asLong()).putMsg(mkt, book);
             }
+            depthPusher.put(book.getOriginText(mkt, C.MAX_LEVEL));
         } catch (InterruptedException e) {
             logger.warn(e.getMessage(), e);
         }

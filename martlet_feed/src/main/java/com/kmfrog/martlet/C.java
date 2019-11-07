@@ -35,6 +35,17 @@ public interface C {
     char THIRD_SEPARATOR = '|';
     
     int MAX_LEVEL = 5;
+
+    long SYMBOL_DELAY_MILLIS = 10000L;
+
+    double SYMBOL_PRICE_DIFF = 0.05;
+
+    String PREFER_SOURCE_NAME = "Binance";
+
+    long SPREAD_LOWLIMIT_MILLESIMAL = 2;
+
+    long TRADE_AVG_WINDOW_MILLIS = 10;
+    
     
 
 

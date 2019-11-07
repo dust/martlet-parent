@@ -11,18 +11,24 @@ import it.unimi.dsi.fastutil.longs.LongSortedSet;
 
 public class TrackBook {
 
+    private final Instrument instrument;
     private final Long2ObjectRBTreeMap<PriceLevel> bids;
     private final Long2ObjectRBTreeMap<PriceLevel> asks;
 
     private final Long2ObjectOpenHashMap<OrderEntry> orders;
     private final ReentrantReadWriteLock lock;
 
-    public TrackBook() {
+    public TrackBook(Instrument instrument) {
+        this.instrument = instrument;
         lock = new ReentrantReadWriteLock();
         bids = new Long2ObjectRBTreeMap<>(LongComparators.OPPOSITE_COMPARATOR);
         asks = new Long2ObjectRBTreeMap<>(LongComparators.NATURAL_COMPARATOR);
 
         orders = new Long2ObjectOpenHashMap<>();
+    }
+    
+    public Instrument getInstrument() {
+        return instrument;
     }
 
     public void entry(long orderId, Side side, long price, long size) {
@@ -99,17 +105,48 @@ public class TrackBook {
             Long2ObjectRBTreeMap<PriceLevel> levels = side == Side.BUY ? bids : asks;
 
             if (!levels.isEmpty()) {
-                LongSortedSet prices = bids.subMap(from, to).keySet();
+                LongSortedSet prices = levels.subMap(from, to).keySet();
                 prices.stream().forEach(p -> {
-                    set.addAll(bids.get(p.longValue()).getOrderIds());
+                    set.addAll(levels.get(p.longValue()).getOrderIds());
                 });
             }
             return set;
         } finally {
             lock.readLock().unlock();
         }
-
     }
+    
+    /**
+     * 获得优于指定价位的全部订单（指定的某侧)。
+     * 
+     * @param side
+     * @param from inclusive
+     * @return
+     */
+    public Set<Long> getOrdersBetter(Side side, long from){
+        lock.readLock().lock();
+        try {
+            Set<Long> set = new HashSet<>();
+            Long2ObjectRBTreeMap<PriceLevel> levels = side == Side.BUY ? bids : asks;
+            //最差的报价：指定买入价格比订单簿中最差出价（即最低买价格）还低； 指定卖出价比订单簿最差出价（即最高卖价）还高。
+            long worst = levels.lastLongKey();
+            if((side==Side.BUY && from < worst) || (side==Side.SELL && from > worst)) {
+                return new HashSet<Long>();
+            }
+
+            if (!levels.isEmpty()) {
+                LongSortedSet prices = levels.subMap(from, worst).keySet();
+                prices.stream().forEach(p -> {
+                    set.addAll(levels.get(p.longValue()).getOrderIds());
+                });
+            }
+            return set;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+    
+   
 
     private void delete(OrderEntry order) {
         PriceLevel level = order.getLevel();

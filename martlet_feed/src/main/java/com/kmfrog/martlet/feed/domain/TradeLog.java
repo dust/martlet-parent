@@ -2,10 +2,9 @@ package com.kmfrog.martlet.feed.domain;
 
 import java.util.Objects;
 
-import com.kmfrog.martlet.book.RollingTimeSpan;
 import com.kmfrog.martlet.feed.Source;
 
-public class TradeLog implements Comparable<TradeLog>, RollingTimeSpan.Timestamp {
+public class TradeLog implements Comparable<TradeLog>, InstrumentTimeSpan {
     private Source src;
     private long instrument;
     private long id;
@@ -42,6 +41,10 @@ public class TradeLog implements Comparable<TradeLog>, RollingTimeSpan.Timestamp
         ts = fields[7];
         recvTs = fields[8];
     }
+    
+    public Source getSource() {
+        return src;
+    }
 
     public long[] toLongArray(){
         return new long[]{src.ordinal(), instrument, id, price, volume, cnt, isBuy?1:0, ts, recvTs};
@@ -55,6 +58,11 @@ public class TradeLog implements Comparable<TradeLog>, RollingTimeSpan.Timestamp
     @Override
     public long getPrice() {
         return price;
+    }
+    
+    @Override
+    public long getInstrument() {
+        return instrument;
     }
 
     @Override

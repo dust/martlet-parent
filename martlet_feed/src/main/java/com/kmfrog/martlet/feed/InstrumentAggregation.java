@@ -74,7 +74,7 @@ public class InstrumentAggregation extends Thread {
                     aggBook.aggregate(src, req.book);
                 }
                 
-                pusher.put(req.book.getOriginText(Source.Mix, maxLevel));
+                pusher.put(aggBook.getOriginText(Source.Mix, maxLevel));
 
                 if (BaseWebSocketHandler.DBG) {
                     tt.addAndGet(System.currentTimeMillis() - start);

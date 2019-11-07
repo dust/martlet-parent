@@ -11,20 +11,26 @@ import it.unimi.dsi.fastutil.longs.LongSortedSet;
  * @author dust Sep 30, 2019
  *
  */
-public interface IOrderBook {
+public interface IOrderBook extends Comparable<IOrderBook> {
 
+    long getSourceValue();
     long getInstrument();
+    
     long getBestBidPrice();
+    long getWorstBidPrice();
     LongSortedSet getBidPrices();
     long getBidSize(long price);
     
     long getBestAskPrice();
+    long getWorstAskPrice();
     LongSortedSet getAskPrices();
     long getAskSize(long price);
     
     long getLastUpdateTs();
     long getLastReceivedTs();
     void setLastUpdateTs(long ts);
+    
+    void destroy();
 
     /**
      * 以简洁文本平铺整个order book

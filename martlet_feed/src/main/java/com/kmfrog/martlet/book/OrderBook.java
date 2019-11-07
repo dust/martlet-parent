@@ -22,6 +22,7 @@ import it.unimi.dsi.fastutil.objects.ObjectBidirectionalIterator;
  */
 public class OrderBook implements IOrderBook {
 
+    private final Source src;
     private final long instrument;
     private final AtomicLong lastUpdate;
     private final AtomicLong lastReceived;
@@ -32,8 +33,9 @@ public class OrderBook implements IOrderBook {
     private final ReadWriteLock bidLock;
     private final ReadWriteLock askLock;
 
-    public OrderBook(long instrument) {
+    public OrderBook(Source src, long instrument) {
         this.instrument = instrument;
+        this.src = src;
         lastReceived = new AtomicLong(0L);
         lastUpdate = new AtomicLong(0L);
 
@@ -45,6 +47,22 @@ public class OrderBook implements IOrderBook {
 
     }
 
+    @Override
+    public void destroy() {
+        bidLock.writeLock().lock();
+        try {
+            bids.clear();
+        } finally {
+            bidLock.writeLock().unlock();
+        }
+        askLock.writeLock().lock();
+        try {
+            asks.clear();
+        } finally {
+            askLock.writeLock().unlock();
+        }
+    }
+
     /**
      * Get the instrument.
      *
@@ -53,6 +71,11 @@ public class OrderBook implements IOrderBook {
     @Override
     public long getInstrument() {
         return instrument;
+    }
+
+    @Override
+    public long getSourceValue() {
+        return src.ordinal();
     }
 
     /**
@@ -69,6 +92,25 @@ public class OrderBook implements IOrderBook {
             }
 
             return bids.firstLongKey();
+        } finally {
+            bidLock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Get the best bid price.
+     *
+     * @return the best bid price or zero if there are no bids
+     */
+    @Override
+    public long getWorstBidPrice() {
+        bidLock.readLock().lock();
+        try {
+            if (bids.isEmpty()) {
+                return 0;
+            }
+
+            return bids.lastLongKey();
         } finally {
             bidLock.readLock().unlock();
         }
@@ -118,6 +160,19 @@ public class OrderBook implements IOrderBook {
                 return 0;
             }
             return asks.firstLongKey();
+        } finally {
+            askLock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public long getWorstAskPrice() {
+        askLock.readLock().lock();
+        try {
+            if (asks.isEmpty()) {
+                return 0;
+            }
+            return asks.lastLongKey();
         } finally {
             askLock.readLock().unlock();
         }
@@ -240,7 +295,7 @@ public class OrderBook implements IOrderBook {
         sb.append(']').append(']');
         return sb.toString();
     }
-    
+
     @Override
     public String getOriginText(Source src, int maxLevel) {
         StringBuilder sb = new StringBuilder();
@@ -278,7 +333,7 @@ public class OrderBook implements IOrderBook {
         }
         return sb.toString();
     }
-    
+
     @Override
     public String dumpOriginText(Side side, int maxLevel) {
         StringBuilder sb = new StringBuilder();
@@ -294,8 +349,7 @@ public class OrderBook implements IOrderBook {
                 if (sb.length() > 0) {
                     sb.append(SEPARATOR);
                 }
-                sb.append('[').append(entry.getLongKey()).append(SEPARATOR)
-                        .append(entry.getLongValue()).append(']');
+                sb.append('[').append(entry.getLongKey()).append(SEPARATOR).append(entry.getLongValue()).append(']');
                 index++;
             }
         } finally {
@@ -321,6 +375,23 @@ public class OrderBook implements IOrderBook {
 
     private Long2LongRBTreeMap getLevels(Side side) {
         return side == Side.BUY ? bids : asks;
+    }
+
+    @Override
+    public int compareTo(IOrderBook o) {
+        if (o == this) {
+            return 0;
+        }
+
+        if (o == null) {
+            return 1;
+        }
+
+        if (getLastUpdateTs() != o.getLastUpdateTs()) {
+            return (int) (getLastUpdateTs() - o.getLastUpdateTs());
+        }
+
+        return (int) (getLastReceivedTs() - o.getLastReceivedTs());
     }
 
 }

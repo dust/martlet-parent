@@ -64,7 +64,7 @@ public class App implements Controller {
      * trade流，推送线程
      **/
     private Pusher tradePusher;
-    
+
     /**
      * 深度推送线程
      */
@@ -89,9 +89,8 @@ public class App implements Controller {
      * 实时交易广播
      **/
     private final FeedBroadcast tradeFeed;
-    
-    
-    //test
+
+    // test
     private final RollingTimeSpan<TradeLog> hbTradeSpan = new RollingTimeSpan<>(10000);
 
     public App() {
@@ -168,7 +167,6 @@ public class App implements Controller {
         String[] okexSymbolNames = new String[instruments.length];
         WsDataListener[] okexListeners = new WsDataListener[instruments.length];
 
-
         for (int i = 0; i < instruments.length; i++) {
             Instrument instrument = instruments[i];
             long lngInst = instrument.asLong();
@@ -182,18 +180,19 @@ public class App implements Controller {
             IOrderBook okexBook = makesureOrderBook(Source.Okex, lngInst);
             okexListeners[i] = new OkexInstrumentDepth(instrument, okexBook, this);
 
-
             binanceSymbolNames[i] = strInst.toLowerCase();
             IOrderBook binanceBook = makesureOrderBook(Source.Binance, lngInst);
             binanceListeners[i] = new BinanceInstrumentDepth(instrument, binanceBook, this);
-            String binanceSnapshotUrl = String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10", strInst);
+            String binanceSnapshotUrl = String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10",
+                    strInst);
             executor.submit(new RestSnapshotRunnable(binanceSnapshotUrl, "GET", null, null, binanceListeners[i]));
 
-            //确认聚合订单簿及聚合线程开始工作。
+            // 确认聚合订单簿及聚合线程开始工作。
             makesureAggregateOrderBook(instrument);
         }
 
-        BaseWebSocketHandler binanceDepthHandler = new BinanceDepthHandler("wss://stream.binance.com:9443/stream?streams=%s@depth", binanceSymbolNames, binanceListeners);
+        BaseWebSocketHandler binanceDepthHandler = new BinanceDepthHandler(
+                "wss://stream.binance.com:9443/stream?streams=%s@depth", binanceSymbolNames, binanceListeners);
         startWebSocket(depthWsDaemons, Source.Binance, binanceDepthHandler);
 
         BaseWebSocketHandler huobiDepthHandler = new HuobiDepthHandler(huobiSymbolNames, huobiListeners);
@@ -238,7 +237,8 @@ public class App implements Controller {
         tradePusher = new Pusher(tradeFeed, this);
         tradePusher.start();
 
-        BaseWebSocketHandler binanceTradeHandler = new BinanceTradeHandler("wss://stream.binance.com:9443/stream?streams=%s@aggTrade", binanceSymbolNames, binanceListeners);
+        BaseWebSocketHandler binanceTradeHandler = new BinanceTradeHandler(
+                "wss://stream.binance.com:9443/stream?streams=%s@aggTrade", binanceSymbolNames, binanceListeners);
         startWebSocket(tradeWsDaemons, Source.Binance, binanceTradeHandler);
 
         BaseWebSocketHandler huobiTradeHandler = new HuobiTradeHandler(huobiSymbolNames, huobiListeners);
@@ -253,7 +253,7 @@ public class App implements Controller {
         int length = symbol.length();
         if (symbol.endsWith("USDT")) {
             return String.format("%s-USDT", symbol.substring(0, length - 4));
-        } else if (symbol.endsWith("XRP") || symbol.endsWith("BTC") || symbol.endsWith("ETH")) {  // ABCXRP, 0
+        } else if (symbol.endsWith("XRP") || symbol.endsWith("BTC") || symbol.endsWith("ETH")) { // ABCXRP, 0
             return String.format("%s-%s", symbol.substring(0, length - 3), symbol.substring(length - 3, length));
         }
         throw new IllegalArgumentException("illegal argument: " + instrument.asString());
@@ -265,20 +265,23 @@ public class App implements Controller {
         App app = new App();
         Instrument btcUsdt = new Instrument("BTCUSDT", 8, 8);
         Instrument ethusdt = new Instrument("ETHUSDT", 8, 8);
-        Instrument[] instruments = new Instrument[]{btcUsdt, ethusdt};
+        Instrument[] instruments = new Instrument[] { btcUsdt, ethusdt };
         app.startDepth(instruments);
         app.startTrade(instruments);
 
         while (true) {
             Thread.sleep(10000L);
             app.depthWsDaemons.get(Source.Binance).keepAlive();
+            app.tradeWsDaemons.get(Source.Binance).keepAlive();
             app.depthWsDaemons.get(Source.Binance).dumpStats(System.out);
             // long now = System.currentTimeMillis();
-            // System.out.format("\nBA: %d|%d\n", now - binanceBook.getLastReceivedTs(), binanceBook.getLastReceivedTs() -
+            // System.out.format("\nBA: %d|%d\n", now - binanceBook.getLastReceivedTs(), binanceBook.getLastReceivedTs()
+            // -
             // binanceBook.getLastUpdateTs());
             System.out.println("\n#####\n");
 
             app.depthWsDaemons.get(Source.Okex).keepAlive();
+            app.tradeWsDaemons.get(Source.Okex).keepAlive();
             app.depthWsDaemons.get(Source.Okex).dumpStats(System.out);
 
             System.out.println("\n====\n");
@@ -289,24 +292,25 @@ public class App implements Controller {
             // hbBook.dump(Side.BUY, System.out);
             app.depthWsDaemons.get(Source.Huobi).dumpStats(System.out);
             app.depthWsDaemons.get(Source.Huobi).keepAlive();
+            app.tradeWsDaemons.get(Source.Huobi).keepAlive();
             // now = System.currentTimeMillis();
             // System.out.format("\nHB: %d|%d\n", now - hbBook.getLastReceivedTs(), hbBook.getLastReceivedTs() -
             // hbBook.getLastUpdateTs());
             System.out.println("\n====\n");
 
-
             if (app.aggWorkers.containsKey(btcUsdt.asLong())) {
                 app.aggWorkers.get(btcUsdt.asLong()).dumpStats(System.out);
             }
             System.out.println("\n====\n");
-            
+
             if (app.aggWorkers.containsKey(ethusdt.asLong())) {
                 app.aggWorkers.get(ethusdt.asLong()).dumpStats(System.out);
             }
             System.out.println("\n########\n");
             printSymbol(app, btcUsdt);
             printSymbol(app, ethusdt);
-            System.out.println("HB.avg" + app.hbTradeSpan.avg() + "|"+app.hbTradeSpan.last()+"|"+app.hbTradeSpan.first());
+            System.out.println(
+                    "HB.avg" + app.hbTradeSpan.avg() + "|" + app.hbTradeSpan.last() + "|" + app.hbTradeSpan.first());
         }
     }
 
@@ -316,21 +320,20 @@ public class App implements Controller {
         IOrderBook hbBook = app.makesureOrderBook(Source.Huobi, instrument.asLong());
         IOrderBook okexBook = app.makesureOrderBook(Source.Okex, instrument.asLong());
 
-        System.out.format("%d|%d, %d|%d, %d|%d, %d|%d\n\n", binanceBook.getBestBidPrice(), binanceBook.getBestAskPrice(),
-                hbBook.getBestBidPrice(), hbBook.getBestAskPrice(), okexBook.getBestBidPrice(),
-                okexBook.getBestAskPrice(), aggBook.getBestBidPrice(), aggBook.getBestAskPrice());
+        System.out.format("%d|%d, %d|%d, %d|%d, %d|%d\n\n", binanceBook.getBestBidPrice(),
+                binanceBook.getBestAskPrice(), hbBook.getBestBidPrice(), hbBook.getBestAskPrice(),
+                okexBook.getBestBidPrice(), okexBook.getBestAskPrice(), aggBook.getBestBidPrice(),
+                aggBook.getBestAskPrice());
         System.out.format("\n\n%s\n", aggBook.getOriginText(Source.Mix, 5));
         System.out.println("\n\n");
     }
 
-
     @Override
     public void reset(Source mkt, Instrument instrument, BaseInstrumentDepth depth, boolean isSubscribe,
-                      boolean isConnect) {
+            boolean isConnect) {
         // this.startSnapshotTask(instrument.asString().toUpperCase(), depth);
         depthWsDaemons.get(mkt).reset(instrument, depth, isSubscribe, isConnect);
     }
-
 
     @Override
     public void resetBook(Source mkt, Instrument instrument, IOrderBook book) {
@@ -338,7 +341,9 @@ public class App implements Controller {
             if (aggWorkers.containsKey(instrument.asLong())) {
                 aggWorkers.get(instrument.asLong()).putMsg(mkt, book);
             }
-            depthPusher.put(book.getOriginText(mkt, C.MAX_LEVEL));
+            if (book != null) {
+                depthPusher.put(book.getOriginText(mkt, C.MAX_LEVEL));
+            }
         } catch (InterruptedException e) {
             logger.warn(e.getMessage(), e);
         }
@@ -346,10 +351,10 @@ public class App implements Controller {
 
     @Override
     public void logTrade(Source src, Instrument instrument, long id, long price, long volume, long cnt, boolean isBuy,
-                         long ts, long recvTs) {
+            long ts, long recvTs) {
         TradeLog log = new TradeLog(src, instrument.asLong(), id, price, volume, cnt, isBuy, ts, recvTs);
         tradePusher.put(StringUtils.join(log.toLongArray(), C.SEPARATOR));
-        if(src==Source.Huobi && instrument.asLong() == ASCII.packLong("BTCUSDT")) {
+        if (src == Source.Huobi && instrument.asLong() == ASCII.packLong("BTCUSDT")) {
             hbTradeSpan.add(new TradeLog(src, instrument.asLong(), id, price, volume, cnt, isBuy, ts, recvTs));
         }
 
@@ -357,7 +362,7 @@ public class App implements Controller {
 
     @Override
     public void onDeviate(Source source, Instrument instrument, IOrderBook book, long bestBid, long bestAsk,
-                          long lastUpdate, long lastReceived) {
+            long lastUpdate, long lastReceived) {
     }
 
 }

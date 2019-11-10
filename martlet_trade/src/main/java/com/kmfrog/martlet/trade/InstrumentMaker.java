@@ -15,6 +15,7 @@ import com.kmfrog.martlet.C;
 import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
+import com.kmfrog.martlet.book.RollingTimeSpan;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.DataChangeListener;
@@ -31,15 +32,17 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
     private BlockingQueue<IOrderBook> depthQueue = new PriorityBlockingQueue<>();
 
     private final TrackBook trackBook;
+    private final Provider provider;
     /**
      * 来源:单一订单簿(k:v)的集合。方便从来源检索单一订单簿。
      **/
     private final Map<Source, IOrderBook> multiSrcBooks;
     private AggregateOrderBook aggBook;
 
-    public InstrumentMaker(Instrument instrument, TrackBook trackBook) {
+    public InstrumentMaker(Instrument instrument, TrackBook trackBook, Provider provider) {
         this.instrument = instrument;
         this.trackBook = trackBook;
+        this.provider = provider;
         multiSrcBooks = new ConcurrentHashMap<>();
     }
 
@@ -48,33 +51,42 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
         while (!isQuit.get()) {
             try {
                 IOrderBook book = depthQueue.take();
-
-                if (book.getInstrument() == instrument.asLong()) {
-                    if (book.getSourceValue() == Source.Mix.ordinal()) {
-                        if (aggBook != null) {
-                            aggBook.destroy();
-                            aggBook = null;
-                        }
-                        aggBook = (AggregateOrderBook) book;
-                    } else {
-                        IOrderBook old = multiSrcBooks.put(Source.values()[(int) book.getSourceValue()], book);
-                        if (old != null) {
-                            old.destroy();
-                            old = null;
-                        }
+                Source src = Source.values()[(int) book.getSourceValue()];
+                // if (book.getInstrument() == instrument.asLong()) {
+                if (src == Source.Mix) {
+                    if (aggBook != null) {
+                        aggBook.destroy();
+                        aggBook = null;
+                    }
+                    aggBook = (AggregateOrderBook) book;
+                } else {
+                    IOrderBook old = multiSrcBooks.put(src, book);
+                    if (old != null) {
+                        old.destroy();
+                        old = null;
                     }
                 }
+                // }
 
                 long[] bbo = getBBO();
-//                List<Long> lst = new ArrayList<>();
-//                lst.add(System.currentTimeMillis());
-//                lst.add(book.getSourceValue());
-//                lst.add(bbo == null ? -1 : bbo[0]);
-//                lst.add(bbo == null ? -1 : bbo[1]);
-//                System.out.println(lst);
+                List<Long> lst = new ArrayList<>();
+                lst.add(System.currentTimeMillis());
+                lst.add(book.getLastUpdateTs());
+                lst.add(book.getSourceValue());
+                lst.add(bbo == null ? -1 : bbo[0]);
+                lst.add(bbo == null ? -1 : bbo[1]);
+                if (src != Source.Mix) {
+                    RollingTimeSpan<TradeLog> avgTradeLogs = provider.getAvgTrade(src, instrument);
+                    lst.add(avgTradeLogs.avg());
+                    lst.add(avgTradeLogs.last());
+                }
+
+                System.out.println(lst);
                 
+                // 得到最糟糕的买单。>bbo[0](${bid})，逆序：从大到小。
                 Set<Long> worstBidOrders = trackBook.getOrdersBetween(Side.BUY, Long.MAX_VALUE, bbo[0]);
-                Set<Long> worstAskOrders = trackBook.getOrdersBetween(Side.SELL, bbo[1], 0);
+                // 得到最糟糕的卖单。<bbo[1](${ask})，顺序：从小到大。
+                Set<Long> worstAskOrders = trackBook.getOrdersBetween(Side.SELL, 0, bbo[1]);
                 
 
             } catch (InterruptedException ex) {
@@ -90,7 +102,7 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
     /**
      * 获得最优出价和供应。（Best Bid and Offer),
      * 
-     * @return
+     * @return [${bid}, ${offer}]
      */
     public long[] getBBO() {
         long floatDownward = 1000 - C.SPREAD_LOWLIMIT_MILLESIMAL / 2;
@@ -188,4 +200,12 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
 
     }
 
+    public void quit() {
+        isQuit.compareAndSet(false, true);
+        interrupt();
+    }
+
+    public void destroy() {
+        depthQueue.clear();
+    }
 }

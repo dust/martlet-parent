@@ -13,12 +13,12 @@ import com.kmfrog.martlet.feed.BaseWebSocketHandler;
 import com.kmfrog.martlet.feed.WsDataListener;
 
 public class HuobiTradeHandler extends BaseWebSocketHandler {
-    
+
     private static final String WS_URL = "wss://api.huobi.pro/ws";
     private static final String CH_NAME_FMT = "market.%s.trade.detail";
     private Map<String, WsDataListener> listenersMap;
     private AtomicLong lastTs;
-    
+
     public HuobiTradeHandler(String[] symbols, WsDataListener[] listeners) {
         super();
         lastTs = new AtomicLong(0L);
@@ -34,7 +34,7 @@ public class HuobiTradeHandler extends BaseWebSocketHandler {
     public String getWebSocketUrl() {
         return WS_URL;
     }
-    
+
     @Override
     public void onConnect(Session session) {
         super.onConnect(session);
@@ -59,9 +59,9 @@ public class HuobiTradeHandler extends BaseWebSocketHandler {
             logger.debug("onMessage: {}", msg);
         }
         DefaultJSONParser parser = new DefaultJSONParser(msg);
-//         System.out.println("\n################\n");
-//         System.out.println(msg);
-//         System.out.println("\n################\n");
+        // System.out.println("\n################\n");
+        // System.out.println(msg);
+        // System.out.println("\n################\n");
         try {
             JSONObject root = parser.parseObject();
             if (!root.containsKey("ts")) {
@@ -70,34 +70,35 @@ public class HuobiTradeHandler extends BaseWebSocketHandler {
                     sess.getRemote().sendString(msg.replace("ping", "pong"));
                     return;
                 }
-                if(logger.isInfoEnabled()) {
+                if (logger.isInfoEnabled()) {
                     logger.info(" eorror procotol, There is no 'ts' {}", msg);
                 }
                 return;
             }
-            
-            long ts = root.getLongValue("ts");            
-            if (ts <= lastTs.get() || !root.containsKey("ch")) {
-                if(root.containsKey("status") || root.containsKey("subbed")) {
-                    //response, pass directly.
+
+            long ts = root.getLongValue("ts");
+            if (!root.containsKey("ch")) {
+                if (root.containsKey("status") || root.containsKey("subbed")) {
+                    // response, pass directly.
                     return;
                 }
-                if(logger.isInfoEnabled()) {
+                if (logger.isInfoEnabled()) {
                     logger.info(" eorror procotol,  There is no 'ch': {}", msg);
                 }
                 return;
             }
-            lastTs.set(ts);
-            
+            // 实时交易流水日志，允许时序错误，但不更新最后接收时间。
+            if (ts > lastTs.get()) {
+                lastTs.set(ts);
+            }
+
             String channelName = root.getString("ch");
             if (listenersMap.containsKey(channelName)) {
                 listenersMap.get(channelName).onJSON(root.getJSONObject("tick"), false);
             }
-        }
-        catch(Exception ex) {
+        } catch (Exception ex) {
             logger.warn(ex.getMessage(), ex);
-        }
-        finally {
+        } finally {
             parser.close();
         }
     }

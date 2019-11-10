@@ -3,6 +3,8 @@ package com.kmfrog.martlet;
 import java.time.LocalDate;
 import java.time.ZoneId;
 
+import com.kmfrog.martlet.feed.Source;
+
 public interface C {
     
     long[] POWERS_OF_TEN = new long[] {
@@ -45,6 +47,8 @@ public interface C {
     long SPREAD_LOWLIMIT_MILLESIMAL = 2;
 
     long TRADE_AVG_WINDOW_MILLIS = 10;
+
+    Source[] DEF_SOURCES = new Source[] {Source.Binance, Source.Huobi, Source.Okex};
     
     
 

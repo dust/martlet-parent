@@ -10,7 +10,9 @@ import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 
+import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.feed.domain.TradeLog;
+import com.kmfrog.martlet.trade.InstrumentTrade;
 import com.kmfrog.martlet.util.FeedUtils;
 
 /**
@@ -61,6 +63,20 @@ public class TradeFeed extends Thread {
         } catch (Exception ex) {
             logger.warn(ex.getMessage(), ex);
         }
+    }
+
+    public void register(Instrument instrument, DataChangeListener listener) {
+        listeners.put(instrument.asLong(), listener);
+    }
+    
+    public void quit() {
+        isQuit.compareAndSet(false, true);
+        interrupt();
+    }
+    
+    public void destroy() {
+        subscriber.close();
+        ctx.close();
     }
 
 }

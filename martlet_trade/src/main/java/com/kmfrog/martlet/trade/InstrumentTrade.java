@@ -6,6 +6,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.RollingTimeSpan;
@@ -17,8 +20,9 @@ public class InstrumentTrade extends Thread implements DataChangeListener {
 
     private final Instrument instrument;
     private final AtomicBoolean isQuit = new AtomicBoolean(false);
-    private final BlockingQueue<TradeLog> depthQueue = new PriorityBlockingQueue<>();
+    private final BlockingQueue<TradeLog> queue = new PriorityBlockingQueue<>();
     private final Map<Source, RollingTimeSpan<TradeLog>> avgTradeMap;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public InstrumentTrade(Instrument instrument, Source[] sources, RollingTimeSpan<TradeLog>[] avgTrades) {
         this.instrument = instrument;
@@ -33,13 +37,14 @@ public class InstrumentTrade extends Thread implements DataChangeListener {
     public void run() {
         while (!isQuit.get()) {
             try {
-                TradeLog book = depthQueue.take();
-                Source src = book.getSource();
+                TradeLog tradeLog = queue.take();
+                Source src = tradeLog.getSource();
                 if (avgTradeMap.containsKey(src)) {
-                    avgTradeMap.get(src).add(book);
+                    avgTradeMap.get(src).add(tradeLog);
                 }
+//                System.out.println(tradeLog);
             } catch (Exception ex) {
-                ex.printStackTrace();
+                logger.warn("{} - {} ", instrument.asString(), ex.getMessage());
             }
         }
     }
@@ -52,10 +57,19 @@ public class InstrumentTrade extends Thread implements DataChangeListener {
     @Override
     public void onTrade(Long instrument, TradeLog tradeLog) {
         try {
-            depthQueue.put(tradeLog);
+            queue.put(tradeLog);
         } catch (Exception ex) {
 
         }
+    }
+    
+    public void quit() {
+        isQuit.compareAndSet(false, true);
+        interrupt();
+    }
+    
+    public void destroy() {
+        queue.clear();
     }
 
 }

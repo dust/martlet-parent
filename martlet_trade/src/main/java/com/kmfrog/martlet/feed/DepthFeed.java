@@ -69,4 +69,13 @@ public class DepthFeed extends Thread {
         listeners.put(btcusdt.asLong(), im);
     }
 
+    public void quit() {
+        isQuit.compareAndSet(false, true);
+        interrupt();
+    }
+    
+    public void destroy() {
+        subscriber.close();
+        ctx.close();
+    }
 }

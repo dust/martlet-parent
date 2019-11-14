@@ -11,25 +11,25 @@ public class PriceLevel {
     private final long price;
     private final List<OrderEntry> orders;
     
-    PriceLevel(Side side, long price){
+    public PriceLevel(Side side, long price){
         this.side = side;
         this.price = price;
         this.orders = new ArrayList<>();
     }
     
-    Side getSide() {
+    public Side getSide() {
         return side;
     }
     
-    long getPrice() {
+    public long getPrice() {
         return price;
     }
     
-    boolean isEmpty() {
+    public boolean isEmpty() {
         return orders.isEmpty();
     }
     
-    OrderEntry add(long orderId, long size) {
+    public OrderEntry add(long orderId, long size) {
         OrderEntry order = new OrderEntry(this, orderId, size);
         
         orders.add(order);
@@ -41,7 +41,7 @@ public class PriceLevel {
         orders.remove(order);
     }
     
-    Set<Long> getOrderIds() {
+    public Set<Long> getOrderIds() {
         return orders.stream().map(ord -> ord.getId()).collect(Collectors.toSet());
     }
 

@@ -13,6 +13,8 @@ import com.kmfrog.martlet.util.Fmt;
 
 import it.unimi.dsi.fastutil.longs.Long2LongMap.Entry;
 import it.unimi.dsi.fastutil.longs.Long2LongRBTreeMap;
+import it.unimi.dsi.fastutil.longs.Long2LongSortedMap;
+import it.unimi.dsi.fastutil.longs.LongBidirectionalIterator;
 import it.unimi.dsi.fastutil.longs.LongComparators;
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
 import it.unimi.dsi.fastutil.objects.ObjectBidirectionalIterator;
@@ -60,6 +62,41 @@ public class OrderBook implements IOrderBook {
             asks.clear();
         } finally {
             askLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public long[] getPreferred(Side side, long size) {
+        Long2LongRBTreeMap levels = getLevels(side);
+        Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
+        
+        lock.lock();
+        try {
+            if (levels.isEmpty()) {
+                return new long[] { 0, -1 };
+            }
+
+            int level = 1;
+            long bbo = levels.firstLongKey();
+            long bboSize = levels.get(bbo);
+            if (bboSize >= size) {
+                return new long[] { bbo, level };
+            }
+
+            long sum = bboSize;
+            LongSortedSet worsePriceSet = levels.tailMap(bbo).keySet();
+            for (LongBidirectionalIterator iter = worsePriceSet.iterator(); iter.hasNext();) {
+                long nextPrice = iter.nextLong();
+                sum += levels.get(nextPrice);
+                if (sum > size) {
+                    return new long[] { nextPrice, level+1 };
+                }
+                level++;
+            }
+            return new long[] {-1, -1};
+
+        } finally {
+            lock.unlock();
         }
     }
 

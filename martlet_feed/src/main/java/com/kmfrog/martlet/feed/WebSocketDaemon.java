@@ -72,6 +72,10 @@ public class WebSocketDaemon {
     public void keepAlive() {
         session = handler.keepAlive();
     }
+    
+    public void close(int status, String reason) {
+        handler.close(status, reason);
+    }
 
     public void reset(Instrument instrument, BaseInstrumentDepth depth, boolean isSubscribe, boolean isConnect) {
         handler.reset(instrument, depth, isSubscribe, isConnect);
@@ -79,6 +83,14 @@ public class WebSocketDaemon {
 
     public void dumpStats(PrintStream ps){
         handler.dumpStats(ps);
+    }
+    
+    public void subscribeSymbol(String symbol, WsDataListener baseDepth) {
+        handler.subscribeSymbol(symbol, baseDepth);
+    }
+    
+    public void unsubscribeSymbols(String symbol) {
+        handler.unsubscribeSymbol(symbol);
     }
 
 }

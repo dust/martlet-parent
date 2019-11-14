@@ -88,5 +88,5 @@ public class RollingTimeSpan<T extends InstrumentTimeSpan> {
             lock.writeLock().unlock();
         }
     }
-
+    
 }

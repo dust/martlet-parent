@@ -36,6 +36,7 @@ public abstract class BaseWebSocketHandler {
     protected WebSocketSession session;
     private ReentrantLock lock;
     private WebSocketDaemon websocket;
+    protected long lastReceived;
 
     private AtomicLong counter;
 
@@ -47,6 +48,7 @@ public abstract class BaseWebSocketHandler {
         lock = new ReentrantLock();
         client = new WebSocketClient();
 
+        lastReceived = 0L;
         counter = new AtomicLong(0L);
     }
 
@@ -70,6 +72,11 @@ public abstract class BaseWebSocketHandler {
 
     public abstract String getWebSocketUrl();
 
+    void onMessageWithLog(Session session, String msg) {
+        lastReceived = System.currentTimeMillis();
+        onMessage(session, msg);
+    }
+
     /**
      * 文本消息。
      *
@@ -86,7 +93,7 @@ public abstract class BaseWebSocketHandler {
      */
     public void onMessageWithStats(Session session, String msg) {
         long b = System.currentTimeMillis();
-        onMessage(session, msg);
+        onMessageWithLog(session, msg);
         times.incrementAndGet();
         tt.addAndGet(System.currentTimeMillis() - b);
     }
@@ -103,7 +110,7 @@ public abstract class BaseWebSocketHandler {
         if (DBG) {
             onMessageWithStats(session, msg);
         } else {
-            onMessage(session, msg);
+            onMessageWithLog(session, msg);
         }
     }
 
@@ -118,6 +125,7 @@ public abstract class BaseWebSocketHandler {
         lock.lock();
         try {
             this.session = null;
+            lastReceived = 0;
         } finally {
             lock.unlock();
         }
@@ -131,6 +139,7 @@ public abstract class BaseWebSocketHandler {
         if (session != null) {
             session.close(status, reason);
         }
+        lastReceived = 0;
     }
 
     protected boolean clientOpened() {
@@ -169,6 +178,7 @@ public abstract class BaseWebSocketHandler {
     public Session keepAlive() {
         try {
             if (!clientOpened()) {
+                lastReceived = 0;
                 session = connect();
             }
         } catch (Exception ex) {
@@ -246,6 +256,25 @@ public abstract class BaseWebSocketHandler {
             ps.println(String.format("\n%s: %d|%d|%d\n", getClass().getName(), tt.get(), times.get(),
                     tt.get() / times.get()));
         }
+    }
+
+    public void subscribeSymbol(String symbol, WsDataListener baseDepth) {
+
+    }
+
+    public void unsubscribeSymbol(String symbol) {
+        
+    }
+    
+    protected static String getOkexSymbol(String instrumentName) {
+        String symbol = instrumentName.toUpperCase();
+        int length = symbol.length();
+        if (symbol.endsWith("USDT")) {
+            return String.format("%s-USDT", symbol.substring(0, length - 4));
+        } else if (symbol.endsWith("XRP") || symbol.endsWith("BTC") || symbol.endsWith("ETH")) { // ABCXRP, 0
+            return String.format("%s-%s", symbol.substring(0, length - 3), symbol.substring(length - 3, length));
+        }
+        throw new IllegalArgumentException("illegal argument: " + symbol);
     }
 
 }

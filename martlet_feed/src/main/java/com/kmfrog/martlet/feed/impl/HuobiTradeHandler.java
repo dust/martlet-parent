@@ -14,32 +14,34 @@ import com.kmfrog.martlet.feed.WsDataListener;
 
 public class HuobiTradeHandler extends BaseWebSocketHandler {
 
-    private static final String WS_URL = "wss://api.huobi.pro/ws";
-    private static final String CH_NAME_FMT = "market.%s.trade.detail";
+    private final String wsUrl;  //WS_URL = "wss://api.huobi.pro/ws";
+    private final String tradeFmt; //CH_NAME_FMT = "market.%s.trade.detail";
     private Map<String, WsDataListener> listenersMap;
     private AtomicLong lastTs;
 
-    public HuobiTradeHandler(String[] symbols, WsDataListener[] listeners) {
+    public HuobiTradeHandler(String wsUrl, String tradeFmt, String[] symbols, WsDataListener[] listeners) {
         super();
+        this.wsUrl = wsUrl;
+        this.tradeFmt = tradeFmt;
         lastTs = new AtomicLong(0L);
         listenersMap = new ConcurrentHashMap<>();
         symbolNames = ConcurrentHashMap.newKeySet();
         for (int i = 0; i < symbols.length; i++) {
             symbolNames.add(symbols[i]);
-            listenersMap.put(String.format(CH_NAME_FMT, symbols[i]), listeners[i]);
+            listenersMap.put(String.format(tradeFmt, symbols[i]), listeners[i]);
         }
     }
 
     @Override
     public String getWebSocketUrl() {
-        return WS_URL;
+        return wsUrl;
     }
 
     @Override
     public void onConnect(Session session) {
         super.onConnect(session);
         try {
-            final String subFmt = "{\"sub\": \"market.%s.trade.detail\", \"id\": \"%d\"}";
+            final String subFmt = "{\"sub\": \""+tradeFmt+"\", \"id\": \"%d\"}";
             symbolNames.stream().forEach(symbol -> {
                 try {
                     session.getRemote().sendString(String.format(subFmt, symbol, generateReqId()));
@@ -48,6 +50,30 @@ public class HuobiTradeHandler extends BaseWebSocketHandler {
                 }
             });
 
+        } catch (Exception ex) {
+            logger.warn(ex.getMessage(), ex);
+        }
+    }
+    
+    @Override
+    public void subscribeSymbol(String symbol, WsDataListener baseDepth) {
+        try {
+            symbolNames.add(symbol);
+            listenersMap.put(symbol, baseDepth);
+            final String subFmt = "{\"sub\": \"" + tradeFmt + "\", \"id\": \"%d\"}";
+            session.getRemote().sendString(String.format(subFmt, symbol, generateReqId()));
+        } catch (Exception ex) {
+            logger.warn(ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    public void unsubscribeSymbol(String symbol) {
+        try {
+            final String subFmt = "{\"unsub\": \"" + tradeFmt + "\", \"id\": \"%d\"}";
+            session.getRemote().sendString(String.format(subFmt, symbol, generateReqId()));
+            listenersMap.remove(symbol);
+            symbolNames.remove(symbol);
         } catch (Exception ex) {
             logger.warn(ex.getMessage(), ex);
         }
@@ -77,6 +103,7 @@ public class HuobiTradeHandler extends BaseWebSocketHandler {
             }
 
             long ts = root.getLongValue("ts");
+            
             if (!root.containsKey("ch")) {
                 if (root.containsKey("status") || root.containsKey("subbed")) {
                     // response, pass directly.

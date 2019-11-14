@@ -31,6 +31,13 @@ public interface IOrderBook extends Comparable<IOrderBook> {
     void setLastUpdateTs(long ts);
     
     void destroy();
+    /**
+     * 获得指定数量的价格和档位。
+     * @param side
+     * @param base
+     * @return 数组：[价格，档位]
+     */
+    long[] getPreferred(Side side, long size);
 
     /**
      * 以简洁文本平铺整个order book

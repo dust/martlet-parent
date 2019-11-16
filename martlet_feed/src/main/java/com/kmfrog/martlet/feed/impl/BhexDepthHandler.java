@@ -5,21 +5,25 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.websocket.api.Session;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.DefaultJSONParser;
+import com.kmfrog.martlet.C;
 import com.kmfrog.martlet.feed.BaseWebSocketHandler;
 import com.kmfrog.martlet.feed.WsDataListener;
 
 public class BhexDepthHandler extends BaseWebSocketHandler {
 
-    static final String WS_URL = "wss://wsapi.tac.vip/openapi/quote/ws/v1";
-
+    final String wsUrl;
+    final String depthFmt;
     final Map<String, WsDataListener> listenersMap;
 
-    public BhexDepthHandler(String[] symbols, WsDataListener[] listeners) {
+    public BhexDepthHandler(String wsUrl, String depthFmt, String[] symbols, WsDataListener[] listeners) {
         super();
+        this.wsUrl = wsUrl;
+        this.depthFmt = depthFmt;
         this.listenersMap = new ConcurrentHashMap<>();
         this.symbolNames = ConcurrentHashMap.newKeySet();
         for (int i = 0; i < symbols.length; i++) {
@@ -30,15 +34,16 @@ public class BhexDepthHandler extends BaseWebSocketHandler {
 
     @Override
     public String getWebSocketUrl() {
-        return WS_URL;
+        return wsUrl;
     }
 
     @Override
     public void onConnect(Session session) {
         try {
-            String depth = "{ \"symbol\": \"%s\", \"topic\": \"depth\",  \"event\": \"sub\", \"params\": {\"binary\": false}}";
-            session.getRemote().sendString(String.format(depth, String.join(",", this.symbolNames)));
-            // logger.info("sub:{}", depth);
+//            String depth = "{ \"symbol\": \"%s\", \"topic\": \"depth\",  \"event\": \"sub\", \"params\": {\"binary\": false}}";
+            String msg = String.format(depthFmt, StringUtils.join(symbolNames, C.SEPARATOR));
+            session.getRemote().sendString(msg);
+             logger.info("sub:{}", msg);
         } catch (Exception ex) {
             logger.warn(ex.getMessage(), ex);
         }

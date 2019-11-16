@@ -38,26 +38,31 @@ public interface C {
     int SELL_FIRST_RATIO = 80;
 
     ///////////////////// configuration /////////////////////
-    String BINANCE_WS_DEPTH = "${binance.ws.depth.url}";
-    String BINANCE_WS_TRADE = "${binance.ws.trade.url}";
-    String BINANCE_REST_URL = "${binance.rest.depth.url}";
+    String BINANCE_WS_DEPTH = "binance.ws.depth.url";
+    String BINANCE_WS_TRADE = "binance.ws.trade.url";
+    String BINANCE_REST_URL = "binance.rest.depth.url";
 
-    String HUOBI_WS_URL = "${huobi.ws.url}";
-    String HUOBI_DEPTH_FMT = "${huobi.depth.fmt}";
-    String HUOBI_TRADE_FMT = "${huobi.trade.fmt}";
+    String HUOBI_WS_URL = "huobi.ws.url";
+    String HUOBI_DEPTH_FMT = "huobi.depth.fmt";
+    String HUOBI_TRADE_FMT = "huobi.trade.fmt";
 
-    String OKEX_WS_URL = "${okex.ws.url}";
-    String OKEX_DEPTH_FMT = "${okex.depth.fmt}";
-    String OKEX_DEPTH_JOIN_SEPARATOR = "${okex.depth.join.separator}";
-    String OKEX_TRADE_FMT = "${okex.trade.fmt}";
-    String OKEX_TRADE_JOIN_SEPARATOR = "${okex.trade.join.separator}";
+    String OKEX_WS_URL = "okex.ws.url";
+    String OKEX_DEPTH_FMT = "okex.depth.fmt";
+    String OKEX_DEPTH_JOIN_SEPARATOR = "okex.depth.join.separator";
+    String OKEX_TRADE_FMT = "okex.trade.fmt";
+    String OKEX_TRADE_JOIN_SEPARATOR = "okex.trade.join.separator";
+    
+    String BHEX_WS_URL = "bhex.ws.url";
+    String BHEX_DEPTH_FMT = "bhex.depth.fmt";
 
-    String PUB_DEPTH_HOST = "${pub.depth.host}";
-    String PUB_DEPTH_PORT = "${pub.depth.port}";
-    String PUB_TRADE_HOST = "${pub.trade.host}";
-    String PUB_TRADE_PORT = "${pub.trade.port}";
-    String PUB_DEPTH_IO_THREAD_CNT = "${pub.depth.io.thread.cnt}";
-    String PUB_TRADE_IO_THREAD_CNT = "${pub.trade.io.thread.cnt}";
+    String PUB_DEPTH_HOST = "pub.depth.host";
+    String PUB_DEPTH_PORT = "pub.depth.port";
+    String PUB_TRADE_HOST = "pub.trade.host";
+    String PUB_TRADE_PORT = "pub.trade.port";
+    String PUB_DEPTH_IO_THREAD_CNT = "pub.depth.io.thread.cnt";
+    String PUB_TRADE_IO_THREAD_CNT = "pub.trade.io.thread.cnt";
+    
+   
     
 
 }

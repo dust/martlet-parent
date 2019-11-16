@@ -58,7 +58,8 @@ public class BhexInstrumentDepth extends BaseInstrumentDepth {
                     // logger.info("onMessage. {}|{}|{}, {}", lastUpdateId.get(), evtFirstId, evtLastId, lastId);
                     lastUpdateId.set(id);
                     lastTimestamp.set(t);
-                    book.setLastUpdateTs(t);
+                    book.setLastUpdateTs(lastTimestamp.get());
+                    controller.resetBook(source, instrument, book);
                 }
             }
             finally {

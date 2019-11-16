@@ -4,16 +4,25 @@ import static com.kmfrog.martlet.C.SECOND_SEPARATOR;
 import static com.kmfrog.martlet.C.SEPARATOR;
 import static com.kmfrog.martlet.C.THIRD_SEPARATOR;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.parser.DefaultJSONParser;
 import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.IOrderBook;
+import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.OrderBook;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.feed.Source;
@@ -73,6 +82,60 @@ public class FeedUtils {
         return book;
     }
 
+    public static List<Instrument> parseInstruments(String json) {
+        List<Instrument> lst = new ArrayList<>();
+        try {
+            JSONArray arr = JSONArray.parseArray(json);
+            int len = arr.size();
+            for (int i = 0; i < len; i++) {
+                JSONObject o = arr.getJSONObject(i);
+                lst.add(new Instrument(o.getString("name").toUpperCase(), o.getIntValue("p"), o.getIntValue("v")));
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return lst;
+    }
+
+    public static Set<String> parseInstrumentName(String json) {
+        Set<String> keys = new HashSet<>();
+        try {
+            JSONArray arr = JSONArray.parseArray(json);
+            int len = arr.size();
+            for (int i = 0; i < len; i++) {
+                keys.add(arr.getString(i));
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return keys;
+    }
+
+    public static Map<String, Object> parseConfigArgs(String json) {
+        Map<String, Object> cfg = new HashMap<>();
+        DefaultJSONParser parser = new DefaultJSONParser(json);
+
+        try {
+            JSONObject root = parser.parseObject();
+            Set<String> keys = root.keySet();
+            Map<String, String> map = new HashMap<>();
+            for (String key : keys) {
+                JSONObject child = root.getJSONObject(key);
+                Set<String> childKeys = child.keySet();
+                for (String ck : childKeys) {
+                    map.put(ck, child.getString(ck));
+                }
+                cfg.put(key, map);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            parser.close();
+        }
+        return cfg;
+
+    }
+
     private static void updatePriceLevel(IOrderBook book, Side side, JSONArray arr) {
         int size = arr.size();
         for (int i = 0; i < size; i++) {
@@ -93,14 +156,15 @@ public class FeedUtils {
             }
         }
     }
-    
+
     public static int between(int min, int max) {
         Random rnd = new Random(System.currentTimeMillis());
         return (int) (min + rnd.nextDouble() * (max - min));
     }
-    
+
     /**
      * 获得随机数。两边都不包含。
+     * 
      * @param min
      * @param max
      * @return

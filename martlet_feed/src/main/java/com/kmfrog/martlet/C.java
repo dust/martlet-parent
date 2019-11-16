@@ -32,6 +32,10 @@ public interface C {
     Source[] DEF_SOURCES = new Source[] { Source.Binance, Source.Huobi, Source.Okex };
 
     long MONITOR_SLEEP_MILLIS = 25000;
+    
+    int SPREAD_PRICE_UNIT_SIMPLE_LIMIT = 5;
+    
+    int SELL_FIRST_RATIO = 80;
 
     ///////////////////// configuration /////////////////////
     String BINANCE_WS_DEPTH = "${binance.ws.depth.url}";
@@ -54,5 +58,6 @@ public interface C {
     String PUB_TRADE_PORT = "${pub.trade.port}";
     String PUB_DEPTH_IO_THREAD_CNT = "${pub.depth.io.thread.cnt}";
     String PUB_TRADE_IO_THREAD_CNT = "${pub.trade.io.thread.cnt}";
+    
 
 }

@@ -5,6 +5,7 @@ import static com.kmfrog.martlet.C.SEPARATOR;
 import static com.kmfrog.martlet.C.THIRD_SEPARATOR;
 
 import java.util.Arrays;
+import java.util.Random;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -91,6 +92,22 @@ public class FeedUtils {
                 }
             }
         }
+    }
+    
+    public static int between(int min, int max) {
+        Random rnd = new Random(System.currentTimeMillis());
+        return (int) (min + rnd.nextDouble() * (max - min));
+    }
+    
+    /**
+     * 获得随机数。两边都不包含。
+     * @param min
+     * @param max
+     * @return
+     */
+    public static long between(long min, long max) {
+        Random rnd = new Random(System.currentTimeMillis());
+        return (long) (min + rnd.nextDouble() * (max - min));
     }
 
     public static void main(String[] args) {

@@ -31,8 +31,8 @@ public class Workbench implements Provider {
 
     private static ExecutorService executor = Executors
             .newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("WorkbenchExecutor-%d").build());
-    /** 一定时间窗口的实时成交流水均值。 **/
-    final Map<Source, Long2ObjectArrayMap<RollingTimeSpan<TradeLog>>> multiSrcLastAvgTrade;
+    /** 一定时间窗口的成交流水均值。 **/
+    final Map<Source, Long2ObjectArrayMap<RollingTimeSpan<TradeLog>>> multiSrcTradeLogs;
     /** 不同来源order book **/
     final Map<Source, Long2ObjectArrayMap<IOrderBook>> multiSrcOrderBooks;
     /** 开放的订单集合 **/
@@ -49,7 +49,7 @@ public class Workbench implements Provider {
     Source[] defSources = C.DEF_SOURCES;
 
     public Workbench() {
-        multiSrcLastAvgTrade = new ConcurrentHashMap<>();
+        multiSrcTradeLogs = new ConcurrentHashMap<>();
         multiSrcOrderBooks = new ConcurrentHashMap<>();
         trackBooks = new Long2ObjectArrayMap<>();
         instrumentMakers = new ConcurrentHashMap<>();
@@ -61,7 +61,7 @@ public class Workbench implements Provider {
     }
 
     RollingTimeSpan<TradeLog> makesureTradeLog(Source src, long instrument) {
-        Long2ObjectArrayMap<RollingTimeSpan<TradeLog>> srcTradeLogs = multiSrcLastAvgTrade.computeIfAbsent(src,
+        Long2ObjectArrayMap<RollingTimeSpan<TradeLog>> srcTradeLogs = multiSrcTradeLogs.computeIfAbsent(src,
                 (key) -> {
                     Long2ObjectArrayMap<RollingTimeSpan<TradeLog>> sameSrcTradeLogs = new Long2ObjectArrayMap<>();
                     RollingTimeSpan<TradeLog> avgTrade = new RollingTimeSpan<TradeLog>(C.TRADE_AVG_WINDOW_MILLIS);

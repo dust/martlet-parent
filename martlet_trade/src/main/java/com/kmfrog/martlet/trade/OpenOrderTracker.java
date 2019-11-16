@@ -21,6 +21,12 @@ import io.broker.api.client.domain.account.Order;
 import io.broker.api.client.domain.account.OrderSide;
 import io.broker.api.client.domain.account.request.OpenOrderRequest;
 
+/**
+ * 开放订单跟踪器。
+ * 附带了帐户总体平衡功能。----今后再重构。
+ * @author dust Nov 16, 2019
+ *
+ */
 public class OpenOrderTracker extends Thread {
 
     BrokerApiRestClient client;

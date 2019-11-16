@@ -5,6 +5,8 @@ import java.util.concurrent.Future;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.RollingTimeSpan;
+import com.kmfrog.martlet.book.Side;
+import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.trade.exec.Exec;
@@ -16,10 +18,11 @@ import com.kmfrog.martlet.trade.exec.Exec;
  */
 public interface Provider {
 
-    RollingTimeSpan<TradeLog> getAvgTrade(Source src, Instrument instrument);
+    RollingTimeSpan<TradeLog> getRollingTradeLog(Source src, Instrument instrument);
 
     IOrderBook getOrderBook(Source source, Instrument instrument);
     
     Future<?> submitExec(Exec exec);
-    
+
+    TrackBook getTrackBook(Source src, Instrument instrument);    
 }

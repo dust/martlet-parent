@@ -83,9 +83,9 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
                 lst.add(bbo == null ? -1 : bbo[0]);
                 lst.add(bbo == null ? -1 : bbo[1]);
                 if (src != Source.Mix) {
-                    RollingTimeSpan<TradeLog> avgTradeLogs = provider.getAvgTrade(src, instrument);
-                    lst.add(avgTradeLogs.avg());
-                    lst.add(avgTradeLogs.last());
+//                    RollingTimeSpan<TradeLog> avgTradeLogs = provider.getAvgTrade(src, instrument);
+//                    lst.add(avgTradeLogs.avg());
+//                    lst.add(avgTradeLogs.last());
                 }
 
                 System.out.println(lst);

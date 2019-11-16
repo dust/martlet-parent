@@ -25,7 +25,7 @@ import com.kmfrog.martlet.util.FeedUtils;
  */
 public abstract class InstrumentSoloDunk extends Thread implements DataChangeListener {
 
-    private final Logger logger = LoggerFactory.getLogger(InstrumentSoloDunk.class);
+    protected final Logger logger = LoggerFactory.getLogger(InstrumentSoloDunk.class);
     protected final Instrument instrument;
     protected final Source source;
     private AtomicBoolean isQuit = new AtomicBoolean(false);

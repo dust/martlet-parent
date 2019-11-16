@@ -26,7 +26,7 @@ public class TrackBook {
 
         orders = new Long2ObjectOpenHashMap<>();
     }
-    
+
     public Instrument getInstrument() {
         return instrument;
     }
@@ -90,6 +90,19 @@ public class TrackBook {
         }
     }
 
+    public void remove(long orderId) {
+        lock.writeLock().lock();
+        try {
+            OrderEntry order = orders.get(orderId);
+            if (order != null) {
+                delete(order);
+                orders.remove(orderId);
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
     /**
      * 获得某价位区间的全部订单（指定的某侧)。
      * 
@@ -115,7 +128,23 @@ public class TrackBook {
             lock.readLock().unlock();
         }
     }
-    
+
+    public Set<Long> getOrders(Side side) {
+        Set<Long> set = new HashSet<>();
+        Long2ObjectRBTreeMap<PriceLevel> levels = side == Side.BUY ? bids : asks;
+        lock.readLock().lock();
+        try {
+            if (!levels.isEmpty()) {
+                LongSortedSet prices = levels.keySet();
+                prices.stream().forEach(p -> set.addAll(levels.get(p.longValue()).getOrderIds()));
+            }
+
+        } finally {
+            lock.readLock().unlock();
+        }
+        return set;
+    }
+
     /**
      * 获得优于指定价位的全部订单（指定的某侧)。
      * 
@@ -123,14 +152,15 @@ public class TrackBook {
      * @param from inclusive
      * @return
      */
-    public Set<Long> getOrdersBetter(Side side, long from){
+    public Set<Long> getOrdersBetter(Side side, long from) {
+        Set<Long> set = new HashSet<>();
+        Long2ObjectRBTreeMap<PriceLevel> levels = side == Side.BUY ? bids : asks;
+
         lock.readLock().lock();
         try {
-            Set<Long> set = new HashSet<>();
-            Long2ObjectRBTreeMap<PriceLevel> levels = side == Side.BUY ? bids : asks;
-            //最差的报价：指定买入价格比订单簿中最差出价（即最低买价格）还低； 指定卖出价比订单簿最差出价（即最高卖价）还高。
+            // 最差的报价：指定买入价格比订单簿中最差出价（即最低买价格）还低； 指定卖出价比订单簿最差出价（即最高卖价）还高。
             long worst = levels.lastLongKey();
-            if((side==Side.BUY && from < worst) || (side==Side.SELL && from > worst)) {
+            if ((side == Side.BUY && from < worst) || (side == Side.SELL && from > worst)) {
                 return new HashSet<Long>();
             }
 
@@ -145,8 +175,6 @@ public class TrackBook {
             lock.readLock().unlock();
         }
     }
-    
-   
 
     private void delete(OrderEntry order) {
         PriceLevel level = order.getLevel();
@@ -196,6 +224,16 @@ public class TrackBook {
         } finally {
             lock.readLock().unlock();
         }
+    }
+
+    public OrderEntry getOrder(long orderId) {
+        lock.readLock().lock();
+        try {
+            return orders.get(orderId);
+        } finally {
+            lock.readLock().unlock();
+        }
+
     }
 
 }

@@ -8,9 +8,12 @@ import java.util.concurrent.Future;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.kmfrog.martlet.C;
+import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
+import com.kmfrog.martlet.book.OrderBook;
 import com.kmfrog.martlet.book.RollingTimeSpan;
+import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.DepthFeed;
 import com.kmfrog.martlet.feed.Source;
@@ -30,6 +33,8 @@ public class Workbench implements Provider {
             .newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("WorkbenchExecutor-%d").build());
     /** 一定时间窗口的实时成交流水均值。 **/
     final Map<Source, Long2ObjectArrayMap<RollingTimeSpan<TradeLog>>> multiSrcLastAvgTrade;
+    /** 不同来源order book **/
+    final Map<Source, Long2ObjectArrayMap<IOrderBook>> multiSrcOrderBooks;
     /** 开放的订单集合 **/
     final Long2ObjectArrayMap<TrackBook> trackBooks;
     /** 交易对的摆盘线程 **/
@@ -45,6 +50,7 @@ public class Workbench implements Provider {
 
     public Workbench() {
         multiSrcLastAvgTrade = new ConcurrentHashMap<>();
+        multiSrcOrderBooks = new ConcurrentHashMap<>();
         trackBooks = new Long2ObjectArrayMap<>();
         instrumentMakers = new ConcurrentHashMap<>();
         instrumentTrades = new ConcurrentHashMap<>();
@@ -66,6 +72,20 @@ public class Workbench implements Provider {
             RollingTimeSpan<TradeLog> avgTrade = new RollingTimeSpan<TradeLog>(C.TRADE_AVG_WINDOW_MILLIS);
             return avgTrade;
         });
+    }
+
+    /**
+     * 获得指定来源及币对的订单簿。Source.Mix 获得相应币对的聚合订单簿。
+     * 
+     * @param src
+     * @param instrument
+     * @return
+     */
+    public IOrderBook makesureOrderBook(Source src, long instrument) {
+        Long2ObjectArrayMap<IOrderBook> srcBooks = multiSrcOrderBooks.computeIfAbsent(src,
+                (key) -> new Long2ObjectArrayMap<>());
+        return srcBooks.computeIfAbsent(instrument,
+                (key) -> src == Source.Mix ? new AggregateOrderBook(instrument) : new OrderBook(src, key));
     }
 
     TrackBook makesureTrackBook(Instrument instrument) {
@@ -100,15 +120,19 @@ public class Workbench implements Provider {
         });
     }
 
-    public RollingTimeSpan<TradeLog> getAvgTrade(Source src, Instrument instrument) {
+    public RollingTimeSpan<TradeLog> getRollingTradeLog(Source src, Instrument instrument) {
         return makesureTradeLog(src, instrument.asLong());
     }
 
     public IOrderBook getOrderBook(Source src, Instrument instrument) {
-        InstrumentMaker im = makesureMaker(instrument);
-        return im.getOrderBook(src);
+        return makesureOrderBook(src, instrument.asLong());
     }
     
+    public TrackBook getTrackBook(Source src, Instrument instrument) {
+        //当前没有多来源订单跟踪。
+        return makesureTrackBook(instrument);
+    }
+
     public Future<?> submitExec(Exec r) {
         return executor.submit(r);
     }

@@ -12,7 +12,7 @@ public class OrderEntry {
         this.remainingQuantity = size;
     }
 
-    PriceLevel getLevel() {
+    public PriceLevel getLevel() {
         return level;
     }
 
@@ -20,7 +20,7 @@ public class OrderEntry {
         return id;
     }
 
-    long getRemainingQuantity() {
+    public long getRemainingQuantity() {
         return remainingQuantity;
     }
     

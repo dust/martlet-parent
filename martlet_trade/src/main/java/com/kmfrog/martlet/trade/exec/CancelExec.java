@@ -4,12 +4,12 @@ import java.util.Set;
 
 import com.kmfrog.martlet.book.TrackBook;
 
-public class ExecCancel extends Exec {
+public class CancelExec extends Exec {
     
     private final TrackBook memBook;
     private final Set<Long> orderIds;
 
-    public ExecCancel(long createAt, Set<Long> orderIds, TrackBook trackBook) {
+    public CancelExec(long createAt, Set<Long> orderIds, TrackBook trackBook) {
         super(createAt);
         this.memBook = trackBook;
         this.orderIds  = orderIds;

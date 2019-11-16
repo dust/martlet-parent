@@ -7,7 +7,7 @@ import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.trade.InstrumentSoloDunk;
 import com.kmfrog.martlet.trade.Provider;
-import com.kmfrog.martlet.trade.exec.ExecTacHedgeOrder;
+import com.kmfrog.martlet.trade.exec.TacHedgeOrderExec;
 
 import io.broker.api.client.BrokerApiRestClient;
 
@@ -29,7 +29,7 @@ public class TacInstrumentSoloDunk extends InstrumentSoloDunk {
             return;
         }
 
-        provider.submitExec(new ExecTacHedgeOrder(instrument, price, spreadSize, client, trackBook));
+        provider.submitExec(new TacHedgeOrderExec(instrument, price, spreadSize, client, trackBook));
     }
 
 }

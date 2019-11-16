@@ -19,9 +19,9 @@ import io.broker.api.client.domain.account.TimeInForce;
  * @author dust Nov 16, 2019
  *
  */
-public class ExecTacHedgeOrder extends Exec {
+public class TacHedgeOrderExec extends Exec {
 
-    static Logger logger = LoggerFactory.getLogger(ExecTacHedgeOrder.class);
+    static Logger logger = LoggerFactory.getLogger(TacHedgeOrderExec.class);
 
     BrokerApiRestClient client;
     Provider provider;
@@ -31,7 +31,7 @@ public class ExecTacHedgeOrder extends Exec {
     boolean isSellFirst;
     Instrument instrument;
 
-    public ExecTacHedgeOrder(Instrument instrument, long price, long spread, BrokerApiRestClient client,
+    public TacHedgeOrderExec(Instrument instrument, long price, long spread, BrokerApiRestClient client,
             TrackBook trackBook) {
         super(System.currentTimeMillis());
         this.instrument = instrument;

@@ -1,8 +1,8 @@
 package com.kmfrog.martlet.trade.exec;
 
-public class ExecRetrieveOrder extends Exec {
+public class RetrieveOrderExec extends Exec {
 
-    public ExecRetrieveOrder(long createAt) {
+    public RetrieveOrderExec(long createAt) {
         super(createAt);
         // TODO Auto-generated constructor stub
     }

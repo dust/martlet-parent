@@ -15,6 +15,7 @@ import com.kmfrog.martlet.C;
 import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
+import com.kmfrog.martlet.book.OrderBook;
 import com.kmfrog.martlet.book.RollingTimeSpan;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.book.TrackBook;
@@ -25,6 +26,12 @@ import com.kmfrog.martlet.feed.domain.TradeLog;
 import it.unimi.dsi.fastutil.longs.Long2LongArrayMap;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 
+/**
+ * 基于外部市场深度来源而进行做市的执行者。
+ * 
+ * @author dust Nov 15, 2019
+ *
+ */
 public class InstrumentMaker extends Thread implements DataChangeListener {
 
     private final Instrument instrument;
@@ -82,12 +89,11 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
                 }
 
                 System.out.println(lst);
-                
+
                 // 得到最糟糕的买单。>bbo[0](${bid})，逆序：从大到小。
                 Set<Long> worstBidOrders = trackBook.getOrdersBetween(Side.BUY, Long.MAX_VALUE, bbo[0]);
                 // 得到最糟糕的卖单。<bbo[1](${ask})，顺序：从小到大。
                 Set<Long> worstAskOrders = trackBook.getOrdersBetween(Side.SELL, 0, bbo[1]);
-                
 
             } catch (InterruptedException ex) {
 
@@ -97,6 +103,11 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
 
         }
 
+    }
+
+    public IOrderBook getOrderBook(Source src) {
+        return multiSrcBooks.computeIfAbsent(src, key -> src == Source.Mix ? new AggregateOrderBook(instrument.asLong())
+                : new OrderBook(src, instrument.asLong()));
     }
 
     /**
@@ -208,4 +219,5 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
     public void destroy() {
         depthQueue.clear();
     }
+
 }

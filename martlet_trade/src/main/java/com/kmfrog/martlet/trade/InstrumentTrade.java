@@ -16,6 +16,11 @@ import com.kmfrog.martlet.feed.DataChangeListener;
 import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.domain.TradeLog;
 
+/**
+ * 对交易平台推送的实时交易数据的处理器。
+ * @author dust Nov 15, 2019
+ *
+ */
 public class InstrumentTrade extends Thread implements DataChangeListener {
 
     private final Instrument instrument;

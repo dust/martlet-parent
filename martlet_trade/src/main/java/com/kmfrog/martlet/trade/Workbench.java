@@ -2,8 +2,13 @@ package com.kmfrog.martlet.trade;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.kmfrog.martlet.C;
+import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.RollingTimeSpan;
 import com.kmfrog.martlet.book.TrackBook;
@@ -11,15 +16,18 @@ import com.kmfrog.martlet.feed.DepthFeed;
 import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.TradeFeed;
 import com.kmfrog.martlet.feed.domain.TradeLog;
+import com.kmfrog.martlet.trade.exec.Exec;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 
 /**
- * Hello world!
+ * Feed推送数据消费者的工作台。维护系统的关键上下文和状态。
  *
  */
-public class Workbench implements Provider{
+public class Workbench implements Provider {
 
+    private static ExecutorService executor = Executors
+            .newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("WorkbenchExecutor-%d").build());
     /** 一定时间窗口的实时成交流水均值。 **/
     final Map<Source, Long2ObjectArrayMap<RollingTimeSpan<TradeLog>>> multiSrcLastAvgTrade;
     /** 开放的订单集合 **/
@@ -91,9 +99,18 @@ public class Workbench implements Provider{
             return im;
         });
     }
+
+    public RollingTimeSpan<TradeLog> getAvgTrade(Source src, Instrument instrument) {
+        return makesureTradeLog(src, instrument.asLong());
+    }
+
+    public IOrderBook getOrderBook(Source src, Instrument instrument) {
+        InstrumentMaker im = makesureMaker(instrument);
+        return im.getOrderBook(src);
+    }
     
-    public RollingTimeSpan<TradeLog> getAvgTrade(Source src, Instrument instrument){
-        return this.makesureTradeLog(src, instrument.asLong());
+    public Future<?> submitExec(Exec r) {
+        return executor.submit(r);
     }
 
     public static void main(String[] args) {

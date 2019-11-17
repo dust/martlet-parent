@@ -19,8 +19,7 @@ public class TacInstrumentSoloDunk extends InstrumentSoloDunk {
 
     public TacInstrumentSoloDunk(Instrument instrument, Source src, TrackBook trackBook, Provider provider,
             BrokerApiRestClient client, Map<String, String> args) {
-        super(instrument, src, trackBook, provider, Integer.valueOf(args.get("minSleepMillis")),
-                Integer.valueOf(args.get("maxSleepMillis")));
+        super(instrument, src, trackBook, provider, args);
         this.client = client;
 
     }
@@ -28,11 +27,15 @@ public class TacInstrumentSoloDunk extends InstrumentSoloDunk {
     @Override
     public void placeHedgeOrder(long price, long spreadSize, IOrderBook book) {
         long ts = Math.max(book.getLastUpdateTs(), book.getLastReceivedTs());
-        if (System.currentTimeMillis() - ts > C.SYMBOL_DELAY_MILLIS) {
+        long now = System.currentTimeMillis();
+        System.out.println(now + "|" + ts + "|" + (now - ts));
+        if (now - ts > C.SYMBOL_DELAY_MILLIS) {
             return;
         }
 
-        provider.submitExec(new TacHedgeOrderExec(instrument, price, spreadSize, client, trackBook));
+        int avgSleepMillis = (minSleepMillis + maxSleepMillis) / 2;
+        provider.submitExec(new TacHedgeOrderExec(source, instrument, price, spreadSize, vMin, vMax, avgSleepMillis,
+                client, trackBook));
     }
 
 }

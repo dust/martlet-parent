@@ -30,7 +30,7 @@ public class RollingTimeSpan<T extends InstrumentTimeSpan> {
         lock.writeLock().lock();
         try {
             rolling.add(t);
-            drainout();  //重进入。
+            drainout(); // 重进入。
         } finally {
             lock.writeLock().unlock();
         }
@@ -51,13 +51,27 @@ public class RollingTimeSpan<T extends InstrumentTimeSpan> {
         }
     }
 
+    public long sum() {
+        drainout();
+        lock.readLock().lock();
+        try {
+            if (rolling.isEmpty()) {
+                return 0L;
+            }
+            LongStream longs = rolling.stream().mapToLong(v -> v.getInstrument());
+            return longs.sum();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
     public long last() {
         lock.readLock().lock();
         try {
             if (rolling.isEmpty()) {
                 return 0L;
             }
-            return rolling.get(rolling.size()-1).getTimestamp();
+            return rolling.get(rolling.size() - 1).getTimestamp();
         } finally {
             lock.readLock().unlock();
         }
@@ -79,14 +93,13 @@ public class RollingTimeSpan<T extends InstrumentTimeSpan> {
         lock.writeLock().lock();
         try {
             long last = last();
-            while(last - first() > windowMillis) {
+            while (last - first() > windowMillis) {
                 rolling.remove(0);
             }
-            
-            
+
         } finally {
             lock.writeLock().unlock();
         }
     }
-    
+
 }

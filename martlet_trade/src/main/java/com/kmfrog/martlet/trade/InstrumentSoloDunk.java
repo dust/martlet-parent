@@ -1,5 +1,6 @@
 package com.kmfrog.martlet.trade;
 
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -35,17 +36,22 @@ public abstract class InstrumentSoloDunk extends Thread implements DataChangeLis
     protected final Provider provider;
     protected IOrderBook lastBook;
 
-    private final int minSleepMillis;
-    private final int maxSleepMillis;
+    protected final int minSleepMillis;
+    protected final int maxSleepMillis;
+    protected final long vMin;
+    protected final long vMax;
 
     public InstrumentSoloDunk(Instrument instrument, Source src, TrackBook trackBook, Provider provider,
-            int minSleepMillis, int maxSleepMillis) {
+            Map<String, String> args) {
         source = src;
         this.instrument = instrument;
         this.trackBook = trackBook;
         this.provider = provider;
-        this.minSleepMillis = minSleepMillis;
-        this.maxSleepMillis = maxSleepMillis;
+
+        minSleepMillis = Integer.valueOf(args.get("minSleepMillis"));
+        maxSleepMillis = Integer.valueOf(args.get("maxSleepMillis"));
+        vMin = Long.valueOf(args.get("vMin"));
+        vMax = Long.valueOf(args.get("vMax"));
     }
 
     public void run() {
@@ -69,7 +75,8 @@ public abstract class InstrumentSoloDunk extends Thread implements DataChangeLis
                 long bid1 = lastBook.getBestBidPrice();
                 long ask1 = lastBook.getBestAskPrice();
                 long price = FeedUtils.between(bid1, ask1);
-                placeHedgeOrder(price, (ask1-bid1)/instrument.getPriceFactor(), lastBook);
+                System.out.println(getClass().toString() + bid1 + "|" + ask1 + "|" + price);
+                placeHedgeOrder(price, (ask1 - bid1) / instrument.getPriceFactor(), lastBook);
 
             } catch (InterruptedException ex) {
                 logger.warn(ex.getMessage(), ex);

@@ -61,6 +61,11 @@ public class TradeLog implements Comparable<TradeLog>, InstrumentTimeSpan {
     }
     
     @Override
+    public long getVolume() {
+        return volume;
+    }
+    
+    @Override
     public long getInstrument() {
         return instrument;
     }

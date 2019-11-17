@@ -7,6 +7,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.Sets;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.OrderEntry;
@@ -22,13 +25,14 @@ import io.broker.api.client.domain.account.OrderSide;
 import io.broker.api.client.domain.account.request.OpenOrderRequest;
 
 /**
- * 开放订单跟踪器。
- * 附带了帐户总体平衡功能。----今后再重构。
+ * 开放订单跟踪器。 附带了帐户总体平衡功能。----今后再重构。
+ * 
  * @author dust Nov 16, 2019
  *
  */
 public class OpenOrderTracker extends Thread {
 
+    final Logger logger = LoggerFactory.getLogger(OpenOrderTracker.class);
     BrokerApiRestClient client;
     Instrument[] instruments;
     Source src;
@@ -40,6 +44,7 @@ public class OpenOrderTracker extends Thread {
         this.src = src;
         this.instruments = instruments;
         this.client = client;
+        this.provider = provider;
     }
 
     @Override
@@ -54,10 +59,12 @@ public class OpenOrderTracker extends Thread {
                     req.setSymbol(instrument.asString());
                     List<Order> openOrders = client.getOpenOrders(req);
                     trackOpenOrders(instrument, trackBook, openOrders);
+                    System.out.println(instrument.asString() + ".openOrder: " + trackBook.getOrders(Side.SELL));
                 }
                 handleImbalance();
 
             } catch (Exception ex) {
+                logger.warn(ex.getMessage(), ex);
 
             }
         }

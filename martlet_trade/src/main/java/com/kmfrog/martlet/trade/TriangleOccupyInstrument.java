@@ -28,8 +28,10 @@ import it.unimi.dsi.fastutil.longs.LongBidirectionalIterator;
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
 
 /**
- * 有三角关系的占领式刷量策略。 1. 抢占盘口（比如前三档）。 2. 确认是自己占领（order book & track book)时，立即下对敲单成交。 3.
- * 这个占领策略需要考虑三角盘口汇率换算关系。（hntc/btc,btc/usdt, hntc/usdt)后面以(ca, ab, cb)简称。
+ * 有三角关系的占领式刷量策略。 
+ * 1. 抢占盘口（比如前三档）。 
+ * 2. 确认是自己占领（order book & track book)时，立即下对敲单成交。 
+ * 3. 这个占领策略需要考虑三角盘口汇率换算关系。（hntc/btc,btc/usdt, hntc/usdt)后面以(ca, ab, cb)简称。
  * 
  * @author dust Nov 15, 2019
  *

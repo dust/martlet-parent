@@ -207,7 +207,10 @@ public class Workbench implements Controller {
                 aggWorkers.get(instrument.asLong()).putMsg(mkt, book);
             }
             if (book != null) {
-                depthPusher.put(book.getOriginText(mkt, C.MAX_LEVEL));
+                multiSrcBooks.get(mkt).put(instrument.asLong(), book);
+                String originText = book.getOriginText(mkt, C.MAX_LEVEL);
+                System.out.println(originText);
+                depthPusher.put(originText);
             }
         } catch (InterruptedException e) {
             logger.warn(e.getMessage(), e);
@@ -242,9 +245,11 @@ public class Workbench implements Controller {
         // Set<String> symbols = instruments.stream().map(instrument -> instrument.asString())
         // .collect(Collectors.toSet());
         for (int i = 0; i < size; i++) {
-            instrumentArr[i] = instruments.get(i).asString();
-            IOrderBook book = makesureOrderBook(Source.Bhex, instruments.get(i).asLong());
-            listeners[i] = new BhexInstrumentDepth(instruments.get(i), book, this);
+            Instrument instrument = instruments.get(i);
+            logger.info("{}:{}", instrument.asString(), instrument.asLong());
+            instrumentArr[i] = instrument.asString();
+            IOrderBook book = makesureOrderBook(Source.Bhex, instrument.asLong());
+            listeners[i] = new BhexInstrumentDepth(instrument, book, this);
         }
 
         BhexDepthHandler handler = new BhexDepthHandler(wsUrl, depthFmt, instrumentArr, listeners);

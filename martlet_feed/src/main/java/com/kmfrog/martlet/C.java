@@ -19,7 +19,7 @@ public interface C {
 
     int MAX_LEVEL = 5;
 
-    long SYMBOL_DELAY_MILLIS = 10000L;
+    long SYMBOL_DELAY_MILLIS = 300000L;
 
     double SYMBOL_PRICE_DIFF = 0.05;
 
@@ -28,6 +28,8 @@ public interface C {
     long SPREAD_LOWLIMIT_MILLESIMAL = 2;
 
     long TRADE_AVG_WINDOW_MILLIS = 10000;
+    
+    long LAST_TRADE_WINDOW_MILLIS = 2 * 60000;
 
     Source[] DEF_SOURCES = new Source[] { Source.Binance, Source.Huobi, Source.Okex };
 

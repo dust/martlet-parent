@@ -118,8 +118,8 @@ public class FeedUtils {
         try {
             JSONObject root = parser.parseObject();
             Set<String> keys = root.keySet();
-            Map<String, String> map = new HashMap<>();
             for (String key : keys) {
+                Map<String, String> map = new HashMap<>();
                 JSONObject child = root.getJSONObject(key);
                 Set<String> childKeys = child.keySet();
                 for (String ck : childKeys) {

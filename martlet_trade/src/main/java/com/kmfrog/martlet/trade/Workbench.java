@@ -163,8 +163,9 @@ public class Workbench implements Provider {
 
     public void start(Source src, List<Instrument> hedgeInstruments, List<Instrument> all, Map<String, Object> cfgArgs,
             BrokerApiRestClient client) {
-        hedgeInstruments.forEach(instrument -> startHedgeInstrument(src, instrument,
-                (Map<String, String>) cfgArgs.get(instrument.asString()), client));
+        for(Instrument instr : hedgeInstruments) {
+            startHedgeInstrument(src, instr, (Map<String, String>) cfgArgs.get(instr.asString()), client); 
+        }
         startOpenOrderTracker(src, all.toArray(new Instrument[all.size()]), client);
     }
 

@@ -92,8 +92,9 @@ public class RollingTimeSpan<T extends InstrumentTimeSpan> {
     public void drainout() {
         lock.writeLock().lock();
         try {
-            long last = last();
-            while (last - first() > windowMillis) {
+            long now = System.currentTimeMillis();
+            long last = now - last() > 23000 ? now : last();
+            while (last - first() > windowMillis && !rolling.isEmpty()) {
                 rolling.remove(0);
             }
 

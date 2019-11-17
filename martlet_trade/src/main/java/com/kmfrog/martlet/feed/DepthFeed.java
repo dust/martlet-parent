@@ -12,7 +12,6 @@ import org.zeromq.ZMQException;
 
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
-import com.kmfrog.martlet.trade.InstrumentMaker;
 import com.kmfrog.martlet.util.FeedUtils;
 
 /**
@@ -53,10 +52,11 @@ public class DepthFeed extends Thread {
                         if (listeners.containsKey(instrument)) {
                             listeners.get(instrument).onDepth(instrument, book);
                         }
+                        System.out.println(book.getOriginText(Source.Bhex, 5));
                     }
 
                 } catch (ZMQException zex) {
-                    logger.warn("");
+                    logger.warn(zex.getMessage(), zex);
                 }
 
             }
@@ -65,7 +65,7 @@ public class DepthFeed extends Thread {
         }
     }
 
-    public void register(Instrument btcusdt, InstrumentMaker im) {
+    public void register(Instrument btcusdt, DataChangeListener im) {
         listeners.put(btcusdt.asLong(), im);
     }
 

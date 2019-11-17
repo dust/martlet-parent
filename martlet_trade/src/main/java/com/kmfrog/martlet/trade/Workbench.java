@@ -13,14 +13,19 @@ import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.OrderBook;
 import com.kmfrog.martlet.book.RollingTimeSpan;
-import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.DepthFeed;
 import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.TradeFeed;
 import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.trade.exec.Exec;
+import com.kmfrog.martlet.trade.tac.TacInstrumentSoloDunk;
+import com.kmfrog.martlet.util.FeedUtils;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
+import io.broker.api.client.BrokerApiClientFactory;
+import io.broker.api.client.BrokerApiRestClient;
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 
 /**
@@ -44,7 +49,7 @@ public class Workbench implements Provider {
     /** 深度数据流 **/
     final DepthFeed depthFeed;
     /** 实时成交数据流 **/
-    final TradeFeed tradeFeed;
+//    final TradeFeed tradeFeed;
     /** 默认来源 **/
     Source[] defSources = C.DEF_SOURCES;
 
@@ -55,8 +60,8 @@ public class Workbench implements Provider {
         instrumentMakers = new ConcurrentHashMap<>();
         instrumentTrades = new ConcurrentHashMap<>();
         depthFeed = new DepthFeed("localhost", 5188, 2);
-        tradeFeed = new TradeFeed("localhost", 5288, 2);
-        tradeFeed.start();
+//        tradeFeed = new TradeFeed("localhost", 5288, 2);
+//        tradeFeed.start();
         depthFeed.start();
     }
 
@@ -102,13 +107,14 @@ public class Workbench implements Provider {
     }
 
     InstrumentTrade makesureTrade(Instrument instrument) {
-        return instrumentTrades.computeIfAbsent(instrument.asLong(), key -> {
-            InstrumentTrade it = new InstrumentTrade(instrument, defSources,
-                    getTradeRollingTimeSpan(defSources, instrument.asLong()));
-            it.start();
-            tradeFeed.register(instrument, it);
-            return it;
-        });
+//        return instrumentTrades.computeIfAbsent(instrument.asLong(), key -> {
+//            InstrumentTrade it = new InstrumentTrade(instrument, defSources,
+//                    getTradeRollingTimeSpan(defSources, instrument.asLong()));
+//            it.start();
+//            tradeFeed.register(instrument, it);
+//            return it;
+//        });
+        return null;
     }
 
     InstrumentMaker makesureMaker(Instrument instrument) {
@@ -139,26 +145,37 @@ public class Workbench implements Provider {
 
     public static void main(String[] args) {
         Workbench app = new Workbench();
-        Instrument instrument = new Instrument("BTCUSDT", 8, 8);
-        RollingTimeSpan<TradeLog> huobiAvgTrade = app.makesureTradeLog(Source.Huobi, instrument.asLong());
-        RollingTimeSpan<TradeLog> binanceAvgTrade = app.makesureTradeLog(Source.Binance, instrument.asLong());
-        RollingTimeSpan<TradeLog> okexAvgTrade = app.makesureTradeLog(Source.Okex, instrument.asLong());
-        InstrumentTrade btcTrade = app.makesureTrade(instrument);
-
-        TrackBook btcOpenOrders = app.makesureTrackBook(instrument);
-        InstrumentMaker btcMaker = app.makesureMaker(instrument);
+        Instrument instrument = new Instrument("TACPTCN", 4, 4);
+        Config cfg = ConfigFactory.load();
+        String baseUrl = cfg.getString("api.base.url");
+        String apiKey = cfg.getString("api.key");
+        String secret = cfg.getString("api.secret");
+        Map<String, Object> cfgArgs = FeedUtils.parseConfigArgs(cfg.getString("hedge.args"));
+        Map<String, String> instrumentArgs = (Map<String, String>)cfgArgs.get(instrument.asString());
+//        int minSleepMillis = Integer.parseInt(instrumentArgs.get(C.Sy))
+        TrackBook trackBook = app.makesureTrackBook(instrument);
+        BrokerApiRestClient client = BrokerApiClientFactory.newInstance(baseUrl, apiKey, secret).newRestClient();
+        TacInstrumentSoloDunk solodunk = new TacInstrumentSoloDunk(instrument, Source.Bhex, trackBook, app, client, instrumentArgs);
+        solodunk.start();
+        app.depthFeed.register(instrument, solodunk);
+//        RollingTimeSpan<TradeLog> huobiAvgTrade = app.makesureTradeLog(Source.Huobi, instrument.asLong());
+//        RollingTimeSpan<TradeLog> binanceAvgTrade = app.makesureTradeLog(Source.Binance, instrument.asLong());
+//        RollingTimeSpan<TradeLog> okexAvgTrade = app.makesureTradeLog(Source.Okex, instrument.asLong());
+//        InstrumentTrade btcTrade = app.makesureTrade(instrument);
+//
+//        TrackBook btcOpenOrders = app.makesureTrackBook(instrument);
+//        InstrumentMaker btcMaker = app.makesureMaker(instrument);
 
         try {
-            btcMaker.join();
+            solodunk.join();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
 
         try {
-            app.tradeFeed.quit();
+//            app.tradeFeed.quit();
             app.depthFeed.quit();
-            btcMaker.quit();
-            btcTrade.quit();
+            solodunk.quit();
 
             Thread.sleep(100);
         } catch (Exception ex) {

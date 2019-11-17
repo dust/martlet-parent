@@ -1,5 +1,7 @@
 package com.kmfrog.martlet.trade.tac;
 
+import java.util.Map;
+
 import com.kmfrog.martlet.C;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
@@ -16,8 +18,9 @@ public class TacInstrumentSoloDunk extends InstrumentSoloDunk {
     BrokerApiRestClient client;
 
     public TacInstrumentSoloDunk(Instrument instrument, Source src, TrackBook trackBook, Provider provider,
-            BrokerApiRestClient client, int minSleepMillis, int maxSleepMillis) {
-        super(instrument, src, trackBook, provider, minSleepMillis, maxSleepMillis);
+            BrokerApiRestClient client, Map<String, String> args) {
+        super(instrument, src, trackBook, provider, Integer.valueOf(args.get("minSleepMillis")),
+                Integer.valueOf(args.get("maxSleepMillis")));
         this.client = client;
 
     }

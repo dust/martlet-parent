@@ -23,9 +23,7 @@ public class AppRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        String baseUrl = cfg.getString("api.base.url");
-        String apiKey = cfg.getString("api.key");
-        String secret = cfg.getString("api.secret");
+        
         List<Instrument> instruments = FeedUtils.parseInstruments(cfg.getString("instruments"));
         List<Instrument> triangleInstruments = FeedUtils.parseInstruments(cfg.getString("triangle.instruments"));
         // Map<String, Object> cfgArgs = FeedUtils.parseConfigArgs(cfg.getString("hedge.args"));

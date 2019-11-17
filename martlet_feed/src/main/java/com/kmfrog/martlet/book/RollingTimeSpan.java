@@ -58,7 +58,7 @@ public class RollingTimeSpan<T extends InstrumentTimeSpan> {
             if (rolling.isEmpty()) {
                 return 0L;
             }
-            LongStream longs = rolling.stream().mapToLong(v -> v.getInstrument());
+            LongStream longs = rolling.stream().mapToLong(v -> v.getVolume());
             return longs.sum();
         } finally {
             lock.readLock().unlock();

@@ -1,5 +1,6 @@
 package com.kmfrog.martlet.trade;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -178,7 +179,10 @@ public class Workbench implements Provider {
         Map<String, Object> cfgArgs = FeedUtils.parseConfigArgs(cfg.getString("hedge.args"));
         List<Instrument> hedgeInstruments = FeedUtils.parseInstruments(cfg.getString("instruments"));
         List<Instrument> occupyInstruments = FeedUtils.parseInstruments(cfg.getString("triangle.instruments"));
-        app.start(Source.Bhex, hedgeInstruments, occupyInstruments, cfgArgs, client);
+        List<Instrument> all = new ArrayList<>();
+        all.addAll(hedgeInstruments);
+        all.addAll(occupyInstruments);
+        app.start(Source.Bhex, hedgeInstruments, all, cfgArgs, client);
 
         try {
             while (true) {

@@ -52,7 +52,7 @@ public class DepthFeed extends Thread {
                         if (listeners.containsKey(instrument)) {
                             listeners.get(instrument).onDepth(instrument, book);
                         }
-                        System.out.println(book.getOriginText(Source.Bhex, 5));
+//                        System.out.println(book.getOriginText(Source.Bhex, 5));
                     }
 
                 } catch (ZMQException zex) {

@@ -1,5 +1,8 @@
 package com.kmfrog.martlet.trade.exec;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.book.TrackBook;
@@ -11,6 +14,8 @@ import io.broker.api.client.domain.account.NewOrderResponse;
 import io.broker.api.client.domain.account.TimeInForce;
 
 public class TacPlaceOrderExec extends Exec {
+
+    static Logger logger = LoggerFactory.getLogger(TacPlaceOrderExec.class);
 
     Instrument instrument;
     long price;
@@ -41,19 +46,25 @@ public class TacPlaceOrderExec extends Exec {
 
     @Override
     public void run() {
-        String priceStr = Fmt.fmtNum(price, instrument.getPriceFractionDigits());
-        String quantityStr = Fmt.fmtNum(volume, instrument.getSizeFractionDigits());
-        NewOrder order;
-        if (side == Side.BUY) {
-            order = NewOrder.limitBuy(instrument.asString(), TimeInForce.GTC, quantityStr, priceStr);
-        } else {
-            order = NewOrder.limitSell(instrument.asString(), TimeInForce.GTC, quantityStr, priceStr);
-        }
+        try {
+            String priceStr = Fmt.fmtNum(price, instrument.getPriceFractionDigits());
+            String quantityStr = Fmt.fmtNum(volume, instrument.getSizeFractionDigits());
+            NewOrder order;
+            if (side == Side.BUY) {
+                order = NewOrder.limitBuy(instrument.asString(), TimeInForce.GTC, quantityStr, priceStr);
+            } else {
+                order = NewOrder.limitSell(instrument.asString(), TimeInForce.GTC, quantityStr, priceStr);
+            }
 
-        NewOrderResponse resp = client.newOrder(order);
-        Long orderId = resp.getOrderId();
-        if (orderId != null && orderId.longValue() > 0) {
-            trackBook.entry(orderId, side, price, volume);
+//            order = order.quantity("1");
+            NewOrderResponse resp = client.newOrder(order);
+            logger.warn("order:{}, resp:{}", order.toString(), resp.toString());
+            Long orderId = resp.getOrderId();
+            if (orderId != null && orderId.longValue() > 0) {
+                trackBook.entry(orderId, side, price, volume);
+            }
+        } catch (Exception ex) {
+            logger.warn(ex.getMessage(), ex.getMessage());
         }
 
     }

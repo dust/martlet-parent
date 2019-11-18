@@ -28,10 +28,8 @@ import it.unimi.dsi.fastutil.longs.LongBidirectionalIterator;
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
 
 /**
- * 有三角关系的占领式刷量策略。 
- * 1. 抢占盘口（比如前三档）。 
- * 2. 确认是自己占领（order book & track book)时，立即下对敲单成交。 
- * 3. 这个占领策略需要考虑三角盘口汇率换算关系。（hntc/btc,btc/usdt, hntc/usdt)后面以(ca, ab, cb)简称。
+ * 有三角关系的占领式刷量策略。 1. 抢占盘口（比如前三档）。 2. 确认是自己占领（order book & track book)时，立即下对敲单成交。 3.
+ * 这个占领策略需要考虑三角盘口汇率换算关系。（hntc/btc,btc/usdt, hntc/usdt)后面以(ca, ab, cb)简称。
  * 
  * @author dust Nov 15, 2019
  *
@@ -59,6 +57,7 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 
     public TriangleOccupyInstrument(Instrument ca, Instrument ab, Instrument cb, Source src, TrackBook caTracker,
             Provider provider, BrokerApiRestClient client, Map<String, String> args) {
+        super("TriangleOccupyInstrument-" + ca.asString() + "-" + ca.asLong());
         this.ca = ca;
         this.ab = ab;
         this.cb = cb;
@@ -86,91 +85,99 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
                         lastBook = null;
                     }
                     lastBook = caBook;
+                    provider.setOrderBook(src, ca, caBook);
+                }
+                
+                if (lastBook == null) {
+                    continue;
+                }
 
-                    boolean placed = false;
-                    PriceLevel openAskLevel = caTracker.getBestLevel(Side.SELL);
-                    if (openAskLevel != null) {
-                        long bestAskPrice = caBook.getBestAskPrice();
-                        long bestAskSize = caBook.getAskSize(bestAskPrice);
-                        if (openAskLevel.getSize() / bestAskSize * 1.0 >= 0.9) {
-                            TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, bestAskPrice, bestAskSize, Side.BUY,
-                                    client, caTracker);
-                            provider.submitExec(placeBid);
-                            placed = true;
-                        }
+                boolean placed = false;
+                PriceLevel openAskLevel = caTracker.getBestLevel(Side.SELL);
+                if (openAskLevel != null) {
+                    long bestAskPrice = lastBook.getBestAskPrice();
+                    long bestAskSize = lastBook.getAskSize(bestAskPrice);
+                    if (openAskLevel.getSize() / bestAskSize * 1.0 >= 0.9) {
+                        TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, bestAskPrice, bestAskSize, Side.BUY,
+                                client, caTracker);
+                        provider.submitExec(placeBid);
+                        placed = true;
                     }
+                }
 
-                    PriceLevel openBidLevel = caTracker.getBestLevel(Side.BUY);
-                    if (openBidLevel != null) {
-                        long bestBidPrice = caBook.getBestBidPrice();
-                        long bestBidSize = caBook.getBidSize(bestBidPrice);
-                        if (openBidLevel.getSize() / bestBidSize * 1.0 >= 0.9) {
-                            TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, bestBidPrice, bestBidSize, Side.BUY,
-                                    client, caTracker);
-                            provider.submitExec(placeBid);
-                            placed = true;
-                        }
+                PriceLevel openBidLevel = caTracker.getBestLevel(Side.BUY);
+                if (openBidLevel != null) {
+                    long bestBidPrice = lastBook.getBestBidPrice();
+                    long bestBidSize = lastBook.getBidSize(bestBidPrice);
+                    if (openBidLevel.getSize() / bestBidSize * 1.0 >= 0.9) {
+                        TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, bestBidPrice, bestBidSize, Side.SELL,
+                                client, caTracker);
+                        provider.submitExec(placeBid);
+                        placed = true;
                     }
+                }
 
-                    if (placed) {
-                        // 处理下一次order book变化及推送。
-                        return;
-                    }
+                if (placed) {
+                    // 处理下一次order book变化及推送。
+                    continue;
+                }
 
-                    IOrderBook abBook = provider.getOrderBook(src, ab);
-                    IOrderBook cbBook = provider.getOrderBook(src, cb);
-                    if (abBook == null || cbBook == null) {
-                        return;
-                    }
+                IOrderBook abBook = provider.getOrderBook(src, ab);
+                IOrderBook cbBook = provider.getOrderBook(src, cb);
+                if (abBook == null || cbBook == null) {
+                    continue;
+                }
 
-                    long diff = max(caBook.getLastUpdateTs(), abBook.getLastUpdateTs(), cbBook.getLastUpdateTs())
-                            - min(caBook.getLastUpdateTs(), abBook.getLastUpdateTs(), cbBook.getLastUpdateTs());
-                    if (diff < C.SYMBOL_DELAY_MILLIS) {
-                        return;
-                    }
+                long diff = max(lastBook.getLastUpdateTs(), abBook.getLastUpdateTs(), cbBook.getLastUpdateTs())
+                        - min(lastBook.getLastUpdateTs(), abBook.getLastUpdateTs(), cbBook.getLastUpdateTs());
+                if (diff > C.SYMBOL_DELAY_MILLIS) {
+                    continue;
+                }
 
-                    long caBid1 = caBook.getBestBidPrice();
-                    long caAsk1 = caBook.getBestAskPrice();
+                long caBid1 = lastBook.getBestBidPrice();
+                long caAsk1 = lastBook.getBestAskPrice();
 
-                    if (!hasOccupy(Side.SELL, caBook)) {
-                        long abAsk1 = abBook.getBestAskPrice();
-                        long cbBid1 = cbBook.getBestBidPrice();
+                if (!hasOccupy(Side.SELL, lastBook)) {
+                    long abAsk1 = abBook.getBestAskPrice();
+                    long cbBid1 = cbBook.getBestBidPrice();
 
+                    if (abAsk1 > 0 && cbBid1 > 0) {
                         long caAskLimit = cbBid1 / abAsk1;
 
                         if ((caAsk1 - caAskLimit) / caAsk1 * 1.0 > 0.001) {
                             // 距离3角套利还有安全距离
-                            long price = caAsk1 - ca.getPriceFactor();
+                            long price = caAsk1 - 1;
                             long volume = FeedUtils.between(vMin, vMax);
                             TacPlaceOrderExec place = new TacPlaceOrderExec(ca, price, volume, Side.SELL, client,
                                     caTracker);
                             provider.submitExec(place);
 
                         }
-
                     }
 
-                    if (!hasOccupy(Side.BUY, caBook)) {
-                        long abBid1 = abBook.getBestBidPrice();
-                        long cbAsk1 = cbBook.getBestAskPrice();
+                }
 
+                if (!hasOccupy(Side.BUY, lastBook)) {
+                    long abBid1 = abBook.getBestBidPrice();
+                    long cbAsk1 = cbBook.getBestAskPrice();
+
+                    if (abBid1 > 0 && cbAsk1 > 0) {
                         long caBidLimit = cbAsk1 / abBid1;
 
                         if ((caBidLimit - caBid1) / caBid1 * 1.0 > 0.001) {
                             // 距离3角套利还有安全距离
-                            long price = caBid1 - ca.getPriceFactor();
+                            long price = caBid1 + 1;
                             long volume = FeedUtils.between(vMin, vMax);
                             TacPlaceOrderExec place = new TacPlaceOrderExec(ca, price, volume, Side.BUY, client,
                                     caTracker);
                             provider.submitExec(place);
                         }
                     }
-
-                    // 撤掉3档以外所有订单。
-                    cancelAfterLevel3Ask(caBook);
-                    cancelAfterLevel3Bid(caBook);
-
                 }
+
+                // 撤掉3档以外所有订单。
+                cancelAfterLevel3Ask(lastBook);
+                cancelAfterLevel3Bid(lastBook);
 
             } catch (InterruptedException ex) {
                 logger.warn(ex.getMessage(), ex);

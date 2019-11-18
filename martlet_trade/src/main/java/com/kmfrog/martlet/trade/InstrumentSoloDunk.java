@@ -90,7 +90,11 @@ public abstract class InstrumentSoloDunk extends Thread implements DataChangeLis
 
     @Override
     public void onDepth(Long instrument, IOrderBook book) {
-        depthQueue.add(book);
+        try {
+            depthQueue.put(book);
+        } catch (Exception ex) {
+            logger.warn(ex.getMessage(), ex);
+        }
     }
 
     @Override

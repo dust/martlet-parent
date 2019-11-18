@@ -24,5 +24,8 @@ public interface Provider {
     
     Future<?> submitExec(Exec exec);
 
-    TrackBook getTrackBook(Source src, Instrument instrument);    
+    TrackBook getTrackBook(Source src, Instrument instrument);
+
+    void setOrderBook(Source src, Instrument instrument, IOrderBook book);    
+    
 }

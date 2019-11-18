@@ -1,7 +1,5 @@
 package com.kmfrog.martlet.trade;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Map;
 import java.util.Set;
@@ -11,13 +9,14 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.LongStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.kmfrog.martlet.C;
 import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.OrderBook;
-import com.kmfrog.martlet.book.RollingTimeSpan;
-import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.DataChangeListener;
 import com.kmfrog.martlet.feed.Source;
@@ -34,6 +33,7 @@ import it.unimi.dsi.fastutil.longs.Long2LongMap;
  */
 public class InstrumentMaker extends Thread implements DataChangeListener {
 
+    final Logger logger = LoggerFactory.getLogger(InstrumentMaker.class);
     private final Instrument instrument;
     private AtomicBoolean isQuit = new AtomicBoolean(false);
     private BlockingQueue<IOrderBook> depthQueue = new PriorityBlockingQueue<>();
@@ -67,38 +67,40 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
                     }
                     aggBook = (AggregateOrderBook) book;
                 } else {
-                    IOrderBook old = multiSrcBooks.put(src, book);
-                    if (old != null) {
-                        old.destroy();
-                        old = null;
-                    }
+//                    IOrderBook old = multiSrcBooks.put(src, book);
+//                    if (old != null) {
+//                        old.destroy();
+//                        old = null;
+//                    }
+                    provider.setOrderBook(src, instrument, book);
+                    
                 }
                 // }
 
-                long[] bbo = getBBO();
-                List<Long> lst = new ArrayList<>();
-                lst.add(System.currentTimeMillis());
-                lst.add(book.getLastUpdateTs());
-                lst.add(book.getSourceValue());
-                lst.add(bbo == null ? -1 : bbo[0]);
-                lst.add(bbo == null ? -1 : bbo[1]);
-                if (src != Source.Mix) {
-//                    RollingTimeSpan<TradeLog> avgTradeLogs = provider.getAvgTrade(src, instrument);
-//                    lst.add(avgTradeLogs.avg());
-//                    lst.add(avgTradeLogs.last());
-                }
-
-                System.out.println(lst);
-
-                // 得到最糟糕的买单。>bbo[0](${bid})，逆序：从大到小。
-                Set<Long> worstBidOrders = trackBook.getOrdersBetween(Side.BUY, Long.MAX_VALUE, bbo[0]);
-                // 得到最糟糕的卖单。<bbo[1](${ask})，顺序：从小到大。
-                Set<Long> worstAskOrders = trackBook.getOrdersBetween(Side.SELL, 0, bbo[1]);
+                // long[] bbo = getBBO();
+                // List<Long> lst = new ArrayList<>();
+                // lst.add(System.currentTimeMillis());
+                // lst.add(book.getLastUpdateTs());
+                // lst.add(book.getSourceValue());
+                // lst.add(bbo == null ? -1 : bbo[0]);
+                // lst.add(bbo == null ? -1 : bbo[1]);
+                // if (src != Source.Mix) {
+                //// RollingTimeSpan<TradeLog> avgTradeLogs = provider.getAvgTrade(src, instrument);
+                //// lst.add(avgTradeLogs.avg());
+                //// lst.add(avgTradeLogs.last());
+                // }
+                //
+                // System.out.println(lst);
+                //
+                // // 得到最糟糕的买单。>bbo[0](${bid})，逆序：从大到小。
+                // Set<Long> worstBidOrders = trackBook.getOrdersBetween(Side.BUY, Long.MAX_VALUE, bbo[0]);
+                // // 得到最糟糕的卖单。<bbo[1](${ask})，顺序：从小到大。
+                // Set<Long> worstAskOrders = trackBook.getOrdersBetween(Side.SELL, 0, bbo[1]);
 
             } catch (InterruptedException ex) {
-
+                logger.warn(ex.getMessage(), ex);
             } catch (Exception ex) {
-
+                logger.warn(ex.getMessage(), ex);
             }
 
         }
@@ -203,7 +205,11 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
 
     @Override
     public void onDepth(Long instrument, IOrderBook book) {
-        depthQueue.add(book);
+        try {
+            depthQueue.put(book);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

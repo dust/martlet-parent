@@ -136,6 +136,14 @@ public class Workbench implements Provider {
         return makesureOrderBook(src, instrument.asLong());
     }
 
+    public void setOrderBook(Source src, Instrument instrument, IOrderBook book) {
+        IOrderBook old = multiSrcOrderBooks.get(src).put(instrument.asLong(), book);
+        if (old != null) {
+            old.destroy();
+            old = null;
+        }
+    }
+
     public TrackBook getTrackBook(Source src, Instrument instrument) {
         // 当前没有多来源订单跟踪。
         return makesureTrackBook(instrument);
@@ -161,12 +169,36 @@ public class Workbench implements Provider {
         depthFeed.register(instrument, solodunk);
     }
 
+    public void startOccupyInstrument(Source src, Instrument ca, Instrument ab, Instrument cb,
+            BrokerApiRestClient client, Map<String, String> caArgs, Map<String, String> cbArgs) {
+        TrackBook caTracker = makesureTrackBook(ca);
+        TrackBook cbTracker = makesureTrackBook(cb);
+
+        makesureMaker(ab);
+//        makesureMaker(cb);
+        makesureOrderBook(src, ca.asLong());
+        makesureOrderBook(src, ab.asLong());
+        makesureOrderBook(src, cb.asLong());
+        makesureTradeLog(src, ca.asLong());
+        makesureTradeLog(src, cb.asLong());
+        
+        TriangleOccupyInstrument caOccupy = new TriangleOccupyInstrument(ca, ab, cb, src, caTracker, this, client,
+                caArgs);
+        TriangleOccupyInstrument cbOccupy = new TriangleOccupyInstrument(cb, ab, cb, src, cbTracker, this, client, cbArgs);
+        
+
+        caOccupy.start();
+        cbOccupy.start();
+        depthFeed.register(cb, cbOccupy);
+        depthFeed.register(ca, caOccupy);
+    }
+
     public void start(Source src, List<Instrument> hedgeInstruments, List<Instrument> all, Map<String, Object> cfgArgs,
             BrokerApiRestClient client) {
-        for(Instrument instr : hedgeInstruments) {
-            startHedgeInstrument(src, instr, (Map<String, String>) cfgArgs.get(instr.asString()), client); 
+        for (Instrument instr : hedgeInstruments) {
+            startHedgeInstrument(src, instr, (Map<String, String>) cfgArgs.get(instr.asString()), client);
         }
-        startOpenOrderTracker(src, all.toArray(new Instrument[all.size()]), client);
+
     }
 
     public static void main(String[] args) {
@@ -183,7 +215,14 @@ public class Workbench implements Provider {
         List<Instrument> all = new ArrayList<>();
         all.addAll(hedgeInstruments);
         all.addAll(occupyInstruments);
-        app.start(Source.Bhex, hedgeInstruments, all, cfgArgs, client);
+        // app.start(Source.Bhex, hedgeInstruments, all, cfgArgs, client);
+        Instrument ca = occupyInstruments.get(0);
+        Instrument ab = occupyInstruments.get(1);
+        Instrument cb = occupyInstruments.get(2);
+        Map<String, String> caArgs = (Map<String, String>) cfgArgs.get(ca.asString());
+        Map<String, String> cbArgs = (Map<String, String>) cfgArgs.get(cb.asString());
+        app.startOccupyInstrument(Source.Bhex, ca, ab, cb, client, caArgs, cbArgs);
+        app.startOpenOrderTracker(Source.Bhex, all.toArray(new Instrument[all.size()]), client);
 
         try {
             while (true) {

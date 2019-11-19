@@ -62,7 +62,7 @@ public class TacHedgeOrderExec extends Exec {
         try {
             long quantity = getQuantity();
             if (quantity <= 0) {
-                logger.info(this.instrument.asString() + " quantity=" + quantity);
+                logger.info(instrument.asString()+ price + "|"+ vMin+"|"+vMax + " quantity=" + quantity);
                 return;
             }
             String priceStr = Fmt.fmtNum(price, instrument.getPriceFractionDigits());

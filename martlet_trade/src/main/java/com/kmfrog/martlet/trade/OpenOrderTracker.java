@@ -59,7 +59,7 @@ public class OpenOrderTracker extends Thread {
                     req.setSymbol(instrument.asString());
                     List<Order> openOrders = client.getOpenOrders(req);
                     trackOpenOrders(instrument, trackBook, openOrders);
-                    System.out.println(instrument.asString() + ".openOrder: " + trackBook.getOrders(Side.SELL));
+                    System.out.println(instrument.asString() + ".openAsks: " + trackBook.getOrders(Side.SELL)+" .openBid"+trackBook.getOrders(Side.BUY));
                 }
                 handleImbalance();
 

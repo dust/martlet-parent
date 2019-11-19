@@ -43,8 +43,18 @@ public class Fmt {
 
     }
     
+    public static String fmtDec(BigDecimal dec, int fractionDigits, int showFractionDigits) {
+        DecimalFormat decFmt = new DecimalFormat(StringUtils.rightPad("0.", 2 + showFractionDigits, "0"));
+        return decFmt.format(dec.divide(BigDecimal.valueOf(POWERS_OF_TEN[fractionDigits])));
+
+    }
+    
     public static String fmtNum(long num, int factorDigits) {
         return fmtDec(BigDecimal.valueOf(num), factorDigits);
+    }
+    
+    public static String fmtNum(long num, int factorDigits, int showFractionDigits) {
+        return fmtDec(BigDecimal.valueOf(num), factorDigits, showFractionDigits);
     }
 
     public static void main(String[] args) {

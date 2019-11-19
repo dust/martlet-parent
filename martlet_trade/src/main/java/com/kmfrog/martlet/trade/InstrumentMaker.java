@@ -72,6 +72,7 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
 //                        old.destroy();
 //                        old = null;
 //                    }
+                    System.out.println(book.getOriginText(src, C.MAX_LEVEL));
                     provider.setOrderBook(src, instrument, book);
                     
                 }

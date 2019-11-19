@@ -184,7 +184,7 @@ public class Workbench implements Provider {
         
         TriangleOccupyInstrument caOccupy = new TriangleOccupyInstrument(ca, ab, cb, src, caTracker, this, client,
                 caArgs);
-        TriangleOccupyInstrument cbOccupy = new TriangleOccupyInstrument(cb, ab, cb, src, cbTracker, this, client, cbArgs);
+        TriangleOccupyInstrument cbOccupy = new TriangleOccupyInstrument(cb, ab, ca, src, cbTracker, this, client, cbArgs);
         
 
         caOccupy.start();

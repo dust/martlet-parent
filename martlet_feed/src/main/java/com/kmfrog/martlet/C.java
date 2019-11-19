@@ -17,7 +17,7 @@ public interface C {
     char SECOND_SEPARATOR = ';';
     char THIRD_SEPARATOR = '|';
 
-    int MAX_LEVEL = 5;
+    int MAX_LEVEL = 50;
 
     long SYMBOL_DELAY_MILLIS = 300000L;
 

@@ -12,11 +12,11 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
 @Component
-public class AppRunner implements CommandLineRunner {
+public class SpringContext implements CommandLineRunner {
 
     Config cfg;
 
-    public AppRunner() {
+    public SpringContext() {
         cfg = ConfigFactory.load();
         // cfg.checkValid(reference, restrictToPaths);
     }

@@ -18,7 +18,7 @@ public class TestTrackBook {
     @Test
     public void testRange() {
 
-        Instrument btcUsdt = new Instrument("BTCUSDT", 8, 8);
+        Instrument btcUsdt = new Instrument("BTCUSDT", 8, 8, 6);
         TrackBook book = new TrackBook(btcUsdt);
         for (int i = 0; i < 10; i++) {
             book.entry(i, Side.BUY, (9351 + i) * POWERS_OF_TEN[8], 30 + i * POWERS_OF_TEN[4]);
@@ -34,7 +34,7 @@ public class TestTrackBook {
 
     @Test
     public void testDiff() {
-        Instrument btcUsdt = new Instrument("BTCUSDT", 8, 8);
+        Instrument btcUsdt = new Instrument("BTCUSDT", 8, 8, 6);
         TrackBook book = new TrackBook(btcUsdt);
         for (int i = 0; i < 20; i++) {
             book.entry(i, Side.BUY, (9351 + i) * POWERS_OF_TEN[8], 30 + i * POWERS_OF_TEN[4]);

@@ -34,19 +34,24 @@ public class Instrument {
 
     private final long priceFactor;
     private final long sizeFactor;
+    
+    private final int showPriceFractionDigits;
+    private final long showPriceFactor;
 
     private String priceFormat;
     private String sizeFormat;
 
-    public Instrument(String asString, int priceFractionDigits, int sizeFractionDigits) {
+    public Instrument(String asString, int priceFractionDigits, int sizeFractionDigits, int spFractionDigits) {
         this.asString = asString;
         this.asLong   = ASCII.packLong(asString);
 
         this.priceFractionDigits = priceFractionDigits;
         this.sizeFractionDigits  = sizeFractionDigits;
+        this.showPriceFractionDigits = spFractionDigits;
 
         this.priceFactor = C.POWERS_OF_TEN[priceFractionDigits];
         this.sizeFactor  = C.POWERS_OF_TEN[sizeFractionDigits];
+        this.showPriceFactor = C.POWERS_OF_TEN[spFractionDigits];
 
         setPriceFormat(1, priceFractionDigits);
         setSizeFormat(1, sizeFractionDigits);
@@ -87,6 +92,10 @@ public class Instrument {
     public int getSizeFractionDigits() {
         return sizeFractionDigits;
     }
+    
+    public int getShowPriceFractionDigits() {
+        return showPriceFractionDigits;
+    }
 
     /**
      * Get the multiplication factor for a price.
@@ -104,6 +113,10 @@ public class Instrument {
      */
     public long getSizeFactor() {
         return sizeFactor;
+    }
+    
+    public long getShowPriceFactor() {
+        return this.showPriceFactor;
     }
 
     /**
@@ -135,8 +148,9 @@ public class Instrument {
     public static Instrument fromConfig(Config config, String path) {
         int priceFractionDigits = config.getInt(path + ".price-fraction-digits");
         int sizeFractionDigits  = config.getInt(path + ".size-fraction-digits");
+        int orderPriceFractionDigits = config.getInt(path + ".order-price-fraction-digits");
 
-        return new Instrument(path, priceFractionDigits, sizeFractionDigits);
+        return new Instrument(path, priceFractionDigits, sizeFractionDigits, orderPriceFractionDigits);
     }
 
     private static String getFormat(int integerDigits, int fractionDigits, int maxFractionDigits) {

@@ -175,6 +175,30 @@ public class TrackBook {
             lock.readLock().unlock();
         }
     }
+    
+    /**
+     * 获得较差价格的订单id
+     * @param side
+     * @param from
+     * @return
+     */
+    public Set<Long> getWorseOrders(Side side, long from) {
+        Set<Long> set = new HashSet<>();
+        Long2ObjectRBTreeMap<PriceLevel> levels = side == Side.BUY ? bids : asks;
+
+        lock.readLock().lock();
+        try {
+            if (levels.isEmpty()) {
+                return set;
+            }
+
+            LongSortedSet prices = levels.keySet().headSet(from);
+            prices.stream().forEach(p -> set.addAll(levels.get(p.longValue()).getOrderIds()));
+            return set;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
 
     private void delete(OrderEntry order) {
         PriceLevel level = order.getLevel();

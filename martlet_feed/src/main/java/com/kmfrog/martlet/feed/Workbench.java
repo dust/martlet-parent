@@ -505,7 +505,7 @@ public class Workbench implements Controller {
                     tradeWsDaemons.forEach((k, v) -> v.keepAlive());
                     checkOffset();
 
-                    printSymbol(new Instrument("HNTCBTC", 8, 3));
+                    printSymbol(new Instrument("HNTCBTC", 8, 3, 8));
                 }
             } catch (Exception ex) {
                 logger.warn("monitor exception: {}", ex.getMessage());

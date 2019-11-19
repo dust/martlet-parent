@@ -47,7 +47,7 @@ public class TacPlaceOrderExec extends Exec {
     @Override
     public void run() {
         try {
-            String priceStr = Fmt.fmtNum(price, instrument.getPriceFractionDigits(), "HNTCUSDT".equals(instrument.asString())?6:instrument.getPriceFractionDigits());
+            String priceStr = Fmt.fmtNum(price, instrument.getPriceFractionDigits(), instrument.getShowPriceFractionDigits());
             String quantityStr = Fmt.fmtNum(volume, instrument.getSizeFractionDigits());
             NewOrder order;
             if (side == Side.BUY) {

@@ -89,7 +89,8 @@ public class FeedUtils {
             int len = arr.size();
             for (int i = 0; i < len; i++) {
                 JSONObject o = arr.getJSONObject(i);
-                lst.add(new Instrument(o.getString("name").toUpperCase(), o.getIntValue("p"), o.getIntValue("v")));
+                int orderPriceFractionDigits = o.getIntValue("showPrice");
+                lst.add(new Instrument(o.getString("name").toUpperCase(), o.getIntValue("p"), o.getIntValue("v"), orderPriceFractionDigits));
             }
         } catch (Exception ex) {
             ex.printStackTrace();

@@ -46,6 +46,7 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
     Instrument ab;
     /** 有时候，更多的时候应该是bc **/
     Instrument cb;
+    boolean reverseAb;
     Source src;
     TrackBook caTracker;
     Provider provider;
@@ -57,8 +58,8 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
     AtomicLong lastOrder = new AtomicLong(0L);
     AtomicLong lastTrade = new AtomicLong(0L);
 
-    public TriangleOccupyInstrument(Instrument ca, Instrument ab, Instrument cb, Source src, TrackBook caTracker,
-            Provider provider, BrokerApiRestClient client, Map<String, String> args) {
+    public TriangleOccupyInstrument(Instrument ca, Instrument ab, Instrument cb, boolean reverseAb, Source src,
+            TrackBook caTracker, Provider provider, BrokerApiRestClient client, Map<String, String> args) {
         super("TriangleOccupyInstrument-" + ca.asString() + "-" + ca.asLong());
         this.ca = ca;
         this.ab = ab;
@@ -96,12 +97,20 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
                 if (System.currentTimeMillis() - lastTrade.get() > sleepMillis && openAskLevel != null) {
                     long bestAskPrice = lastBook.getBestAskPrice();
                     long bestAskSize = bestAskPrice > 0 ? lastBook.getAskSize(bestAskPrice) : 0L;
-                    if (bestAskSize > 0 && bestAskPrice == openAskLevel.getPrice() && openAskLevel.getSize() / bestAskSize * 1.0 >= 0.9) {
-                        TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, bestAskPrice, bestAskSize, Side.BUY,
-                                client, caTracker);
-                        provider.submitExec(placeBid);
-                        lastTrade.set(System.currentTimeMillis());
-                        placed = true;
+                    if (bestAskSize > 0 && bestAskPrice == openAskLevel.getPrice()
+                            && openAskLevel.getSize() / bestAskSize * 1.0 >= 0.9) {
+                        if (bestAskSize < vMin) {
+                            // 小于最小订单数量，先撤单（因为api会拒绝）
+                            Set<Long> cancelIds = openAskLevel.getOrderIds();
+                            TacCancelExec cancelExec = new TacCancelExec(cancelIds, client, provider, caTracker);
+                            provider.submitExec(cancelExec);
+                        } else {
+                            TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, bestAskPrice, bestAskSize, Side.BUY,
+                                    client, caTracker);
+                            provider.submitExec(placeBid);
+                            lastTrade.set(System.currentTimeMillis());
+                            placed = true;
+                        }
                     }
                 }
 
@@ -109,12 +118,20 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
                 if (System.currentTimeMillis() - lastTrade.get() > sleepMillis && openBidLevel != null) {
                     long bestBidPrice = lastBook.getBestBidPrice();
                     long bestBidSize = bestBidPrice > 0 ? lastBook.getBidSize(bestBidPrice) : 0;
-                    if (bestBidSize > 0 && bestBidPrice == openBidLevel.getPrice() && openBidLevel.getSize() / bestBidSize * 1.0 >= 0.9) {
-                        TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, bestBidPrice, bestBidSize, Side.SELL,
-                                client, caTracker);
-                        provider.submitExec(placeBid);
-                        lastTrade.set(System.currentTimeMillis());
-                        placed = true;
+                    if (bestBidSize > 0 && bestBidPrice == openBidLevel.getPrice()
+                            && openBidLevel.getSize() / bestBidSize * 1.0 >= 0.9) {
+                        if (bestBidSize < vMin) {
+                            // 小于最小订单数量，先撤单（因为api会拒绝）
+                            Set<Long> cancelIds = openBidLevel.getOrderIds();
+                            TacCancelExec cancelExec = new TacCancelExec(cancelIds, client, provider, caTracker);
+                            provider.submitExec(cancelExec);
+                        } else {
+                            TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, bestBidPrice, bestBidSize, Side.SELL,
+                                    client, caTracker);
+                            provider.submitExec(placeBid);
+                            lastTrade.set(System.currentTimeMillis());
+                            placed = true;
+                        }
                     }
                 }
 
@@ -137,17 +154,18 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 
                 long caBid1 = lastBook.getBestBidPrice();
                 long caAsk1 = lastBook.getBestAskPrice();
+                long probability = System.currentTimeMillis() % 10;
 
-                if (System.currentTimeMillis() - lastOrder.get() > sleepMillis && !hasOccupy(Side.SELL, lastBook)) {
+                if (/* probability < 5 && */ System.currentTimeMillis() - lastOrder.get() > sleepMillis && !hasOccupy(Side.SELL, lastBook)) {
                     long abAsk1 = abBook.getBestAskPrice();
                     long cbBid1 = cbBook.getBestBidPrice();
 
                     if (abAsk1 > 0 && cbBid1 > 0) {
-                        long caAskLimit = cbBid1 / abAsk1;
+                        long caAskLimit = cbBid1 / abAsk1 * ca.getPriceFactor();
 
-                        if ((caAsk1 - caAskLimit) / caAsk1 * 1.0 > 0.001) {
+                        if ((caAsk1 - caAskLimit) / (caAsk1 * 1.0) > 0.001) {
                             // 距离3角套利还有安全距离
-                            long price = caAsk1 - 1;
+                            long price = caAsk1 - ca.getPriceFactor() / ca.getShowPriceFactor();
                             long volume = FeedUtils.between(vMin, vMax);
                             TacPlaceOrderExec place = new TacPlaceOrderExec(ca, price, volume, Side.SELL, client,
                                     caTracker);
@@ -158,17 +176,16 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
                     }
 
                 }
-
-//                if (System.currentTimeMillis() - lastOrder.get() > sleepMillis && !hasOccupy(Side.BUY, lastBook)) {
+//                else if (System.currentTimeMillis() - lastOrder.get() > sleepMillis && !hasOccupy(Side.BUY, lastBook)) {
 //                    long abBid1 = abBook.getBestBidPrice();
 //                    long cbAsk1 = cbBook.getBestAskPrice();
 //
 //                    if (abBid1 > 0 && cbAsk1 > 0) {
-//                        long caBidLimit = cbAsk1 / abBid1;
+//                        long caBidLimit = cbAsk1 / abBid1 * ca.getPriceFactor();
 //
-//                        if ((caBidLimit - caBid1) / caBid1 * 1.0 > 0.001) {
+//                        if ((caBidLimit - caBid1) / (caBid1 * 1.0) > 0.001) {
 //                            // 距离3角套利还有安全距离
-//                            long price = caBid1 + 1;
+//                            long price = caBid1 + ca.getPriceFactor() / ca.getShowPriceFactor();
 //                            long volume = FeedUtils.between(vMin, vMax);
 //                            TacPlaceOrderExec place = new TacPlaceOrderExec(ca, price, volume, Side.BUY, client,
 //                                    caTracker);
@@ -192,7 +209,7 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 
     private void cancelAfterLevel3Ask(IOrderBook caBook) {
         LongSortedSet prices = caBook.getAskPrices();
-        long level3 = prices.size() > 3 ? prices.toArray(new long[prices.size()])[2]:0;
+        long level3 = prices.size() > 3 ? prices.toArray(new long[prices.size()])[2] : 0;
         if (level3 > 0) {
             Set<Long> afterLevel3 = caTracker.getOrdersBetter(Side.SELL, level3);
             if (afterLevel3.size() > 0) {
@@ -204,7 +221,7 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 
     private void cancelAfterLevel3Bid(IOrderBook caBook) {
         LongSortedSet prices = caBook.getBidPrices();
-        long level3 = prices.size() > 3 ? prices.toArray(new long[prices.size()])[2]:0;
+        long level3 = prices.size() > 3 ? prices.toArray(new long[prices.size()])[2] : 0;
 
         if (level3 > 0) {
             Set<Long> afterLevel3 = caTracker.getOrdersBetter(Side.BUY, level3);
@@ -230,6 +247,9 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
         }
 
         long bboPrice = side == Side.SELL ? book.getBestAskPrice() : book.getBestBidPrice();
+        if (openLevel.getPrice() != bboPrice) {
+            return false;
+        }
         long bboSize = side == Side.SELL ? book.getAskSize(bboPrice) : book.getBidSize(bboPrice);
         return openLevel.getSize() / bboSize * 1.0 >= 0.9;
     }

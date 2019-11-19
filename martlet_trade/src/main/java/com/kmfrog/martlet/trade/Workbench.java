@@ -182,9 +182,9 @@ public class Workbench implements Provider {
         makesureTradeLog(src, ca.asLong());
         makesureTradeLog(src, cb.asLong());
         
-        TriangleOccupyInstrument caOccupy = new TriangleOccupyInstrument(ca, ab, cb, src, caTracker, this, client,
+        TriangleOccupyInstrument caOccupy = new TriangleOccupyInstrument(ca, ab, cb, false, src,caTracker, this, client,
                 caArgs);
-        TriangleOccupyInstrument cbOccupy = new TriangleOccupyInstrument(cb, ab, ca, src, cbTracker, this, client, cbArgs);
+        TriangleOccupyInstrument cbOccupy = new TriangleOccupyInstrument(cb, ab, ca, true, src, cbTracker, this, client, cbArgs);
         
 
         caOccupy.start();

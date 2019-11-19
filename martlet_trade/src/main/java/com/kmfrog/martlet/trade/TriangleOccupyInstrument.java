@@ -192,14 +192,7 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 
     private void cancelAfterLevel3Ask(IOrderBook caBook) {
         LongSortedSet prices = caBook.getAskPrices();
-        int i = 0;
-        long level3 = 0;
-        for (LongBidirectionalIterator iter = prices.iterator(); iter.hasNext() && i < 3;) {
-            level3 = iter.nextLong();
-            System.out.println(ca.asString() + "ask level3:" + level3);
-            i++;
-        }
-
+        long level3 = prices.size() > 3 ? prices.toArray(new long[prices.size()])[2]:0;
         if (level3 > 0) {
             Set<Long> afterLevel3 = caTracker.getOrdersBetter(Side.SELL, level3);
             if (afterLevel3.size() > 0) {
@@ -211,15 +204,7 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 
     private void cancelAfterLevel3Bid(IOrderBook caBook) {
         LongSortedSet prices = caBook.getBidPrices();
-        // long[] priceArray = prices.toArray(new long[prices.size()]);
-
-        int i = 0;
-        long level3 = 0;
-        for (LongBidirectionalIterator iter = prices.iterator(); iter.hasNext() && i < 3;) {
-            level3 = iter.nextLong();
-            System.out.println(ca.asString() + " bid level3:" + level3);
-            i++;
-        }
+        long level3 = prices.size() > 3 ? prices.toArray(new long[prices.size()])[2]:0;
 
         if (level3 > 0) {
             Set<Long> afterLevel3 = caTracker.getOrdersBetter(Side.BUY, level3);

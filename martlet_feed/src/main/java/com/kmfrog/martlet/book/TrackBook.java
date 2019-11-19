@@ -165,7 +165,7 @@ public class TrackBook {
                     return new HashSet<Long>();
                 }
 
-                LongSortedSet prices = levels.subMap(from, worst).keySet();
+                LongSortedSet prices = levels.keySet().tailSet(from);
                 prices.stream().forEach(p -> {
                     set.addAll(levels.get(p.longValue()).getOrderIds());
                 });

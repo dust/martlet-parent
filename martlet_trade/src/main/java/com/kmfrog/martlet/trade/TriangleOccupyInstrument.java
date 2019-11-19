@@ -96,7 +96,7 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
                 if (System.currentTimeMillis() - lastTrade.get() > sleepMillis && openAskLevel != null) {
                     long bestAskPrice = lastBook.getBestAskPrice();
                     long bestAskSize = bestAskPrice > 0 ? lastBook.getAskSize(bestAskPrice) : 0L;
-                    if (bestAskSize > 0 && openAskLevel.getSize() / bestAskSize * 1.0 >= 0.9) {
+                    if (bestAskSize > 0 && bestAskPrice == openAskLevel.getPrice() && openAskLevel.getSize() / bestAskSize * 1.0 >= 0.9) {
                         TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, bestAskPrice, bestAskSize, Side.BUY,
                                 client, caTracker);
                         provider.submitExec(placeBid);
@@ -109,7 +109,7 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
                 if (System.currentTimeMillis() - lastTrade.get() > sleepMillis && openBidLevel != null) {
                     long bestBidPrice = lastBook.getBestBidPrice();
                     long bestBidSize = bestBidPrice > 0 ? lastBook.getBidSize(bestBidPrice) : 0;
-                    if (bestBidSize > 0 && openBidLevel.getSize() / bestBidSize * 1.0 >= 0.9) {
+                    if (bestBidSize > 0 && bestBidPrice == openBidLevel.getPrice() && openBidLevel.getSize() / bestBidSize * 1.0 >= 0.9) {
                         TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, bestBidPrice, bestBidSize, Side.SELL,
                                 client, caTracker);
                         provider.submitExec(placeBid);

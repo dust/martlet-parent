@@ -3,15 +3,20 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.2.1.RELEASE</version>
-		<relativePath />
+		<groupId>com.kmfrog.martlet</groupId>
+		<artifactId>martlet-parent</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 
+
+	<!-- <parent> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-parent</artifactId> 
+		<version>2.2.1.RELEASE</version> <relativePath /> </parent> -->
+
 	<artifactId>martlet-feed</artifactId>
-	<version>2.2.1</version>
+	<version>0.0.1</version>
 	<name>martlet-feed</name>
 	<url>http://maven.apache.org</url>
 
@@ -43,7 +48,11 @@
 
 		<!-- trade dependency // -->
 
-		
+		<!-- <dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter</artifactId> 
+			</dependency> <dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-test</artifactId> 
+			<scope>test</scope> <exclusions> <exclusion> <groupId>org.junit.vintage</groupId> 
+			<artifactId>junit-vintage-engine</artifactId> </exclusion> </exclusions> 
+			</dependency> -->
 
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -61,7 +70,7 @@
 			<version>${nassau.version}</version>
 		</dependency>
 
-		<dependency> <groupId>commons-codec</groupId> <artifactId>commons-codec</artifactId> 
+		<!-- <dependency> <groupId>commons-codec</groupId> <artifactId>commons-codec</artifactId> 
 			</dependency> <dependency> <groupId>org.eclipse.jetty.websocket</groupId> 
 			<artifactId>websocket-client</artifactId> </dependency> <dependency> <groupId>com.squareup.okhttp3</groupId> 
 			<artifactId>okhttp</artifactId> </dependency> <dependency> <groupId>com.fasterxml.jackson.core</groupId> 
@@ -72,15 +81,17 @@
 			</dependency> <dependency> <groupId>ch.qos.logback</groupId> <artifactId>logback-classic</artifactId> 
 			</dependency> <dependency> <groupId>commons-codec</groupId> <artifactId>commons-codec</artifactId> 
 			</dependency> <dependency> <groupId>org.apache.commons</groupId> <artifactId>commons-lang3</artifactId> 
-			</dependency>
+			</dependency> -->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
+			<version>2.2.1.RELEASE</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<version>2.2.1.RELEASE</version>
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
@@ -92,44 +103,54 @@
 		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
+			<version>1.10</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
+			<version>1.10</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>websocket-client</artifactId>
+			<version>9.4.21.v20190926</version>
 		</dependency>
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>okhttp</artifactId>
+			<version>3.14.2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
+			<version>2.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
+			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-core</artifactId>
+			<version>${logback.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
+			<version>${logback.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
+			<version>3.7</version>
 		</dependency>
 
 
@@ -194,33 +215,90 @@
 	<!-- </dependencyManagement> -->
 
 	<build>
-		<!-- <pluginManagement> <plugins> <plugin> <groupId>org.apache.maven.plugins</groupId> 
-			<artifactId>maven-compiler-plugin</artifactId> <version>3.8.0</version> </plugin> 
-			<plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-dependency-plugin</artifactId> 
-			<version>3.1.1</version> </plugin> <plugin> <groupId>org.apache.maven.plugins</groupId> 
-			<artifactId>maven-deploy-plugin</artifactId> <version>2.8.2</version> </plugin> 
-			<plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-javadoc-plugin</artifactId> 
-			<version>3.0.1</version> </plugin> <plugin> <groupId>org.apache.maven.plugins</groupId> 
-			<artifactId>maven-release-plugin</artifactId> <version>2.5.3</version> </plugin> 
-			<plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-shade-plugin</artifactId> 
-			<version>3.2.1</version> <configuration> <minimizeJar>true</minimizeJar> 
-			</configuration> <executions> <execution> <phase>package</phase> <goals> 
-			<goal>shade</goal> </goals> </execution> </executions> </plugin> </plugins> 
-			</pluginManagement> -->
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.8.0</version>
+					<configuration>
+						<source>${java.version}</source>
+						<target>${java.version}</target>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<version>3.1.1</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<version>2.8.2</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>3.0.1</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-release-plugin</artifactId>
+					<version>2.5.3</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-shade-plugin</artifactId>
+					<version>3.2.1</version>
+					<configuration>
+						<minimizeJar>true</minimizeJar>
+					</configuration>
+					<executions>
+						<execution>
+							<phase>package</phase>
+							<goals>
+								<goal>shade</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
-			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-compiler-plugin</artifactId> 
-				<configuration> <source>${java.version}</source> <target>${java.version}</target> 
-				</configuration> </plugin> <plugin> <groupId>org.apache.maven.plugins</groupId> 
-				<artifactId>maven-javadoc-plugin</artifactId> <configuration> <excludePackageNames>com.paritytrading.parity.client:com.paritytrading.parity.fix:com.paritytrading.parity.reporter:com.paritytrading.parity.system:com.paritytrading.parity.ticker:*.perf</excludePackageNames> 
-				<links> <link>http://api.paritytrading.com/nassau/latest/</link> <link>http://fastutil.di.unimi.it/docs/</link> 
-				<link>http://typesafehub.github.io/config/latest/api/</link> </links> </configuration> 
-				</plugin> <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-release-plugin</artifactId> 
-				<configuration> <addSchema>false</addSchema> <autoVersionSubmodules>true</autoVersionSubmodules> 
-				<tagNameFormat>@{project.version}</tagNameFormat> </configuration> </plugin> -->
 			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.2.0</version>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<excludes>
+						<exclude>application.properties</exclude>
+					</excludes>
+				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<excludePackageNames>com.paritytrading.parity.client:com.paritytrading.parity.fix:com.paritytrading.parity.reporter:com.paritytrading.parity.system:com.paritytrading.parity.ticker:*.perf</excludePackageNames>
+					<links>
+						<link>http://api.paritytrading.com/nassau/latest/</link>
+						<link>http://fastutil.di.unimi.it/docs/</link>
+						<link>http://typesafehub.github.io/config/latest/api/</link>
+					</links>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<configuration>
+					<addSchema>false</addSchema>
+					<autoVersionSubmodules>true</autoVersionSubmodules>
+					<tagNameFormat>@{project.version}</tagNameFormat>
+				</configuration>
+			</plugin>
+
 		</plugins>
 		<finalName>martlet-feed</finalName>
 	</build>

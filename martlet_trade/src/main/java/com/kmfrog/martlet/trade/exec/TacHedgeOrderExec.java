@@ -65,7 +65,7 @@ public class TacHedgeOrderExec extends Exec {
                 logger.info(instrument.asString()+ price + "|"+ vMin+"|"+vMax + " quantity=" + quantity);
                 return;
             }
-            String priceStr = Fmt.fmtNum(price, instrument.getPriceFractionDigits());
+            String priceStr = Fmt.fmtNum(price, instrument.getPriceFractionDigits(), instrument.getShowPriceFractionDigits());
             String quantityStr = Fmt.fmtNum(quantity, instrument.getSizeFractionDigits());
             NewOrder buy = NewOrder.limitBuy(instrument.asString(), TimeInForce.GTC, quantityStr, priceStr);
             NewOrder sell = NewOrder.limitSell(instrument.asString(), TimeInForce.GTC, quantityStr, priceStr);

@@ -28,6 +28,14 @@ public class PriceLevel {
     public long getSize() {
         return orders.stream().collect(Collectors.summingLong(OrderEntry::getRemainingQuantity));
     }
+    
+    /**
+     * 获得订单数。
+     * @return
+     */
+    public int getCount() {
+        return orders.size();
+    }
 
     public boolean isEmpty() {
         return orders.isEmpty();

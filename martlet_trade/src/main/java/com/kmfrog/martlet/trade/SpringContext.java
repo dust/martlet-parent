@@ -43,7 +43,11 @@ class SpringContext implements CommandLineRunner {
         Instrument cb = occupyInstruments.get(2);
         Map<String, String> caArgs = (Map<String, String>) cfgArgs.get(ca.asString());
         Map<String, String> cbArgs = (Map<String, String>) cfgArgs.get(cb.asString());
-        app.startOccupyInstrument(Source.Bhex, ca, ab, cb, client, caArgs, cbArgs);
+        
+//        app.startOccupyInstrument(Source.Bhex, ca, ab, cb, client, caArgs, cbArgs);
+        app.startHedgeInstrument(Source.Bhex, ca, caArgs, client);
+        app.startHedgeInstrument(Source.Bhex, cb, cbArgs, client);
+        
         app.startOpenOrderTracker(Source.Bhex, all.toArray(new Instrument[all.size()]), client);
 
     }

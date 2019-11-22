@@ -37,14 +37,14 @@ class SpringContext implements CommandLineRunner {
         List<Instrument> all = new ArrayList<>();
         all.addAll(hedgeInstruments);
         all.addAll(occupyInstruments);
-        // app.start(Source.Bhex, hedgeInstruments, all, cfgArgs, client);
-        Instrument ca = occupyInstruments.get(0);
-        Instrument ab = occupyInstruments.get(1);
-        Instrument cb = occupyInstruments.get(2);
-        Map<String, String> caArgs = (Map<String, String>) cfgArgs.get(ca.asString());
-        Map<String, String> cbArgs = (Map<String, String>) cfgArgs.get(cb.asString());
-        app.startOccupyInstrument(Source.Bhex, ca, ab, cb, client, caArgs, cbArgs);
-        app.startOpenOrderTracker(Source.Bhex, all.toArray(new Instrument[all.size()]), client);
+         app.start(Source.Bhex, hedgeInstruments, all, cfgArgs, client);
+//        Instrument ca = occupyInstruments.get(0);
+//        Instrument ab = occupyInstruments.get(1);
+//        Instrument cb = occupyInstruments.get(2);
+//        Map<String, String> caArgs = (Map<String, String>) cfgArgs.get(ca.asString());
+//        Map<String, String> cbArgs = (Map<String, String>) cfgArgs.get(cb.asString());
+//        app.startOccupyInstrument(Source.Bhex, ca, ab, cb, client, caArgs, cbArgs);
+//        app.startOpenOrderTracker(Source.Bhex, all.toArray(new Instrument[all.size()]), client);
 
     }
 

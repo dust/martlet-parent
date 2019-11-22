@@ -49,4 +49,11 @@ public class PriceLevel {
         return orders.stream().map(ord -> ord.getId()).collect(Collectors.toSet());
     }
 
+
+    @Override
+    public String toString() {
+        return String.format("{%d: %s}", getSize(), orders.stream()
+                .collect(Collectors.toMap(OrderEntry::getId, OrderEntry::getRemainingQuantity)).toString());
+    }
+
 }

@@ -3,6 +3,7 @@ package com.kmfrog.martlet.book;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectRBTreeMap;
@@ -34,7 +35,7 @@ public class TrackBook {
     public void entry(long orderId, Side side, long price, long size) {
         lock.writeLock().lock();
         try {
-            if (orders.containsKey(orderId) || size <= 0) {
+            if (orders.containsKey(orderId)) {
                 return;
             }
 
@@ -96,8 +97,8 @@ public class TrackBook {
             OrderEntry order = orders.get(orderId);
             if (order != null) {
                 delete(order);
-                orders.remove(orderId);
             }
+            orders.remove(orderId);
         } finally {
             lock.writeLock().unlock();
         }
@@ -175,9 +176,10 @@ public class TrackBook {
             lock.readLock().unlock();
         }
     }
-    
+
     /**
      * 获得较差价格的订单id
+     * 
      * @param side
      * @param from
      * @return
@@ -258,6 +260,16 @@ public class TrackBook {
             lock.readLock().unlock();
         }
 
+    }
+
+    public String dump(Side side) {
+        lock.readLock().lock();
+        try {
+            Long2ObjectRBTreeMap<PriceLevel> levels = side == Side.BUY ? bids : asks;
+            return levels.toString();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
 }

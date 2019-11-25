@@ -69,13 +69,18 @@ public class TacBalanceSoloDunk extends InstrumentSoloDunk {
     }
 
     private void putBBO() {
+        if (currentBaseVolume == null) {
+            return;
+        }
         RollingTimeSpan<TradeLog> logs = provider.getRollingTradeLog(source, instrument);
-        if (Math.abs(logs.last() - logs.avg()) / (logs.last() * 1.0) > 0.1) {
-
-            if (div(currentBaseVolume, originBaseVolume) <= 0.8) {
-                putAskOrder();
-            } else if (div(currentBaseVolume, originBaseVolume) >= 1.1) {
+        long last = logs.lastPrice();
+        long avg = logs.avg();
+        if (logs.count() == 0 || last == 0 || avg == 0
+                || Math.abs(last - avg) / (last * 1.0) <= 0.1) {
+            if (div(currentBaseVolume, originBaseVolume) <= 0.9) {
                 putBidOrder();
+            } else if (div(currentBaseVolume, originBaseVolume) >= 1.1) {
+                putAskOrder();
             } else {
                 if (System.currentTimeMillis() % 10 < 3) {
                     putBidOrder();
@@ -84,7 +89,8 @@ public class TacBalanceSoloDunk extends InstrumentSoloDunk {
                 }
             }
         } else {
-            logger.info("{} {} last trade price / avg, 0.9 or 1.1.", source, instrument.asString());
+            logger.info("{} {} last trade price / avg, 0.9 or 1.1. {}|{}|{}", source, instrument.asString(), avg,
+                    last, logs.count());
         }
         // 撤掉3档以外所有订单。
         cancelAfterLevel3Ask(lastBook);
@@ -96,25 +102,6 @@ public class TacBalanceSoloDunk extends InstrumentSoloDunk {
     }
 
     private void putAskOrder() {
-        if (System.currentTimeMillis() - lastOrder.get() > sleepMillis && !hasOccupy(Side.BUY, lastBook)) {
-            // long abBid1 = abBook.getBestBidPrice();
-            // long cbAsk1 = cbBook.getBestAskPrice();
-            long bid1 = lastBook.getBestBidPrice();
-
-            // if (abBid1 > 0 && cbAsk1 > 0) {
-            // long caBidLimit = cbAsk1 / abBid1 * ca.getPriceFactor();
-
-            // if ((caBidLimit - caBid1) / (caBid1 * 1.0) > 0.001) {
-            // 距离3角套利还有安全距离
-            long price = (bid1 + instrument.getPriceFactor()) / instrument.getShowPriceFactor();
-            long volume = FeedUtils.between(vMin, vMax);
-            TacPlaceOrderExec place = new TacPlaceOrderExec(instrument, price, volume, Side.BUY, client, trackBook);
-            provider.submitExec(place);
-            lastOrder.set(System.currentTimeMillis());
-        }
-    }
-
-    private void putBidOrder() {
         if (System.currentTimeMillis() - lastOrder.get() > sleepMillis && !hasOccupy(Side.SELL, lastBook)) {
             // long abBid1 = abBook.getBestBidPrice();
             // long cbAsk1 = cbBook.getBestAskPrice();
@@ -124,9 +111,28 @@ public class TacBalanceSoloDunk extends InstrumentSoloDunk {
             // long caBidLimit = cbAsk1 / abBid1 * ca.getPriceFactor();
 
             // if ((caBidLimit - caBid1) / (caBid1 * 1.0) > 0.001) {
-            long price = (ask1 - instrument.getPriceFactor()) / instrument.getShowPriceFactor();
+            // 距离3角套利还有安全距离
+            long price = ask1 - instrument.getPriceFactor() / instrument.getShowPriceFactor();
             long volume = FeedUtils.between(vMin, vMax);
             TacPlaceOrderExec place = new TacPlaceOrderExec(instrument, price, volume, Side.SELL, client, trackBook);
+            provider.submitExec(place);
+            lastOrder.set(System.currentTimeMillis());
+        }
+    }
+
+    private void putBidOrder() {
+        if (System.currentTimeMillis() - lastOrder.get() > sleepMillis && !hasOccupy(Side.BUY, lastBook)) {
+            // long abBid1 = abBook.getBestBidPrice();
+            // long cbAsk1 = cbBook.getBestAskPrice();
+            long bid1 = lastBook.getBestBidPrice();
+
+            // if (abBid1 > 0 && cbAsk1 > 0) {
+            // long caBidLimit = cbAsk1 / abBid1 * ca.getPriceFactor();
+
+            // if ((caBidLimit - caBid1) / (caBid1 * 1.0) > 0.001) {
+            long price = bid1 + instrument.getPriceFactor() / instrument.getShowPriceFactor();
+            long volume = FeedUtils.between(vMin, vMax);
+            TacPlaceOrderExec place = new TacPlaceOrderExec(instrument, price, volume, Side.BUY, client, trackBook);
             provider.submitExec(place);
             lastOrder.set(System.currentTimeMillis());
         }
@@ -160,7 +166,7 @@ public class TacBalanceSoloDunk extends InstrumentSoloDunk {
     boolean hasOccupy(Side side, IOrderBook book) {
         PriceLevel openLevel = trackBook.getBestLevel(side);
         if (openLevel == null || book.getBestAskPrice() == 0 || book.getBestAskPrice() == 0) {
-            return true; // 数据获取有问题。避免重新挂单，此处应该返回true。
+            return false; // 数据获取有问题。避免重新挂单，此处应该返回true。
         }
 
         long bboPrice = side == Side.SELL ? book.getBestAskPrice() : book.getBestBidPrice();

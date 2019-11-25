@@ -85,6 +85,7 @@ class SpringContext implements CommandLineRunner {
         Map<String, Param> instrumentArgsMap = params.stream()
                 .collect(Collectors.toMap(Param::getName, v -> v));
         app.start(Source.Bhex, hedgeEntrys, instrumentMap, instrumentArgsMap, client);
+         app.startOpenOrderTracker(Source.Bhex, instrumentMap.values().toArray(new Instrument[instrumentMap.size()]), client);
 
         // app.startHedgeInstrument(Source.Bhex, hntcbtc, buildConfigArgs(4000, 19000, 50000, 13390000), client);
         // InstrumentArg[] items = instrumentJson.get
@@ -107,7 +108,6 @@ class SpringContext implements CommandLineRunner {
         // app.startHedgeInstrument(Source.Bhex, ca, caArgs, client);
         // app.startHedgeInstrument(Source.Bhex, cb, cbArgs, client);
 
-        // app.startOpenOrderTracker(Source.Bhex, all.toArray(new Instrument[all.size()]), client);
 
     }
 

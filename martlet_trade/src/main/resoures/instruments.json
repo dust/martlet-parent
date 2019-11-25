@@ -50,8 +50,8 @@
 			"maxSleepMillis": 19000,
 			"minVolume": 50000,
 			"maxVolume": 539000,
-			"originBaseVolume":"100000",
-			"originQuoteVolume":"0.1"
+			"originBaseVolume":"200000",
+			"originQuoteVolume":"0.9122"
 		},
 		{
 			"name": "HNTCUSDT",
@@ -59,8 +59,8 @@
 			"maxSleepMillis": 17000,
 			"minVolume": 10000,
 			"maxVolume": 593000,
-			"originBaseVolume":"100000",
-			"originQuoteVolume":"1000"
+			"originBaseVolume":"200000",
+			"originQuoteVolume":"392.17"
 		}
 	]
 }

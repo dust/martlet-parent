@@ -51,6 +51,17 @@ public class RollingTimeSpan<T extends InstrumentTimeSpan> {
         }
     }
 
+    public int count() {
+        drainout();
+        lock.readLock().lock();
+        try {
+            return rolling.size();
+        } finally {
+            lock.readLock().unlock();
+        }
+
+    }
+
     public long sum() {
         drainout();
         lock.readLock().lock();
@@ -76,6 +87,30 @@ public class RollingTimeSpan<T extends InstrumentTimeSpan> {
             lock.readLock().unlock();
         }
     }
+    
+    public long lastPrice() {
+        lock.readLock().lock();
+        try {
+            if (rolling.isEmpty()) {
+                return 0L;
+            }
+            return rolling.get(rolling.size() - 1).getPrice();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+    
+    public long firstPrice() {
+        lock.readLock().lock();
+        try {
+            if (rolling.isEmpty()) {
+                return 0L;
+            }
+            return rolling.get(0).getPrice();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
 
     public long first() {
         lock.readLock().lock();
@@ -93,7 +128,7 @@ public class RollingTimeSpan<T extends InstrumentTimeSpan> {
         lock.writeLock().lock();
         try {
             long now = System.currentTimeMillis();
-            long last = now - last() > 23000 ? now : last();
+            long last = now - last() > windowMillis / 2 ? now : last();
             while (last - first() > windowMillis && !rolling.isEmpty()) {
                 rolling.remove(0);
             }

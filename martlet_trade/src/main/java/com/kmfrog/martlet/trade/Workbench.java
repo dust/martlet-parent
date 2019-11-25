@@ -1,5 +1,6 @@
 package com.kmfrog.martlet.trade;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,8 +20,9 @@ import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.DepthFeed;
 import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.domain.TradeLog;
+import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
 import com.kmfrog.martlet.trade.exec.Exec;
-import com.kmfrog.martlet.trade.tac.TacInstrumentSoloDunk;
+import com.kmfrog.martlet.trade.tac.TacBalanceSoloDunk;
 import com.kmfrog.martlet.util.FeedUtils;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -158,13 +160,15 @@ public class Workbench implements Provider {
         openOrderTracker.start();
     }
 
-    public void startHedgeInstrument(Source src, Instrument instrument, Map<String, String> instrumentArgs,
-            BrokerApiRestClient client) {
+    public void startHedgeInstrument(Source src, Instrument instrument, Param param, BrokerApiRestClient client) {
         TrackBook trackBook = makesureTrackBook(instrument);
         // RollingTimeSpan<TradeLog> lastTradeLogs = makesureTradeLog(src, instrument.asLong());
         makesureTradeLog(src, instrument.asLong());
-        TacInstrumentSoloDunk solodunk = new TacInstrumentSoloDunk(instrument, Source.Bhex, trackBook, this, client,
-                instrumentArgs);
+        // TacInstrumentSoloDunk solodunk = new TacInstrumentSoloDunk(instrument, Source.Bhex, trackBook, this, client,
+        // param);
+        // Instrument instrument, Source src, TrackBook trackBook, Provider provider, Param args,
+        // BrokerApiRestClient client, BigDecimal originBaseVolume, BigDecimal originQuoteVolume
+        TacBalanceSoloDunk solodunk = new TacBalanceSoloDunk(instrument, src, trackBook, this, param, client);
         solodunk.start();
         depthFeed.register(instrument, solodunk);
     }
@@ -175,17 +179,17 @@ public class Workbench implements Provider {
         TrackBook cbTracker = makesureTrackBook(cb);
 
         makesureMaker(ab);
-//        makesureMaker(cb);
+        // makesureMaker(cb);
         makesureOrderBook(src, ca.asLong());
         makesureOrderBook(src, ab.asLong());
         makesureOrderBook(src, cb.asLong());
         makesureTradeLog(src, ca.asLong());
         makesureTradeLog(src, cb.asLong());
-        
-        TriangleOccupyInstrument caOccupy = new TriangleOccupyInstrument(ca, ab, cb, false, src,caTracker, this, client,
-                caArgs);
-        TriangleOccupyInstrument cbOccupy = new TriangleOccupyInstrument(cb, ab, ca, true, src, cbTracker, this, client, cbArgs);
-        
+
+        TriangleOccupyInstrument caOccupy = new TriangleOccupyInstrument(ca, ab, cb, false, src, caTracker, this,
+                client, caArgs);
+        TriangleOccupyInstrument cbOccupy = new TriangleOccupyInstrument(cb, ab, ca, true, src, cbTracker, this, client,
+                cbArgs);
 
         caOccupy.start();
         cbOccupy.start();
@@ -193,10 +197,13 @@ public class Workbench implements Provider {
         depthFeed.register(ca, caOccupy);
     }
 
-    public void start(Source src, List<Instrument> hedgeInstruments, List<Instrument> all, Map<String, Object> cfgArgs,
-            BrokerApiRestClient client) {
-        for (Instrument instr : hedgeInstruments) {
-            startHedgeInstrument(src, instr, (Map<String, String>) cfgArgs.get(instr.asString()), client);
+    public void start(Source src, String[] instrumentNames, Map<String, Instrument> instruments,
+            Map<String, Param> cfgArgs, BrokerApiRestClient client) {
+        // for (Instrument instr : hedgeInstruments) {
+        // startHedgeInstrument(src, instr, (Map<String, String>) cfgArgs.get(instr.asString()), client);
+        // }
+        for (String instrumentName : instrumentNames) {
+            startHedgeInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);
         }
 
     }
@@ -223,10 +230,10 @@ public class Workbench implements Provider {
         Map<String, String> cbArgs = (Map<String, String>) cfgArgs.get(cb.asString());
 
         app.startOpenOrderTracker(Source.Bhex, all.toArray(new Instrument[all.size()]), client);
-        
-//      app.startOccupyInstrument(Source.Bhex, ca, ab, cb, client, caArgs, cbArgs);
-        app.startHedgeInstrument(Source.Bhex, ca, caArgs, client);
-        app.startHedgeInstrument(Source.Bhex, cb, cbArgs, client);
+
+        // app.startOccupyInstrument(Source.Bhex, ca, ab, cb, client, caArgs, cbArgs);
+        // app.startHedgeInstrument(Source.Bhex, ca, caArgs, client);
+        // app.startHedgeInstrument(Source.Bhex, cb, cbArgs, client);
 
         try {
             while (true) {

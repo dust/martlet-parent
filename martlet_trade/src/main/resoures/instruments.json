@@ -1,0 +1,66 @@
+{
+	"symbols": [
+		{
+			"name": "TACPTCN",
+			"p": 4,
+			"v": 4,
+			"showPrice": 4
+		},
+		{
+			"name": "XIEPTCN",
+			"p": 3,
+			"v": 3,
+			"showPrice": 3
+		},
+		{
+			"name": "HNTCBTC",
+			"p": 8,
+			"v": 3,
+			"showPrice": 8
+		},
+		{
+			"name": "HNTCUSDT",
+			"p": 8,
+			"v": 2,
+			"showPrice": 6
+		}
+	],
+	"args": [
+		{
+			"name": "XIEPTCN",
+			"minSleepMillis": 2000,
+			"maxSleepMillis": 19000,
+			"minVolume": 500000,
+			"maxVolume": 379000,
+			"originBaseVolume": "20000",
+			"originQuoteVolume": "10000"
+		},
+		{
+			"name": "TACPTCN",
+			"minSleepMillis": 5000,
+			"maxSleepMillis": 39000,
+			"minVolume": 3190000,
+			"maxVolume": 12590000,
+			"originBaseVolume": "20000",
+			"originQuoteVolume": "10000"
+		},
+		{
+			"name": "HNTCBTC",
+			"minSleepMillis": 4000,
+			"maxSleepMillis": 19000,
+			"minVolume": 50000,
+			"maxVolume": 539000,
+			"originBaseVolume":"100000",
+			"originQuoteVolume":"0.1"
+		},
+		{
+			"name": "HNTCUSDT",
+			"minSleepMillis": 3000,
+			"maxSleepMillis": 17000,
+			"minVolume": 10000,
+			"maxVolume": 593000,
+			"originBaseVolume":"100000",
+			"originQuoteVolume":"1000"
+		}
+	]
+}

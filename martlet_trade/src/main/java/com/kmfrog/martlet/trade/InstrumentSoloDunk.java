@@ -1,6 +1,5 @@
 package com.kmfrog.martlet.trade;
 
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -9,13 +8,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kmfrog.martlet.C;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.DataChangeListener;
 import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.domain.TradeLog;
+import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
 import com.kmfrog.martlet.util.FeedUtils;
 
 /**
@@ -42,16 +41,16 @@ public abstract class InstrumentSoloDunk extends Thread implements DataChangeLis
     protected final long vMax;
 
     public InstrumentSoloDunk(Instrument instrument, Source src, TrackBook trackBook, Provider provider,
-            Map<String, String> args) {
+            Param args) {
         source = src;
         this.instrument = instrument;
         this.trackBook = trackBook;
         this.provider = provider;
 
-        minSleepMillis = Integer.valueOf(args.get("minSleepMillis"));
-        maxSleepMillis = Integer.valueOf(args.get("maxSleepMillis"));
-        vMin = Long.valueOf(args.get("vMin"));
-        vMax = Long.valueOf(args.get("vMax"));
+        minSleepMillis = args.getMinSleepMillis();
+        maxSleepMillis = args.getMaxSleepMillis();
+        vMin = args.getMinVolume();
+        vMax = args.getMaxVolume();
     }
 
     public void run() {

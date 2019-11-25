@@ -59,7 +59,8 @@ public class OpenOrderTracker extends Thread {
                     req.setSymbol(instrument.asString());
                     List<Order> openOrders = client.getOpenOrders(req);
                     trackOpenOrders(instrument, trackBook, openOrders);
-                    System.out.println(instrument.asString() + ".openAsks: " + trackBook.getOrders(Side.SELL)+" .openBid"+trackBook.getOrders(Side.BUY));
+                    System.out.println(instrument.asString() + ".openAsks: " + trackBook.getOrders(Side.SELL)
+                            + " .openBid" + trackBook.getOrders(Side.BUY));
                 }
                 handleImbalance();
 
@@ -107,12 +108,12 @@ public class OpenOrderTracker extends Thread {
     }
 
     private void appendTradeLog(Instrument instrument, TrackBook book, Long orderId, Side side) {
-        RollingTimeSpan<TradeLog> askLogs = provider.getRollingTradeLog(src, instrument);
+        RollingTimeSpan<TradeLog> logs = provider.getRollingTradeLog(src, instrument);
         OrderEntry orderEntry = book.getOrder(orderId.longValue());
         long price = orderEntry.getLevel().getPrice();
         long now = System.currentTimeMillis();
         long size = orderEntry.getRemainingQuantity();
-        askLogs.add(new TradeLog(src, instrument.asLong(), orderId, price, size, 0L, false, now, now));
+        logs.add(new TradeLog(src, instrument.asLong(), orderId, price, size, 0L, false, now, now));
         book.remove(orderId);
     }
 

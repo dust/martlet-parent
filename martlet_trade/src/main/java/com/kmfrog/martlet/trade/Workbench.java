@@ -20,6 +20,8 @@ import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.DepthFeed;
 import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.domain.TradeLog;
+import com.kmfrog.martlet.trade.bikun.BikunApiRestClient;
+import com.kmfrog.martlet.trade.bikun.BikunInstrumentSoloDunk;
 import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
 import com.kmfrog.martlet.trade.exec.Exec;
 import com.kmfrog.martlet.trade.tac.TacBalanceSoloDunk;
@@ -172,6 +174,14 @@ public class Workbench implements Provider {
         solodunk.start();
         depthFeed.register(instrument, solodunk);
     }
+    
+    public void startBikunHedgeInstrument(Source src, Instrument instrument, Param param, BikunApiRestClient client) {
+    	TrackBook trackBook = makesureTrackBook(instrument);
+    	makesureTradeLog(src, instrument.asLong());
+     	BikunInstrumentSoloDunk solodunk =  new BikunInstrumentSoloDunk(instrument, src, trackBook, this, client, param);
+     	solodunk.start();
+     	depthFeed.register(instrument, solodunk);
+    }
 
     public void startOccupyInstrument(Source src, Instrument ca, Instrument ab, Instrument cb,
             BrokerApiRestClient client, Map<String, String> caArgs, Map<String, String> cbArgs) {
@@ -205,7 +215,13 @@ public class Workbench implements Provider {
         for (String instrumentName : instrumentNames) {
             startHedgeInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);
         }
-
+    }
+    
+    public void startBikun(Source src, String[] instrumentNames, Map<String, Instrument> instruments,
+    	Map<String, Param> cfgArgs, BikunApiRestClient client) {
+    	for(String instrumentName : instrumentNames) {
+    		startBikunHedgeInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);
+    	}
     }
 
     public static void main(String[] args) {

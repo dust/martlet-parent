@@ -56,6 +56,9 @@ public interface C {
     
     String BHEX_WS_URL = "bhex.ws.url";
     String BHEX_DEPTH_FMT = "bhex.depth.fmt";
+    
+    String BIKUN_WS_URL = "bikun.ws.url";
+    String BIKUN_DEPTH_FMT = "bikun.depth.fmt";
 
     String PUB_DEPTH_HOST = "pub.depth.host";
     String PUB_DEPTH_PORT = "pub.depth.port";

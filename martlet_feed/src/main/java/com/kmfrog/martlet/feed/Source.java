@@ -12,6 +12,6 @@ public enum Source {
     Huobi,
     CoinbasePro,
     Bitrue,
-    Bhex
-
+    Bhex,
+    Bikun
 }

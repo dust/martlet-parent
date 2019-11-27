@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.feed.Source;
+import com.kmfrog.martlet.trade.bikun.BikunApiRestClient;
 import com.kmfrog.martlet.trade.config.InstrumentsJson;
 import com.kmfrog.martlet.trade.config.InstrumentsJson.JsonInstrument;
 import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
@@ -56,6 +57,18 @@ class SpringContext implements CommandLineRunner {
 
     @Value("${bhex.depth.fmt")
     private String hbDepthFmt;
+    
+    @Value("${bikun.hedge.items}")
+    private String[] bikunHedgeEntrys;
+    
+    @Value("${api.base.url.bikun}")
+    private String bikunBaseUrl;
+    
+    @Value("${api.key.bikun}")
+    private String bikunApiKey;
+    
+    @Value("${api.secret.bikun}")
+    private String bikunSecret;
 
 //    @Autowired
 //    InstrumentArgs instrumentArgs;
@@ -71,6 +84,8 @@ class SpringContext implements CommandLineRunner {
         Workbench app = new Workbench();
 
         BrokerApiRestClient client = BrokerApiClientFactory.newInstance(baseUrl, apiKey, secret).newRestClient();
+        BikunApiRestClient bikunClient = new BikunApiRestClient(bikunBaseUrl, bikunApiKey, bikunSecret);
+        
         List<JsonInstrument> jsonInstruments = instrumentJson.getSymbols();
         // Map<String, >
 //        List<InstrumentArgs.InstrumentArg> params = instrumentArgs.getItems();
@@ -85,7 +100,8 @@ class SpringContext implements CommandLineRunner {
         Map<String, Param> instrumentArgsMap = params.stream()
                 .collect(Collectors.toMap(Param::getName, v -> v));
         app.start(Source.Bhex, hedgeEntrys, instrumentMap, instrumentArgsMap, client);
-         app.startOpenOrderTracker(Source.Bhex, instrumentMap.values().toArray(new Instrument[instrumentMap.size()]), client);
+        app.startBikun(Source.Bikun, bikunHedgeEntrys, instrumentMap, instrumentArgsMap, bikunClient);
+        app.startOpenOrderTracker(Source.Bhex, instrumentMap.values().toArray(new Instrument[instrumentMap.size()]), client);
 
         // app.startHedgeInstrument(Source.Bhex, hntcbtc, buildConfigArgs(4000, 19000, 50000, 13390000), client);
         // InstrumentArg[] items = instrumentJson.get

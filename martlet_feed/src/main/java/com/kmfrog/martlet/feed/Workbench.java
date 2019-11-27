@@ -19,6 +19,8 @@ import com.kmfrog.martlet.book.OrderBook;
 import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.feed.impl.BhexDepthHandler;
 import com.kmfrog.martlet.feed.impl.BhexInstrumentDepth;
+import com.kmfrog.martlet.feed.impl.BikunDepthHandler;
+import com.kmfrog.martlet.feed.impl.BikunInstrumentDepth;
 import com.kmfrog.martlet.feed.net.FeedBroadcast;
 import com.typesafe.config.Config;
 
@@ -232,8 +234,30 @@ public class Workbench implements Controller {
             long lastUpdate, long lastReceived) {
     }
 
-    public void start(List<Instrument> supportedInstruments) {
-        setupBhex(supportedInstruments);
+    public void start(Map<String, List<Instrument>> supportedInstruments) {
+        setupBhex(supportedInstruments.get(Source.Bhex.name()));
+        setupBikun(supportedInstruments.get(Source.Bikun.name()));
+    }
+    
+    void setupBikun(List<Instrument> instruments) {
+    	String wsUrl = cfg.getString(C.BIKUN_WS_URL);
+    	String depthFmt = cfg.getString(C.BIKUN_DEPTH_FMT);
+    	
+    	int size = instruments.size();
+    	WsDataListener[] listeners = new BikunInstrumentDepth[size];
+    	String[] instrumentArr = new String[size];
+    	
+    	for(int i=0; i<size; i++) {
+    		Instrument instrument = instruments.get(i);
+    		logger.info("{}:{}:{}", Source.Bikun.name(), instrument.asString(), instrument.asLong());
+    		instrumentArr[i] = instrument.asString();
+    		IOrderBook book = makesureOrderBook(Source.Bikun, instrument.asLong());
+    		listeners[i] = new BikunInstrumentDepth(instrument, book, Source.Bikun, this);
+    	}
+    	
+    	BikunDepthHandler handler = new BikunDepthHandler(wsUrl, depthFmt, instrumentArr, listeners);
+    	startWebSocket(depthWsDaemons, Source.Bikun, handler);
+    			
     }
 
     void setupBhex(List<Instrument> instruments) {

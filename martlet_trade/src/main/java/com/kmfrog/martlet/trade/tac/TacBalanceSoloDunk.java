@@ -198,7 +198,7 @@ public class TacBalanceSoloDunk extends InstrumentSoloDunk {
             }
         }
 
-        PriceLevel openBidLevel = trackBook.getBestLevel(Side.SELL);
+        PriceLevel openBidLevel = trackBook.getBestLevel(Side.BUY);
         if (openBidLevel != null) {
             long bestBidPrice = lastBook.getBestBidPrice();
             long bestBidSize = bestBidPrice > 0 ? lastBook.getBidSize(bestBidPrice) : 0L;

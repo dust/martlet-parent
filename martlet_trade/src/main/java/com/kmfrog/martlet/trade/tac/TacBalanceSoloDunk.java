@@ -46,11 +46,13 @@ public class TacBalanceSoloDunk extends InstrumentSoloDunk {
     }
 
     @Override
-    public void placeHedgeOrder(long price, long spreadSize, IOrderBook book) {    	
-    	if(isLevelSpaceNormal(Side.SELL) && isLevelSpaceNormal(Side.BUY)) {
-	        placeBBO();
-	        putBBO();
-    	}
+    public void placeHedgeOrder(long price, long spreadSize, IOrderBook book) {    
+//    	if(isLevelSpaceNormal(Side.SELL) && isLevelSpaceNormal(Side.BUY)) {
+//	        placeBBO();
+//	        putBBO();
+//    	}
+    	placeBBO();
+        putBBO();
         retrieveBalance();
         
     }
@@ -262,7 +264,7 @@ public class TacBalanceSoloDunk extends InstrumentSoloDunk {
     	long level2 = pricesArray[1];
     	long level3 = side == Side.SELL ? pricesArray[2] : pricesArray[0];
 //    	System.out.println(String.format("###### %s %s %s %s %s", String.valueOf(level1), String.valueOf(level2), String.valueOf(level3), String.valueOf((level2 * 1.0) / (level1 * 1.0)), String.valueOf((level3 * 1.0) / (level2 * 1.0))));
-    	if((level2 * 1.0) / (level1 * 1.0) > 1.05 || (level3 * 1.0) / (level2 * 1.0) > 1.05) {
+    	if((level2 * 1.0) / (level1 * 1.0) > 1.15 || (level3 * 1.0) / (level2 * 1.0) > 1.15) {
     		return false;
     	}
     	return true;

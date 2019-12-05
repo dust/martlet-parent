@@ -211,7 +211,7 @@ public class Workbench implements Controller {
             if (book != null) {
                 multiSrcBooks.get(mkt).put(instrument.asLong(), book);
                 String originText = book.getOriginText(mkt, C.MAX_LEVEL);
-                System.out.println(originText);
+//                System.out.println(originText);
                 depthPusher.put(originText);
             }
         } catch (InterruptedException e) {

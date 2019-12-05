@@ -25,6 +25,7 @@ import com.kmfrog.martlet.trade.bikun.BikunInstrumentSoloDunk;
 import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
 import com.kmfrog.martlet.trade.exec.Exec;
 import com.kmfrog.martlet.trade.tac.TacBalanceSoloDunk;
+import com.kmfrog.martlet.trade.tac.TacInstrumentSoloDunk;
 import com.kmfrog.martlet.util.FeedUtils;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -170,7 +171,9 @@ public class Workbench implements Provider {
         // param);
         // Instrument instrument, Source src, TrackBook trackBook, Provider provider, Param args,
         // BrokerApiRestClient client, BigDecimal originBaseVolume, BigDecimal originQuoteVolume
-        TacBalanceSoloDunk solodunk = new TacBalanceSoloDunk(instrument, src, trackBook, this, param, client);
+        
+//        TacBalanceSoloDunk solodunk = new TacBalanceSoloDunk(instrument, src, trackBook, this, param, client);
+        TacInstrumentSoloDunk solodunk = new TacInstrumentSoloDunk(instrument, src, trackBook, this, client, param);
         solodunk.start();
         depthFeed.register(instrument, solodunk);
     }

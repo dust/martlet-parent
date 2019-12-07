@@ -27,17 +27,17 @@ public class LoexDepthHandler {
 
     public void reqDepth(Controller app) {
         for (String symbol : symbols) {
-            RestSnapshotRunnable r = new RestSnapshotRunnable(symbol, depthUrlFmt, "GET", null, null,
-                    listenersMap.get(symbol));
+            String url = String.format(depthUrlFmt, symbol);
+            RestSnapshotRunnable r = new RestSnapshotRunnable(url, "GET", null, null, listenersMap.get(symbol));
             app.submitTask(r);
         }
     }
 
-    public void onSnapshot(String symbol, String resp) {
-        if (listenersMap.containsKey(symbol)) {
-            listenersMap.get(symbol).onSnapshot(resp);
-            lastTs.set(System.currentTimeMillis());
-        }
-    }
+    // public void onSnapshot(String symbol, String resp) {
+    // if (listenersMap.containsKey(symbol)) {
+    // listenersMap.get(symbol).onSnapshot(resp);
+    // lastTs.set(System.currentTimeMillis());
+    // }
+    // }
 
 }

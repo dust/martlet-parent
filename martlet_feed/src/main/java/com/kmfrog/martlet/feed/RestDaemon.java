@@ -19,7 +19,7 @@ public class RestDaemon extends Thread {
     public RestDaemon(Source src, LoexDepthHandler handler,
             Controller app) {
        
-        super(String.format("%s-%s-%s", src, RestDaemon.class.getSimpleName()));
+        super(String.format("%s-%s", src, RestDaemon.class.getSimpleName()));
         source = src;
         this.handler = handler;
         this.app = app;

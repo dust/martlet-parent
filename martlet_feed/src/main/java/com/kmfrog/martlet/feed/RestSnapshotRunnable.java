@@ -16,7 +16,6 @@ public class RestSnapshotRunnable implements Runnable {
 
     private final String url;
     private final String method;
-    private final String symbol;
     private final Map<String, String> params;
     private final Map<String, String> headers;
 
@@ -24,9 +23,8 @@ public class RestSnapshotRunnable implements Runnable {
 
     private OkHttpClient client = new OkHttpClient();
 
-    public RestSnapshotRunnable(String symbol, String url, String method, Map<String, String> headers, Map<String, String> params,
+    public RestSnapshotRunnable(String url, String method, Map<String, String> headers, Map<String, String> params,
             SnapshotDataListener snapshotDataListener) {
-        this.symbol = symbol;
         this.url = url;
         this.method = method.toUpperCase();
         this.params = params;

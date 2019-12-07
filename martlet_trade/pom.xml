@@ -153,6 +153,10 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<additionalProperties>src/main/resources/*.properties</additionalProperties>
+					<addResources>src/main/resources/*.json</addResources>
+				</configuration>
 			</plugin>
 		</plugins>
 		<finalName>martlet-trade</finalName>

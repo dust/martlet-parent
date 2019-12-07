@@ -1,5 +1,7 @@
 package com.kmfrog.martlet.feed;
 
+import java.util.concurrent.Future;
+
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 
@@ -57,5 +59,8 @@ public interface Controller {
      * @param recvTs
      */
     void logTrade(Source src, Instrument instrument, long id, long price, long volume, long cnt, boolean isBuy, long ts, long recvTs);
+    
+    
+    Future<?> submitTask(Runnable r);
 
 }

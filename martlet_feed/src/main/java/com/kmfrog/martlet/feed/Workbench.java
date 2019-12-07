@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -21,8 +22,8 @@ import com.kmfrog.martlet.feed.impl.BhexDepthHandler;
 import com.kmfrog.martlet.feed.impl.BhexInstrumentDepth;
 import com.kmfrog.martlet.feed.impl.BikunDepthHandler;
 import com.kmfrog.martlet.feed.impl.BikunInstrumentDepth;
+import com.kmfrog.martlet.feed.impl.LoexDepthHandler;
 import com.kmfrog.martlet.feed.impl.LoexInstrumentDepth;
-import com.kmfrog.martlet.feed.loex.LoexApiRestClient;
 import com.kmfrog.martlet.feed.net.FeedBroadcast;
 import com.typesafe.config.Config;
 
@@ -77,6 +78,8 @@ public class Workbench implements Controller {
      * trade流websocket集合。`key`值为来源
      **/
     private final Map<Source, WebSocketDaemon> tradeWsDaemons;
+    
+    private final Map<Source, RestDaemon> restDaemons;
 
     /**
      * 深度ZMQ广播
@@ -120,6 +123,7 @@ public class Workbench implements Controller {
 
         tradeWsDaemons = new ConcurrentHashMap<>();
         depthWsDaemons = new ConcurrentHashMap<>();
+        restDaemons = new ConcurrentHashMap<>();
     }
 
     /**
@@ -169,10 +173,20 @@ public class Workbench implements Controller {
         executor.submit(r);
     }
 
+    public Future<?> submitTask(Runnable r) {
+        return executor.submit(r);
+    }
+
     static void startWebSocket(Map<Source, WebSocketDaemon> daemons, Source source, BaseWebSocketHandler handler) {
         WebSocketDaemon wsDaemon = new WebSocketDaemon(handler);
         daemons.put(source, wsDaemon);
         wsDaemon.keepAlive();
+    }
+    
+    static void startRestDepth(Map<Source, RestDaemon> daemons, Source source, LoexDepthHandler handler, Controller app) {
+        RestDaemon restDaemon = new RestDaemon(source, handler, app);
+        daemons.put(source, restDaemon);
+        restDaemon.start();
     }
 
     private void printSymbol(Instrument instrument) {
@@ -213,7 +227,7 @@ public class Workbench implements Controller {
             if (book != null) {
                 multiSrcBooks.get(mkt).put(instrument.asLong(), book);
                 String originText = book.getOriginText(mkt, C.MAX_LEVEL);
-//                System.out.println(originText);
+                // System.out.println(originText);
                 depthPusher.put(originText);
             }
         } catch (InterruptedException e) {
@@ -242,47 +256,64 @@ public class Workbench implements Controller {
         setupLoex(supportedInstruments.get(Source.Loex.name()));
     }
     
-    void setupLoex(List<Instrument> instruments) {
-    	String baseUrl = cfg.getString(C.LOEX_REST_URL);
-    	int size = instruments.size();
-    	WsDataListener[] listeners = new LoexInstrumentDepth[size];
-    	String[] instrumentArr = new String[size];
-    	for(int i=0; i<size; i++) {
-    		Instrument instrument = instruments.get(i);
-    		logger.info("{}:{}:{}", Source.Loex.name(), instrument.asString(), instrument.asLong());
-    		instrumentArr[i] = instrument.asString();
-    		IOrderBook book = makesureOrderBook(Source.Loex, instrument.asLong());
-    		try {
-    			listeners[i] = new LoexInstrumentDepth(instrument, book, Source.Loex, this);
-    		}catch(Exception ex) {
-    			ex.printStackTrace();
-    		}
-    	}
-    	
-    	BaseApiRestClient client = new LoexApiRestClient(baseUrl, cfg.getString("api.key.loex"), cfg.getString("api.key.loex"));
-    	MktDepthTracker mktDepthTracker = new MktDepthTracker(Source.Loex, instrumentArr, listeners, client, 1000);
-    	mktDepthTracker.start();
+//    void setupLoex(List<Instrument> instruments) {
+//    	String baseUrl = cfg.getString(C.LOEX_REST_URL);
+//    	int size = instruments.size();
+//    	WsDataListener[] listeners = new LoexInstrumentDepth[size];
+//    	String[] instrumentArr = new String[size];
+//    	for(int i=0; i<size; i++) {
+//    		Instrument instrument = instruments.get(i);
+//    		logger.info("{}:{}:{}", Source.Loex.name(), instrument.asString(), instrument.asLong());
+//    		instrumentArr[i] = instrument.asString();
+//    		IOrderBook book = makesureOrderBook(Source.Loex, instrument.asLong());
+//    		try {
+//    			listeners[i] = new LoexInstrumentDepth(instrument, book, Source.Loex, this);
+//    		}catch(Exception ex) {
+//    			ex.printStackTrace();
+//    		}
+//    	}
+//    	
+//    	BaseApiRestClient client = new LoexApiRestClient(baseUrl, cfg.getString("api.key.loex"), cfg.getString("api.key.loex"));
+//    	MktDepthTracker mktDepthTracker = new MktDepthTracker(Source.Loex, instrumentArr, listeners, client, 1000);
+//    	mktDepthTracker.start();
+//    }
+
+    private void setupLoex(List<Instrument> list) {
+        String depthUrl = "https://openapi.loex.io//open/api/market_dept?symbol=%s&type=step0";
+        int size = list.size();
+        SnapshotDataListener[] listeners = new LoexInstrumentDepth[size];
+        String[] instrumentArr = new String[size];
+        
+        for(int i=0; i<size; i++) {
+            Instrument instrument = list.get(i);
+            instrumentArr[i] = instrument.asString().toLowerCase();
+            IOrderBook book = makesureOrderBook(Source.Loex, instrument.asLong());
+            listeners[i] = new LoexInstrumentDepth(instrument, book, Source.Loex, this);
+        }
+        
+        LoexDepthHandler handler = new LoexDepthHandler(depthUrl, instrumentArr, listeners);
+        startRestDepth(restDaemons, Source.Loex, handler, this);
     }
-    
+
     void setupBikun(List<Instrument> instruments) {
-    	String wsUrl = cfg.getString(C.BIKUN_WS_URL);
-    	String depthFmt = cfg.getString(C.BIKUN_DEPTH_FMT);
-    	
-    	int size = instruments.size();
-    	WsDataListener[] listeners = new BikunInstrumentDepth[size];
-    	String[] instrumentArr = new String[size];
-    	
-    	for(int i=0; i<size; i++) {
-    		Instrument instrument = instruments.get(i);
-    		logger.info("{}:{}:{}", Source.Bikun.name(), instrument.asString(), instrument.asLong());
-    		instrumentArr[i] = instrument.asString();
-    		IOrderBook book = makesureOrderBook(Source.Bikun, instrument.asLong());
-    		listeners[i] = new BikunInstrumentDepth(instrument, book, Source.Bikun, this);
-    	}
-    	
-    	BikunDepthHandler handler = new BikunDepthHandler(wsUrl, depthFmt, instrumentArr, listeners);
-    	startWebSocket(depthWsDaemons, Source.Bikun, handler);
-    			
+        String wsUrl = cfg.getString(C.BIKUN_WS_URL);
+        String depthFmt = cfg.getString(C.BIKUN_DEPTH_FMT);
+
+        int size = instruments.size();
+        WsDataListener[] listeners = new BikunInstrumentDepth[size];
+        String[] instrumentArr = new String[size];
+
+        for (int i = 0; i < size; i++) {
+            Instrument instrument = instruments.get(i);
+            logger.info("{}:{}:{}", Source.Bikun.name(), instrument.asString(), instrument.asLong());
+            instrumentArr[i] = instrument.asString();
+            IOrderBook book = makesureOrderBook(Source.Bikun, instrument.asLong());
+            listeners[i] = new BikunInstrumentDepth(instrument, book, Source.Bikun, this);
+        }
+
+        BikunDepthHandler handler = new BikunDepthHandler(wsUrl, depthFmt, instrumentArr, listeners);
+        startWebSocket(depthWsDaemons, Source.Bikun, handler);
+
     }
 
     void setupBhex(List<Instrument> instruments) {

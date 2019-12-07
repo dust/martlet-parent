@@ -222,7 +222,7 @@ public class TacBalanceSoloDunk extends InstrumentSoloDunk {
             if (bestAskSize > 0 && bestAskPrice == openAskLevel.getPrice()
                     && openAskLevel.getSize() / (bestAskSize * 1.0) >= 0.9) {
                 if (bestAskSize < vMin) {
-                    // 小于最小订单数量，先撤单（因为api会拒绝）
+                    // 小于订单最小数量，先撤单（因为api会拒绝）
                     Set<Long> cancelIds = openAskLevel.getOrderIds();
                     TacCancelExec cancelExec = new TacCancelExec(cancelIds, client, provider, trackBook);
                     provider.submitExec(cancelExec);

@@ -59,6 +59,8 @@ public interface C {
     
     String BIKUN_WS_URL = "bikun.ws.url";
     String BIKUN_DEPTH_FMT = "bikun.depth.fmt";
+    
+    String LOEX_REST_URL = "api.base.url.loex";
 
     String PUB_DEPTH_HOST = "pub.depth.host";
     String PUB_DEPTH_PORT = "pub.depth.port";

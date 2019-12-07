@@ -13,6 +13,7 @@ import com.kmfrog.martlet.feed.BaseInstrumentDepth;
 import com.kmfrog.martlet.feed.Controller;
 import com.kmfrog.martlet.feed.Source;
 
+
 public class LoexInstrumentDepth extends BaseInstrumentDepth {
 
     private final Lock lock;
@@ -94,6 +95,44 @@ public class LoexInstrumentDepth extends BaseInstrumentDepth {
         }
 
         return null;
+//=======
+//public class LoexInstrumentDepth extends BaseInstrumentDepth{
+//	
+//	private final Lock lock;
+//
+//	public LoexInstrumentDepth(Instrument instrument, IOrderBook book, Source source, Controller controller) {
+//		super(instrument, book, source, controller);
+//
+//		lock = new ReentrantLock();
+//	}
+//	
+//	@Override
+//    public void onJSON(JSONObject root, boolean isSnapshot) {
+//		JSONObject data = root.getJSONObject("data");
+//		if(!data.containsKey("tick")) {
+//			return;
+//		}
+//		
+//		lock.lock();
+//		try {
+//			JSONObject main = root.getJSONObject("tick");
+//			JSONArray bids = main.getJSONArray("bids");
+//			JSONArray asks = main.getJSONArray("asks");
+//			book.clear(Side.BUY, source.ordinal());
+//			book.clear(Side.SELL, source.ordinal());
+//			updatePriceLevel(Side.BUY, bids);
+//			updatePriceLevel(Side.SELL, asks);
+//			
+//			lastTimestamp.set(System.currentTimeMillis());
+//			book.setLastUpdateTs(lastTimestamp.get());
+//			controller.resetBook(source, instrument, book);
+//		} catch(Exception ex) {
+//			ex.printStackTrace();
+//		} finally {
+//			lock.unlock();
+//		}
+//        
+//>>>>>>> 036b63179010f1c08cbe346121fb154568f3a0e0
     }
 
 }

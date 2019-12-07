@@ -11,11 +11,13 @@ import com.kmfrog.martlet.feed.SnapshotDataListener;
 public class LoexDepthHandler {
 
     private String[] symbols;
+    private final String depthUrlFmt;
     private Map<String, SnapshotDataListener> listenersMap;
     private AtomicLong lastTs = new AtomicLong(0L);
 
-    public LoexDepthHandler(String[] symbols, SnapshotDataListener[] listeners) {
+    public LoexDepthHandler(String depthUrlFmt, String[] symbols, SnapshotDataListener[] listeners) {
         super();
+        this.depthUrlFmt = depthUrlFmt;
         this.symbols = symbols;
         listenersMap = new ConcurrentHashMap<>();
         for (int i = 0; i < symbols.length; i++) {
@@ -23,7 +25,7 @@ public class LoexDepthHandler {
         }
     }
 
-    public void reqDepth(String depthUrlFmt, Controller app) {
+    public void reqDepth(Controller app) {
         for (String symbol : symbols) {
             RestSnapshotRunnable r = new RestSnapshotRunnable(symbol, depthUrlFmt, "GET", null, null,
                     listenersMap.get(symbol));

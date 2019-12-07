@@ -22,6 +22,7 @@ import com.kmfrog.martlet.feed.impl.BhexDepthHandler;
 import com.kmfrog.martlet.feed.impl.BhexInstrumentDepth;
 import com.kmfrog.martlet.feed.impl.BikunDepthHandler;
 import com.kmfrog.martlet.feed.impl.BikunInstrumentDepth;
+import com.kmfrog.martlet.feed.impl.LoexDepthHandler;
 import com.kmfrog.martlet.feed.impl.LoexInstrumentDepth;
 import com.kmfrog.martlet.feed.net.FeedBroadcast;
 import com.typesafe.config.Config;
@@ -77,6 +78,8 @@ public class Workbench implements Controller {
      * trade流websocket集合。`key`值为来源
      **/
     private final Map<Source, WebSocketDaemon> tradeWsDaemons;
+    
+    private final Map<Source, RestDaemon> restDaemons;
 
     /**
      * 深度ZMQ广播
@@ -120,6 +123,7 @@ public class Workbench implements Controller {
 
         tradeWsDaemons = new ConcurrentHashMap<>();
         depthWsDaemons = new ConcurrentHashMap<>();
+        restDaemons = new ConcurrentHashMap<>();
     }
 
     /**
@@ -165,7 +169,7 @@ public class Workbench implements Controller {
     }
 
     void startSnapshotTask(String url, SnapshotDataListener listener) {
-        Runnable r = new RestSnapshotRunnable(url, "GET", null, null, listener);
+        Runnable r = new RestSnapshotRunnable("", url, "GET", null, null, listener);
         executor.submit(r);
     }
 
@@ -177,6 +181,12 @@ public class Workbench implements Controller {
         WebSocketDaemon wsDaemon = new WebSocketDaemon(handler);
         daemons.put(source, wsDaemon);
         wsDaemon.keepAlive();
+    }
+    
+    static void startRestDepth(Map<Source, RestDaemon> daemons, Source source, LoexDepthHandler handler, Controller app) {
+        RestDaemon restDaemon = new RestDaemon(source, handler, app);
+        daemons.put(source, restDaemon);
+        restDaemon.start();
     }
 
     private void printSymbol(Instrument instrument) {
@@ -244,8 +254,32 @@ public class Workbench implements Controller {
         setupBhex(supportedInstruments.get(Source.Bhex.name()));
         setupBikun(supportedInstruments.get(Source.Bikun.name()));
         setupLoex(supportedInstruments.get(Source.Loex.name()));
-
     }
+    
+//    void setupLoex(List<Instrument> instruments) {
+//    	String baseUrl = cfg.getString(C.LOEX_REST_URL);
+//    	int size = instruments.size();
+//    	WsDataListener[] listeners = new LoexInstrumentDepth[size];
+//    	String[] instrumentArr = new String[size];
+//    	for(int i=0; i<size; i++) {
+//    		Instrument instrument = instruments.get(i);
+//    		logger.info("{}:{}:{}", Source.Loex.name(), instrument.asString(), instrument.asLong());
+//    		instrumentArr[i] = instrument.asString();
+//    		IOrderBook book = makesureOrderBook(Source.Loex, instrument.asLong());
+//    		try {
+//    			listeners[i] = new LoexInstrumentDepth(instrument, book, Source.Loex, this);
+//    		}catch(Exception ex) {
+//    			System.out.println("111"+instrument);
+//    			System.out.println("222"+book);
+//    			System.out.println("333"+this);
+//    			ex.printStackTrace();
+//    		}
+//    	}
+//    	
+//    	BaseApiRestClient client = new LoexApiRestClient(baseUrl, cfg.getString("api.key.loex"), cfg.getString("api.key.loex"));
+//    	MktDepthTracker mktDepthTracker = new MktDepthTracker(Source.Loex, instrumentArr, listeners, client, 5000);
+//    	mktDepthTracker.start();
+//    }
 
     private void setupLoex(List<Instrument> list) {
         String depthUrl = "https://openapi.loex.io//open/api/market_dept?symbol=%s&type=step0";
@@ -260,8 +294,8 @@ public class Workbench implements Controller {
             listeners[i] = new LoexInstrumentDepth(instrument, book, Source.Loex, this);
         }
         
-        LoexDepthHandler handler = new LoexDepthHandler(depthUrl, null, instrumentArr, listeners);
-        startWebSocket(depthWsDaemons, Source.Bikun, handler);
+        LoexDepthHandler handler = new LoexDepthHandler(depthUrl, instrumentArr, listeners);
+        startRestDepth(restDaemons, Source.Loex, handler, this);
     }
 
     void setupBikun(List<Instrument> instruments) {

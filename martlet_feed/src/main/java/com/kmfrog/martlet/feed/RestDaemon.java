@@ -9,21 +9,18 @@ import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.feed.impl.LoexDepthHandler;
 
 public class RestDaemon extends Thread {
-
+    
     private final Source source;
-    private final String depthUrl;
-    private final String tradeUrl;
     private final LoexDepthHandler handler;
     private final Controller app;
     private final AtomicBoolean isQuit = new AtomicBoolean(false);
     private final Logger logger = LoggerFactory.getLogger(RestDaemon.class);
 
-    public RestDaemon(Source src, Instrument instrument, String depthUrl, String tradeUrl, LoexDepthHandler handler,
+    public RestDaemon(Source src, LoexDepthHandler handler,
             Controller app) {
-        super(String.format("%s-%s-%s", src, instrument.asString(), RestDaemon.class.getSimpleName()));
+       
+        super(String.format("%s-%s-%s", src, RestDaemon.class.getSimpleName()));
         source = src;
-        this.depthUrl = depthUrl;
-        this.tradeUrl = tradeUrl;
         this.handler = handler;
         this.app = app;
     }
@@ -33,7 +30,7 @@ public class RestDaemon extends Thread {
         try {
             while (!isQuit.get()) {
                 try {
-                    handler.reqDepth(depthUrl, app);
+                    handler.reqDepth(app);
                     Thread.sleep(800L);
                 } catch (InterruptedException ex) {
                     isQuit.compareAndSet(false, true);

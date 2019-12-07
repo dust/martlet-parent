@@ -13,5 +13,6 @@ public enum Source {
     CoinbasePro,
     Bitrue,
     Bhex,
-    Bikun
+    Bikun,
+    Loex
 }

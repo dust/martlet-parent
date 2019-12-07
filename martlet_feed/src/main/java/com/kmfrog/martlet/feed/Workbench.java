@@ -21,6 +21,8 @@ import com.kmfrog.martlet.feed.impl.BhexDepthHandler;
 import com.kmfrog.martlet.feed.impl.BhexInstrumentDepth;
 import com.kmfrog.martlet.feed.impl.BikunDepthHandler;
 import com.kmfrog.martlet.feed.impl.BikunInstrumentDepth;
+import com.kmfrog.martlet.feed.impl.LoexInstrumentDepth;
+import com.kmfrog.martlet.feed.loex.LoexApiRestClient;
 import com.kmfrog.martlet.feed.net.FeedBroadcast;
 import com.typesafe.config.Config;
 
@@ -237,6 +239,32 @@ public class Workbench implements Controller {
     public void start(Map<String, List<Instrument>> supportedInstruments) {
         setupBhex(supportedInstruments.get(Source.Bhex.name()));
         setupBikun(supportedInstruments.get(Source.Bikun.name()));
+        setupLoex(supportedInstruments.get(Source.Loex.name()));
+    }
+    
+    void setupLoex(List<Instrument> instruments) {
+    	String baseUrl = cfg.getString(C.LOEX_REST_URL);
+    	int size = instruments.size();
+    	WsDataListener[] listeners = new LoexInstrumentDepth[size];
+    	String[] instrumentArr = new String[size];
+    	for(int i=0; i<size; i++) {
+    		Instrument instrument = instruments.get(i);
+    		logger.info("{}:{}:{}", Source.Loex.name(), instrument.asString(), instrument.asLong());
+    		instrumentArr[i] = instrument.asString();
+    		IOrderBook book = makesureOrderBook(Source.Loex, instrument.asLong());
+    		try {
+    			listeners[i] = new LoexInstrumentDepth(instrument, book, Source.Loex, this);
+    		}catch(Exception ex) {
+    			System.out.println("111"+instrument);
+    			System.out.println("222"+book);
+    			System.out.println("333"+this);
+    			ex.printStackTrace();
+    		}
+    	}
+    	
+    	BaseApiRestClient client = new LoexApiRestClient(baseUrl, cfg.getString("api.key.loex"), cfg.getString("api.key.loex"));
+    	MktDepthTracker mktDepthTracker = new MktDepthTracker(Source.Loex, instrumentArr, listeners, client, 5000);
+    	mktDepthTracker.start();
     }
     
     void setupBikun(List<Instrument> instruments) {

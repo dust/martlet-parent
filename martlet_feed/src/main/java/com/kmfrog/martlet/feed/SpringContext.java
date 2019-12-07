@@ -29,6 +29,7 @@ public class SpringContext implements CommandLineRunner {
         List<Instrument> instruments = FeedUtils.parseInstruments(cfg.getString("instruments"));
         List<Instrument> triangleInstruments = FeedUtils.parseInstruments(cfg.getString("triangle.instruments"));
         List<Instrument> bikunInstruments = FeedUtils.parseInstruments(cfg.getString("bikun.instruments"));
+        List<Instrument> loexInstruments = FeedUtils.parseInstruments(cfg.getString("loex.instruments"));
         
         // Map<String, Object> cfgArgs = FeedUtils.parseConfigArgs(cfg.getString("hedge.args"));
         Map<String, List<Instrument>> all = new HashMap<String, List<Instrument>>();
@@ -37,6 +38,7 @@ public class SpringContext implements CommandLineRunner {
         bhexInstruments.addAll(triangleInstruments);
         all.put(Source.Bhex.name(), bhexInstruments);
         all.put(Source.Bikun.name(), bikunInstruments);
+        all.put(Source.Loex.name(), loexInstruments);
         
         Workbench workbench = new Workbench(cfg);
         workbench.start(all);

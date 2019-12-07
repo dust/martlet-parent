@@ -20,9 +20,12 @@ import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.DepthFeed;
 import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.domain.TradeLog;
+import com.kmfrog.martlet.trade.bikun.BikunApiRestClient;
+import com.kmfrog.martlet.trade.bikun.BikunInstrumentSoloDunk;
 import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
 import com.kmfrog.martlet.trade.exec.Exec;
 import com.kmfrog.martlet.trade.tac.TacBalanceSoloDunk;
+import com.kmfrog.martlet.trade.tac.TacInstrumentSoloDunk;
 import com.kmfrog.martlet.util.FeedUtils;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -168,9 +171,19 @@ public class Workbench implements Provider {
         // param);
         // Instrument instrument, Source src, TrackBook trackBook, Provider provider, Param args,
         // BrokerApiRestClient client, BigDecimal originBaseVolume, BigDecimal originQuoteVolume
-        TacBalanceSoloDunk solodunk = new TacBalanceSoloDunk(instrument, src, trackBook, this, param, client);
+        
+//        TacBalanceSoloDunk solodunk = new TacBalanceSoloDunk(instrument, src, trackBook, this, param, client);
+        TacInstrumentSoloDunk solodunk = new TacInstrumentSoloDunk(instrument, src, trackBook, this, client, param);
         solodunk.start();
         depthFeed.register(instrument, solodunk);
+    }
+    
+    public void startBikunHedgeInstrument(Source src, Instrument instrument, Param param, BikunApiRestClient client) {
+    	TrackBook trackBook = makesureTrackBook(instrument);
+    	makesureTradeLog(src, instrument.asLong());
+     	BikunInstrumentSoloDunk solodunk =  new BikunInstrumentSoloDunk(instrument, src, trackBook, this, client, param);
+     	solodunk.start();
+     	depthFeed.register(instrument, solodunk);
     }
 
     public void startOccupyInstrument(Source src, Instrument ca, Instrument ab, Instrument cb,
@@ -205,7 +218,13 @@ public class Workbench implements Provider {
         for (String instrumentName : instrumentNames) {
             startHedgeInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);
         }
-
+    }
+    
+    public void startBikun(Source src, String[] instrumentNames, Map<String, Instrument> instruments,
+    	Map<String, Param> cfgArgs, BikunApiRestClient client) {
+    	for(String instrumentName : instrumentNames) {
+    		startBikunHedgeInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);
+    	}
     }
 
     public static void main(String[] args) {

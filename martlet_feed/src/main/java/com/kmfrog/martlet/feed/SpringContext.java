@@ -1,7 +1,9 @@
 package com.kmfrog.martlet.feed;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -26,10 +28,18 @@ public class SpringContext implements CommandLineRunner {
         
         List<Instrument> instruments = FeedUtils.parseInstruments(cfg.getString("instruments"));
         List<Instrument> triangleInstruments = FeedUtils.parseInstruments(cfg.getString("triangle.instruments"));
+        List<Instrument> bikunInstruments = FeedUtils.parseInstruments(cfg.getString("bikun.instruments"));
+        List<Instrument> loexInstruments = FeedUtils.parseInstruments(cfg.getString("loex.instruments"));
+        
         // Map<String, Object> cfgArgs = FeedUtils.parseConfigArgs(cfg.getString("hedge.args"));
-        List<Instrument> all = new ArrayList<>();
-        all.addAll(instruments);
-        all.addAll(triangleInstruments);
+        Map<String, List<Instrument>> all = new HashMap<String, List<Instrument>>();
+        List<Instrument> bhexInstruments = new ArrayList<>();
+        bhexInstruments.addAll(instruments);
+        bhexInstruments.addAll(triangleInstruments);
+        all.put(Source.Bhex.name(), bhexInstruments);
+        all.put(Source.Bikun.name(), bikunInstruments);
+        all.put(Source.Loex.name(), loexInstruments);
+        
         Workbench workbench = new Workbench(cfg);
         workbench.start(all);
 

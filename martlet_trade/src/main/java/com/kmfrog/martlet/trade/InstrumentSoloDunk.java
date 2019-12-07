@@ -16,6 +16,7 @@ import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
 import com.kmfrog.martlet.util.FeedUtils;
+import com.kmfrog.martlet.util.Fmt;
 
 /**
  * 以刷量为目的的对敲交易
@@ -75,8 +76,16 @@ public abstract class InstrumentSoloDunk extends Thread implements DataChangeLis
                 long ask1 = lastBook.getBestAskPrice();
                 long price = FeedUtils.between(bid1, ask1);
                 System.out.println(getClass().toString() + bid1 + "|" + ask1 + "|" + price);
-                placeHedgeOrder(price, (ask1 - bid1) / instrument.getPriceFactor(), lastBook);
-
+                String bidStr = Fmt.fmtNum(bid1, instrument.getPriceFractionDigits(), instrument.getShowPriceFractionDigits());
+                String askStr = Fmt.fmtNum(ask1, instrument.getPriceFractionDigits(), instrument.getShowPriceFractionDigits());
+                String priceStr = Fmt.fmtNum(price, instrument.getPriceFractionDigits(), instrument.getShowPriceFractionDigits());
+                System.out.println(getClass().toString() + bidStr + "|" + askStr + "|" + priceStr);
+                if(!priceStr.equals(bidStr) && !priceStr.equals(askStr)) {
+                	placeHedgeOrder(price, (ask1 - bid1) / instrument.getPriceFactor(), lastBook);
+                }
+//                if(price != bid1 && price != ask1) {
+//                	placeHedgeOrder(price, (ask1 - bid1) / instrument.getPriceFactor(), lastBook);
+//                }
             } catch (InterruptedException ex) {
                 logger.warn(ex.getMessage(), ex);
             } catch (Exception ex) {

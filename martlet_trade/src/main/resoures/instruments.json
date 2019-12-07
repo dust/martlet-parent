@@ -23,6 +23,12 @@
 			"p": 8,
 			"v": 2,
 			"showPrice": 6
+		},
+		{
+			"name": "AICUSDT",
+			"p": 4,
+			"v": 2,
+			"showPrice": 4
 		}
 	],
 	"args": [
@@ -58,9 +64,19 @@
 			"minSleepMillis": 3000,
 			"maxSleepMillis": 17000,
 			"minVolume": 10000,
-			"maxVolume": 59300,
+			"maxVolume": 20000,
 			"originBaseVolume":"200000",
 			"originQuoteVolume":"392.17"
+		}
+		,
+		{
+			"name": "AICUSDT",
+			"minSleepMillis": 3000,
+			"maxSleepMillis": 17000,
+			"minVolume": 10000,
+			"maxVolume": 59300,
+			"originBaseVolume":"1000000",
+			"originQuoteVolume":"143"
 		}
 	]
 }

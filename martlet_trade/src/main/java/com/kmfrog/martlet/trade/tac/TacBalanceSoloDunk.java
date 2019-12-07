@@ -46,10 +46,15 @@ public class TacBalanceSoloDunk extends InstrumentSoloDunk {
     }
 
     @Override
-    public void placeHedgeOrder(long price, long spreadSize, IOrderBook book) {
-        placeBBO();
+    public void placeHedgeOrder(long price, long spreadSize, IOrderBook book) {    
+//    	if(isLevelSpaceNormal(Side.SELL) && isLevelSpaceNormal(Side.BUY)) {
+//	        placeBBO();
+//	        putBBO();
+//    	}
+    	placeBBO();
         putBBO();
         retrieveBalance();
+        
     }
 
     private void retrieveBalance() {
@@ -92,9 +97,14 @@ public class TacBalanceSoloDunk extends InstrumentSoloDunk {
             logger.info("{} {} last trade price / avg, 0.9 or 1.1. {}|{}|{}", source, instrument.asString(), avg,
                     last, logs.count());
         }
-        // 撤掉3档以外所有订单。
-        cancelAfterLevel3Ask(lastBook);
+        
+        // 撤掉1档以外的多有订单
+        cancelAfterLevel1Ask(lastBook);
         cancelAfterLevel3Bid(lastBook);
+        
+        // 撤掉3档以外所有订单。
+//        cancelAfterLevel3Ask(lastBook);
+//        cancelAfterLevel3Bid(lastBook);
     }
 
     private double div(BigDecimal d1, BigDecimal d2) {
@@ -137,6 +147,32 @@ public class TacBalanceSoloDunk extends InstrumentSoloDunk {
             lastOrder.set(System.currentTimeMillis());
         }
     }
+    
+    private void cancelAfterLevel1Ask(IOrderBook caBook) {
+        LongSortedSet prices = caBook.getAskPrices();
+        long level1 = prices.size() > 1 ? prices.toArray(new long[prices.size()])[0] : 0;
+        if (level1 > 0) {
+            Set<Long> afterLevel1 = trackBook.getOrdersBetter(Side.SELL, level1);
+            if (afterLevel1.size() > 0) {
+                TacCancelExec cancelExec = new TacCancelExec(afterLevel1, client, provider, trackBook);
+                provider.submitExec(cancelExec);
+            }
+        }
+    }
+
+    private void cancelAfterLevel1Bid(IOrderBook caBook) {
+        LongSortedSet prices = caBook.getBidPrices();
+        long level1 = prices.size() > 1 ? prices.toArray(new long[prices.size()])[0] : 0;
+
+        if (level1 > 0) {
+            Set<Long> afterLevel1 = trackBook.getOrdersBetter(Side.BUY, level1);
+            if (afterLevel1.size() > 0) {
+                TacCancelExec cancelExec = new TacCancelExec(afterLevel1, client, provider, trackBook);
+                provider.submitExec(cancelExec);
+            }
+        }
+    }
+
 
     private void cancelAfterLevel3Ask(IOrderBook caBook) {
         LongSortedSet prices = caBook.getAskPrices();
@@ -216,5 +252,21 @@ public class TacBalanceSoloDunk extends InstrumentSoloDunk {
             }
         }
 
+    }
+    
+    private boolean isLevelSpaceNormal(Side side) {
+    	LongSortedSet prices = side == Side.SELL ? lastBook.getAskPrices() : lastBook.getBidPrices();
+    	if(prices.size() < 3) {
+    		return true;
+    	}
+    	Long[] pricesArray = prices.toArray(new Long[prices.size()]);
+    	long level1 = side == Side.SELL ? pricesArray[0] : pricesArray[3];
+    	long level2 = pricesArray[1];
+    	long level3 = side == Side.SELL ? pricesArray[2] : pricesArray[0];
+//    	System.out.println(String.format("###### %s %s %s %s %s", String.valueOf(level1), String.valueOf(level2), String.valueOf(level3), String.valueOf((level2 * 1.0) / (level1 * 1.0)), String.valueOf((level3 * 1.0) / (level2 * 1.0))));
+    	if((level2 * 1.0) / (level1 * 1.0) > 1.15 || (level3 * 1.0) / (level2 * 1.0) > 1.15) {
+    		return false;
+    	}
+    	return true;
     }
 }

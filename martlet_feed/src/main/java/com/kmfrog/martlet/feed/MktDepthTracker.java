@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSONObject;
+
 
 public class MktDepthTracker extends Thread{
 	
@@ -35,7 +37,10 @@ public class MktDepthTracker extends Thread{
 				String[] symbols = new String[listenersMap.size()];
 				listenersMap.keySet().toArray(symbols);
 				for(String symbol: symbols) {
-					client.getDepth(symbol);
+					JSONObject jsn = client.getDepth(symbol);
+					if(listenersMap.containsKey(symbol)) {
+						listenersMap.get(symbol).onJSON(jsn, true);
+					}
 				}
 			}catch(Exception ex) {
 				logger.warn(ex.getMessage(), ex);

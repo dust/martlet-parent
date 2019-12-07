@@ -10,10 +10,15 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.parser.DefaultJSONParser;
+import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.feed.BaseApiRestClient;
 
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class LoexApiRestClient extends BaseApiRestClient{
@@ -23,8 +28,107 @@ public class LoexApiRestClient extends BaseApiRestClient{
 		super(baseUrl, apiKey, secret);
 	}
 	
+	public Long limitBuy(Instrument instrument, String quantityStr, String priceStr) {
+		Response res = this.limitOrder("BUY", instrument.asString().toLowerCase(), quantityStr, priceStr);
+		if(res.isSuccessful()) {
+			try {
+				String str = res.body().string();
+				System.out.println(str);
+				JSONObject jsonObject = JSONObject.parseObject(str);
+				if(jsonObject.getIntValue("code") == 0) {
+					return jsonObject.getJSONObject("data").getLong("order_id");
+				}else {
+					logger.warn(" {} submit buy newOrder failed: {} {} {}", instrument.asString(), quantityStr, priceStr);
+					return null;
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+	
+	public Long limitSell(Instrument instrument, String quantityStr, String priceStr) {
+		Response res = this.limitOrder("SELL", instrument.asString().toLowerCase(), quantityStr, priceStr);
+		if(res.isSuccessful()) {
+			try {
+				String str = res.body().string();
+				System.out.println(str);
+				JSONObject jsonObject = JSONObject.parseObject(str);
+				if(jsonObject.getIntValue("code") == 0) {
+					return jsonObject.getJSONObject("data").getLong("order_id");
+				}else {
+					logger.warn(" {} submit sell newOrder failed:　{} {}", instrument.asString(), quantityStr, priceStr);
+					return null;
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+	
+	private Response limitOrder(String side, String symbol, String volume, String price) {
+		HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("api_key", apiKey);
+        params.put("symbol", symbol.toLowerCase());
+        params.put("time", System.currentTimeMillis()/1000);
+        params.put("symbol", symbol);
+        params.put("volume", volume);
+        params.put("side", side);
+        params.put("type", "1");
+        params.put("price", price);
+
+        String[] keys = new String[params.keySet().size()];
+        params.keySet().toArray(keys);
+        Arrays.sort(keys);
+
+        StringBuilder p = new StringBuilder();
+        StringBuilder reqBody = new StringBuilder();
+        for (String key : keys) {
+            p.append(key).append(params.get(key));
+            reqBody.append(key).append("=").append(params.get(key)).append("&");
+        }
+        p.append(secret);
+        
+        MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("MD5");
+			byte[] bytes = md.digest(p.toString().getBytes("utf-8"));
+	        String sign = bytesToHex(bytes);
+	        reqBody.append("sign=").append(sign);
+		} catch (NoSuchAlgorithmException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+        OkHttpClient client = new OkHttpClient();
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+        RequestBody body = RequestBody.create(mediaType, reqBody.toString());
+		Request request = new Request.Builder()
+				  .url(baseUrl + "/open/api/create_order")
+				  .post(body)
+				  .addHeader("Content-Type", "application/x-www-form-urlencoded")
+				  .build();
+
+		try {
+			return client.newCall(request).execute();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			
+		}
+		return null;
+	}
+	
 	@Override
-	public void getDepth(String symbol) {
+	public JSONObject getDepth(String symbol) {
 		HashMap<String, Object> params = new HashMap<String, Object>();
         params.put("api_key", apiKey);
         params.put("symbol", symbol.toLowerCase());
@@ -58,7 +162,6 @@ public class LoexApiRestClient extends BaseApiRestClient{
 		}
         
         OkHttpClient client = new OkHttpClient();
-        System.out.println("######"+baseUrl);
 		Request request = new Request.Builder()
 				  .url(baseUrl + "/open/api/market_dept?"+reqBody.toString())
 				  .get()
@@ -68,7 +171,9 @@ public class LoexApiRestClient extends BaseApiRestClient{
 		try {
 			Response res =  client.newCall(request).execute();
 			if(res.isSuccessful()) {
-				System.out.println(res.body().string());
+				String msg = res.body().string();
+				DefaultJSONParser parser = new DefaultJSONParser(msg);
+				return parser.parseObject();
 			}else {
 				System.out.println(res.body().string());
 			}
@@ -78,6 +183,7 @@ public class LoexApiRestClient extends BaseApiRestClient{
 		} finally {
 			
 		}
+		return null;
 	}
 	
 	private static String bytesToHex(byte[] md5Array) {

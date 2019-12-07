@@ -31,7 +31,7 @@ public class LoexInstrumentDepth extends BaseInstrumentDepth{
 		
 		lock.lock();
 		try {
-			JSONObject main = root.getJSONObject("tick");
+			JSONObject main = data.getJSONObject("tick");
 			JSONArray bids = main.getJSONArray("bids");
 			JSONArray asks = main.getJSONArray("asks");
 			book.clear(Side.BUY, source.ordinal());

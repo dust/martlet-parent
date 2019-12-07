@@ -255,15 +255,12 @@ public class Workbench implements Controller {
     		try {
     			listeners[i] = new LoexInstrumentDepth(instrument, book, Source.Loex, this);
     		}catch(Exception ex) {
-    			System.out.println("111"+instrument);
-    			System.out.println("222"+book);
-    			System.out.println("333"+this);
     			ex.printStackTrace();
     		}
     	}
     	
     	BaseApiRestClient client = new LoexApiRestClient(baseUrl, cfg.getString("api.key.loex"), cfg.getString("api.key.loex"));
-    	MktDepthTracker mktDepthTracker = new MktDepthTracker(Source.Loex, instrumentArr, listeners, client, 5000);
+    	MktDepthTracker mktDepthTracker = new MktDepthTracker(Source.Loex, instrumentArr, listeners, client, 1000);
     	mktDepthTracker.start();
     }
     

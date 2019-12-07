@@ -1,5 +1,7 @@
 package com.kmfrog.martlet.feed;
 
+import com.alibaba.fastjson.JSONObject;
+
 public abstract class BaseApiRestClient {
 	
 	protected final String baseUrl;
@@ -12,8 +14,6 @@ public abstract class BaseApiRestClient {
 		this.secret = secret;
 	}
 	
-	public void getDepth(String symbol) {
-		
-	}
+	public abstract JSONObject getDepth(String symbol);
 
 }

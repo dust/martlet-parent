@@ -20,10 +20,12 @@ import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.DepthFeed;
 import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.domain.TradeLog;
+import com.kmfrog.martlet.feed.loex.LoexApiRestClient;
 import com.kmfrog.martlet.trade.bikun.BikunApiRestClient;
 import com.kmfrog.martlet.trade.bikun.BikunInstrumentSoloDunk;
 import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
 import com.kmfrog.martlet.trade.exec.Exec;
+import com.kmfrog.martlet.trade.loex.LoexInstrumentSoloDunk;
 import com.kmfrog.martlet.trade.tac.TacBalanceSoloDunk;
 import com.kmfrog.martlet.trade.tac.TacInstrumentSoloDunk;
 import com.kmfrog.martlet.util.FeedUtils;
@@ -178,6 +180,14 @@ public class Workbench implements Provider {
         depthFeed.register(instrument, solodunk);
     }
     
+    public void startLoexHedgeInstrument(Source src, Instrument instrument, Param param, LoexApiRestClient client) {
+    	TrackBook trackBook = makesureTrackBook(instrument);
+    	makesureTradeLog(src, instrument.asLong());
+    	LoexInstrumentSoloDunk solodunk = new LoexInstrumentSoloDunk(instrument, src, trackBook, this, param, client);
+    	solodunk.start();
+    	depthFeed.register(instrument,  solodunk);
+    }
+    
     public void startBikunHedgeInstrument(Source src, Instrument instrument, Param param, BikunApiRestClient client) {
     	TrackBook trackBook = makesureTrackBook(instrument);
     	makesureTradeLog(src, instrument.asLong());
@@ -224,6 +234,13 @@ public class Workbench implements Provider {
     	Map<String, Param> cfgArgs, BikunApiRestClient client) {
     	for(String instrumentName : instrumentNames) {
     		startBikunHedgeInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);
+    	}
+    }
+    
+    public void startLoex(Source src, String[] instrumentNames, Map<String, Instrument> instruments,
+    	Map<String, Param> cfgArgs, LoexApiRestClient client) {
+    	for(String instrumentName : instrumentNames) {
+    		startLoexHedgeInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);
     	}
     }
 

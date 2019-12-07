@@ -169,7 +169,7 @@ public class Workbench implements Controller {
     }
 
     void startSnapshotTask(String url, SnapshotDataListener listener) {
-        Runnable r = new RestSnapshotRunnable("", url, "GET", null, null, listener);
+        Runnable r = new RestSnapshotRunnable(url, "GET", null, null, listener);
         executor.submit(r);
     }
 

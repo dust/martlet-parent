@@ -87,8 +87,8 @@
 			"name": "MCGTUSDT",
 			"minSleepMillis": 3000,
 			"maxSleepMillis": 17000,
-			"minVolume": 20000,
-			"maxVolume": 118600,
+			"minVolume": 200000,
+			"maxVolume": 718600,
 			"originBaseVolume":"1000000",
 			"originQuoteVolume":"143"
 		}

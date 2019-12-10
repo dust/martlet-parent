@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.feed.Source;
+import com.kmfrog.martlet.feed.loex.LoexApiRestClient;
 import com.kmfrog.martlet.trade.bikun.BikunApiRestClient;
 import com.kmfrog.martlet.trade.config.InstrumentsJson;
 import com.kmfrog.martlet.trade.config.InstrumentsJson.JsonInstrument;
@@ -61,6 +62,9 @@ class SpringContext implements CommandLineRunner {
     @Value("${bikun.hedge.items}")
     private String[] bikunHedgeEntrys;
     
+    @Value("${loex.hedge.items}")
+    private String[] loexHedgeEntrys;
+    
     @Value("${api.base.url.bikun}")
     private String bikunBaseUrl;
     
@@ -69,6 +73,15 @@ class SpringContext implements CommandLineRunner {
     
     @Value("${api.secret.bikun}")
     private String bikunSecret;
+    
+    @Value("${api.base.url.loex}")
+    private String loexBaseUrl;
+    
+    @Value("${api.key.loex}")
+    private String loexApiKey;
+    
+    @Value("${api.secret.loex}")
+    private String loexSecret;
 
 //    @Autowired
 //    InstrumentArgs instrumentArgs;
@@ -85,6 +98,7 @@ class SpringContext implements CommandLineRunner {
 
         BrokerApiRestClient client = BrokerApiClientFactory.newInstance(baseUrl, apiKey, secret).newRestClient();
         BikunApiRestClient bikunClient = new BikunApiRestClient(bikunBaseUrl, bikunApiKey, bikunSecret);
+        LoexApiRestClient loexClient = new LoexApiRestClient(loexBaseUrl, loexApiKey, loexSecret);
         
         List<JsonInstrument> jsonInstruments = instrumentJson.getSymbols();
         // Map<String, >
@@ -101,6 +115,7 @@ class SpringContext implements CommandLineRunner {
                 .collect(Collectors.toMap(Param::getName, v -> v));
         app.start(Source.Bhex, hedgeEntrys, instrumentMap, instrumentArgsMap, client);
         app.startBikun(Source.Bikun, bikunHedgeEntrys, instrumentMap, instrumentArgsMap, bikunClient);
+        app.startLoex(Source.Loex, loexHedgeEntrys, instrumentMap, instrumentArgsMap, loexClient);
         app.startOpenOrderTracker(Source.Bhex, instrumentMap.values().toArray(new Instrument[instrumentMap.size()]), client);
 
         // app.startHedgeInstrument(Source.Bhex, hntcbtc, buildConfigArgs(4000, 19000, 50000, 13390000), client);

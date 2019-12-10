@@ -30,7 +30,6 @@ public class LoexInstrumentDepth extends BaseInstrumentDepth {
 
     @Override
     public void onJSON(JSONObject tick, boolean isSnapshot) {
-
         
 
         // JSONArray bids = tick.getJSONArray("buys");
@@ -41,7 +40,7 @@ public class LoexInstrumentDepth extends BaseInstrumentDepth {
             if (isSnapshot) {
                 book.clear(Side.BUY, source.ordinal());
                 book.clear(Side.SELL, source.ordinal());
-                JSONArray bids = tick.getJSONArray("buys");
+                JSONArray bids = tick.getJSONArray("bids");
                 JSONArray asks = tick.getJSONArray("asks");
                 updatePriceLevel(Side.BUY, bids);
                 updatePriceLevel(Side.SELL, asks);

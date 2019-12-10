@@ -274,6 +274,7 @@
 					<target>${java.version}</target>
 					<excludes>
 						<exclude>application.properties</exclude>
+						<exclude>META-INF/app.properties</exclude>
 					</excludes>
 				</configuration>
 			</plugin>

@@ -5,9 +5,9 @@ public interface InstrumentTimeSpan {
     long getTimestamp();
 
     long getPrice();
-    
-    long getVolume();
 
     long getInstrument();
+    
+    long getVolume();
 
 }

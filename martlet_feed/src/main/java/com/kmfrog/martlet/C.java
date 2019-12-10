@@ -40,6 +40,13 @@ public interface C {
     int SELL_FIRST_RATIO = 80;
 
     ///////////////////// configuration /////////////////////
+    String ALL_SUPPORTED_SYMBOLS = "${supported.symbols}";
+    String BINANCE_SUPPORTED = "${binance.supported}";
+    String BIKUN_SUPPORTED = "${bikun.supported}";
+    String LOEX_SUPPORTED = "${loex.supported}";
+    String TAC_SUPPORTED = "${tac.supported:[]}";
+    
+    
     String BINANCE_WS_DEPTH = "binance.ws.depth.url";
     String BINANCE_WS_TRADE = "binance.ws.trade.url";
     String BINANCE_REST_URL = "binance.rest.depth.url";
@@ -62,12 +69,12 @@ public interface C {
     
     String LOEX_REST_URL = "api.base.url.loex";
 
-    String PUB_DEPTH_HOST = "pub.depth.host";
-    String PUB_DEPTH_PORT = "pub.depth.port";
-    String PUB_TRADE_HOST = "pub.trade.host";
-    String PUB_TRADE_PORT = "pub.trade.port";
-    String PUB_DEPTH_IO_THREAD_CNT = "pub.depth.io.thread.cnt";
-    String PUB_TRADE_IO_THREAD_CNT = "pub.trade.io.thread.cnt";
+    String PUB_DEPTH_HOST = "${pub.depth.host}";
+    String PUB_DEPTH_PORT = "${pub.depth.port}";
+    String PUB_TRADE_HOST = "${pub.trade.host}";
+    String PUB_TRADE_PORT = "${pub.trade.port}";
+    String PUB_DEPTH_IO_THREAD_CNT = "${pub.depth.io.thread.cnt}";
+    String PUB_TRADE_IO_THREAD_CNT = "${pub.trade.io.thread.cnt}";
     
     
    

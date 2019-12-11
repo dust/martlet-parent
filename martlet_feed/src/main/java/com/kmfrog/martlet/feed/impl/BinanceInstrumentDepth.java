@@ -44,7 +44,7 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
         long evtFirstId = root.getLongValue("U");
         long evtLastId = root.getLongValue("u");
 
-        // logger.info("onJSON {}|{}|{}, {}",lastUpdateId.get(), evtFirstId, evtLastId, lastSnapshotId.get());
+//         logger.info("onJSON {}|{}|{}, {}",lastUpdateId.get(), evtFirstId, evtLastId, lastSnapshotId.get());
         if (!evtName.equalsIgnoreCase("depthUpdate") || !symbol.equalsIgnoreCase(instrument.asString())) {
             return;
         }
@@ -99,7 +99,7 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
             // System.out.println("\n%%%%%%%%%%%%%%%%%%%%\n");
             lock.lock();
             try {
-                if (lastSnapshotId.get() == 0L) {
+                if (lastSnapshotId.get() == 0L && bids!=null && asks!=null) {
                     updatePriceLevel(Side.BUY, bids);
                     updatePriceLevel(Side.SELL, asks);
                     lastSnapshotId.set(root.getLongValue("lastUpdateId"));

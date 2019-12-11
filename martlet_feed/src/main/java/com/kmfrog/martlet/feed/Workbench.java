@@ -376,7 +376,7 @@ public class Workbench implements Controller {
             Instrument instrument = instruments.get(symbol);
 
             // 确认聚合订单簿及聚合线程开始工作。
-            makesureAggregateOrderBook(instrument);
+//            makesureAggregateOrderBook(instrument);
             IOrderBook binanceBook = makesureOrderBook(Source.Binance, instrument.asLong());
             binanceListeners[idx] = new BinanceInstrumentDepth(instrument, binanceBook, this);
             // String binanceSnapshotUrl = String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10",

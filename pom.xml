@@ -16,7 +16,6 @@
 
   <module>martlet_trade</module>
   <module>martlet_feed</module>
-  <module>martlet-maker</module>
     <module>martlet_maker</module>
   </modules>
 </project>

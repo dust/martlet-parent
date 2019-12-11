@@ -33,11 +33,12 @@ public class PlaceOrderExec extends Exec{
 	@Override
 	public void run() {
 		try {
+		    int initStatus = 0;
 			orders.stream().forEach((o)->{
 				depthService.insertOrder(o);
 				long price = o.getPrice().multiply(BigDecimal.valueOf(instrument.getPriceFactor())).longValue();
                 long size = o.getVolume().multiply(BigDecimal.valueOf(instrument.getSizeFactor())).longValue();
-                trackBook.entry(o.getId(), o.getSide(), price, size);
+                trackBook.entry(o.getId(), o.getSide(), price, size, initStatus);
 				
 			});
 		} catch (Exception ex) {

@@ -8,8 +8,7 @@
  */
 package com.kmfrog.martlet.util;
 
-import static com.kmfrog.martlet.C.POWERS_OF_TEN;
-
+import static com.kmfrog.martlet.C.*;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.time.LocalTime;
@@ -40,21 +39,14 @@ public class Fmt {
     public static String fmtDec(BigDecimal dec, int fractionDigits) {
         DecimalFormat decFmt = new DecimalFormat(StringUtils.rightPad("0.", 2 + fractionDigits, "0"));
         return decFmt.format(dec.divide(BigDecimal.valueOf(POWERS_OF_TEN[fractionDigits])));
-
     }
-    
-    public static String fmtDec(BigDecimal dec, int fractionDigits, int showFractionDigits) {
-        DecimalFormat decFmt = new DecimalFormat(StringUtils.rightPad("0.", 2 + showFractionDigits, "0"));
-        return decFmt.format(dec.divide(BigDecimal.valueOf(POWERS_OF_TEN[fractionDigits])));
 
+    public static BigDecimal dec(long val, int scale) {
+        return BigDecimal.valueOf(val, scale);
     }
-    
+
     public static String fmtNum(long num, int factorDigits) {
         return fmtDec(BigDecimal.valueOf(num), factorDigits);
-    }
-    
-    public static String fmtNum(long num, int factorDigits, int showFractionDigits) {
-        return fmtDec(BigDecimal.valueOf(num), factorDigits, showFractionDigits);
     }
 
     public static void main(String[] args) {

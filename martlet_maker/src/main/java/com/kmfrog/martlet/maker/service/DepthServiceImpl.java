@@ -1,6 +1,7 @@
 package com.kmfrog.martlet.maker.service;
 
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class DepthServiceImpl implements DepthService{
 
 
 	@Override
-	public List<Order> getOpenOrders(String symbol, Side side) {
+	public List<Order> getOpenOrders(String symbol, Side side, Integer userId) {
 		int pageNo = 1;
 		int pageSize = 1000;
 		String text = client.getOpenOrder(symbol, side, pageNo, pageSize);
@@ -48,7 +49,9 @@ public class DepthServiceImpl implements DepthService{
 		for(Object o: content) {
 			JSONObject orderJson = (JSONObject)o;
 			Side sideObj = orderJson.getString("direction").equals("BUY") ? Side.BUY : Side.SELL;
-			Order order = Order.buildOrderByPriceLevel(orderJson.getString("symbol"), sideObj, orderJson.getBigDecimal("price"), orderJson.getBigDecimal("amount"));
+			BigDecimal price = orderJson.getBigDecimal("price");
+            BigDecimal amount = orderJson.getBigDecimal("amount");
+            Order order = Order.buildOrderByPriceLevel(orderJson.getString("symbol"), sideObj, price, amount, userId);
 			ret.add(order);
 		}
 		

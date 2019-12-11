@@ -173,7 +173,7 @@ public class Workbench implements Controller {
     AggregateOrderBook makesureAggregateOrderBook(Instrument instrument) {
         AggregateOrderBook book = aggBooks.computeIfAbsent(instrument.asLong(), (key) -> new AggregateOrderBook(key));
         if (!aggWorkers.containsKey(instrument.asLong())) {
-            InstrumentAggregation worker = new InstrumentAggregation(instrument, book, depthPusher, this, C.MAX_LEVEL);
+            InstrumentAggregation worker = new InstrumentAggregation(instrument, book, depthPusher, this, ctx.getMaxLevel());
             aggWorkers.put(instrument.asLong(), worker);
             worker.start();
         }
@@ -239,7 +239,7 @@ public class Workbench implements Controller {
             }
             if (book != null) {
                 multiSrcBooks.get(mkt).put(instrument.asLong(), book);
-                String originText = book.getOriginText(mkt, C.MAX_LEVEL);
+                String originText = book.getOriginText(mkt, ctx.getMaxLevel());
                 // System.out.println(originText);
                 depthPusher.put(originText);
             }

@@ -12,6 +12,6 @@ public interface DepthService {
     
     Long insertOrder(Order order);
     
-    List<Order> getOpenOrders(String symbol, Side side);
+    List<Order> getOpenOrders(String symbol, Side side, Integer userId);
 }
 

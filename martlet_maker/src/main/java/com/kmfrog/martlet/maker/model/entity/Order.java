@@ -10,11 +10,6 @@ import java.util.Date;
 
 import com.kmfrog.martlet.book.Side;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 
 public class Order {
     private Long id;
@@ -30,7 +25,7 @@ public class Order {
     private BigDecimal dealVolume;
     private BigDecimal dealMoney;
     private BigDecimal avgPrice;
-//    private OrderStatus status;
+    private Integer status;
 //    private OrderType type;
 //    private OrderSource source;
     private Date ctime;
@@ -170,11 +165,21 @@ public class Order {
 		this.symbol = symbol;
 	}
 
-	private Date mtime;
+	public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+
+
+    private Date mtime;
     private String tableName;
     private String symbol;
 
-    public static Order buildOrderByPriceLevel(String symbol, Side side, BigDecimal price, BigDecimal volume) {
+    public static Order buildOrderByPriceLevel(String symbol, Side side, BigDecimal price, BigDecimal volume, Integer userId) {
 //        if (priceLevelWrapper == null) {
 //            return null;
 //        }
@@ -183,9 +188,35 @@ public class Order {
         order.setPrice(price);
         order.setVolume(volume);
         order.setSymbol(symbol);
+        order.setUserId(userId);
 //        order.setSide(priceLevelWrapper.getOrderSide());
 //        order.setPrice(priceLevelWrapper.getPrice());
 //        order.setVolume(priceLevelWrapper.getVolume());
         return order;
     }
+    
+//    public static class Builder{
+//        private Long id;
+//        private Integer userId;
+//        private Side side;
+//        private BigDecimal price;
+//        private BigDecimal volume;
+//        private BigDecimal remainVolume;
+//        private String feeRateMaker;
+//        private String feeRateTaker;
+//        private BigDecimal fee;
+//        private String feeCoinRate;
+//        private BigDecimal dealVolume;
+//        private BigDecimal dealMoney;
+//        private BigDecimal avgPrice;
+////        private OrderStatus status;
+////        private OrderType type;
+////        private OrderSource source;
+//        private Date ctime;
+//        private Date mtime;
+//        private String tableName;
+//        private String symbol;
+//        
+//        
+//    }
 }

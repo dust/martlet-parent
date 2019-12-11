@@ -10,7 +10,9 @@ import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.RollingTimeSpan;
 import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.Source;
+import com.kmfrog.martlet.feed.domain.SymbolAoWithFeatureAndExtra;
 import com.kmfrog.martlet.feed.domain.TradeLog;
+import com.kmfrog.martlet.feed.domain.VolumeStrategy;
 import com.kmfrog.martlet.maker.exec.Exec;
 import com.kmfrog.martlet.maker.service.DepthService;
 import com.kmfrog.martlet.maker.service.TradeService;
@@ -47,30 +49,38 @@ public interface Provider {
 
     TrackBook getTrackBook(Source src, Instrument instrument);
 
-//    SymbolAoWithFeatureAndExtra getSymbolInfo(Instrument instrument);
-
     long getOpenOrderSleepMillis();
 
-//    Source getPreferSource(SymbolAoWithFeatureAndExtra symbolInfo);
+    Source getPreferSource(SymbolAoWithFeatureAndExtra symbolInfo);
 
-//    int getSpreadLowLimitMillesimal(SymbolAoWithFeatureAndExtra symbolInfo);
+    int getSpreadLowLimitMillesimal(SymbolAoWithFeatureAndExtra symbolInfo);
     
-//    long getMakerSleepMillis(SymbolAoWithFeatureAndExtra symbolInfo);
+    long getMakerSleepMillis(SymbolAoWithFeatureAndExtra symbolInfo);
 
     Source[] getAllSource();
 
-//    double getMaxPriceDiff(SymbolAoWithFeatureAndExtra symbolInfo);
+    double getMaxPriceDiff(SymbolAoWithFeatureAndExtra symbolInfo);
 
-//    long getMaxDelayMillis(SymbolAoWithFeatureAndExtra symbolInfo);
+    long getMaxDelayMillis(SymbolAoWithFeatureAndExtra symbolInfo);
 
     Set<String> getSplitTradeSymbols();
 
-//    long getSplitTradeMaxDelayMillis(SymbolAoWithFeatureAndExtra symbolInfo);
+    long getSplitTradeMaxDelayMillis(SymbolAoWithFeatureAndExtra symbolInfo);
 
-//    double getSplitTradeRatio(SymbolAoWithFeatureAndExtra symbolInfo);
+    double getSplitTradeRatio(SymbolAoWithFeatureAndExtra symbolInfo);
 
     double getMaxVolumeDiff(Instrument instrument);
+
+    SymbolAoWithFeatureAndExtra getSymbolInfo(Instrument instrument);
+
+    List<VolumeStrategy> getVolumeStrategy(SymbolAoWithFeatureAndExtra symbolInfo);
+
+    int getMaxLevel(SymbolAoWithFeatureAndExtra symbolInfo);
     
-//    List<VolumeStrategy> getVolumeStrategy(SymbolAoWithFeatureAndExtra symbolInfo);
+    int getBuyRobotId(SymbolAoWithFeatureAndExtra symbolInfo);
+    
+    int getSellRobotId(SymbolAoWithFeatureAndExtra symbolInfo);
+    
+    int getMakerTradeUserId(SymbolAoWithFeatureAndExtra symbolInfo);
 
 }

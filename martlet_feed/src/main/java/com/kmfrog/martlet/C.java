@@ -17,7 +17,7 @@ public interface C {
     char SECOND_SEPARATOR = ';';
     char THIRD_SEPARATOR = '|';
 
-    int MAX_LEVEL = 50;
+//    int MAX_LEVEL = 50;
 
     long SYMBOL_DELAY_MILLIS = 300000L;
 
@@ -25,9 +25,9 @@ public interface C {
 
     String PREFER_SOURCE_NAME = "Binance";
 
-    long SPREAD_LOWLIMIT_MILLESIMAL = 2;
+//    long SPREAD_LOWLIMIT_MILLESIMAL = 2;
 
-    long TRADE_AVG_WINDOW_MILLIS = 10000;
+//    long TRADE_AVG_WINDOW_MILLIS = 10000;
     
     long LAST_TRADE_WINDOW_MILLIS = 2 * 60000;
 
@@ -79,5 +79,37 @@ public interface C {
     String MONITOR_SLEEP_MILLIS = "${monitor.sleep.millis:25000}";
    
     
+    // for maker
+    String DEPTH_FEED_HOST = "${depth.feed.host}";
+    String TRADE_FEED_HOST = "${trade.feed.host}";
+    String DEPTH_FEED_PORT = "${depth.feed.port}";
+    String TRADE_FEED_PORT = "${trade.feed.port}";
+    String DEPTH_FEED_IO_THREAD_CNT = "${depth.feed.io.thread.cnt}";
+    String TRADE_FEED_IO_THREAD_CNT = "${trade.feed.io.thread.cnt}";
+    
+    
+   
+    String OPEN_ORDER_TRACKER_SLEEP_MILLIS = "${open.order.tracker.sleep.millis:25000}";
+    String PREFER_SOURCE = "${prefer.source:Binance}";
+    String ALL_SOURCES = "${all.sources:[Binance,Huobi,Okex]}";
+    String MAX_MAKE_ORDER_VOL_DIFF = "${max.make.order.volume.diff:0.3}";
+    String MAKER_SLEEP_MILLIS = "${maker.sleep.millis:510}";
+    String SPREAD_LOWLIMIT_MILLESIMAL = "${min.spread.limit:1}";
+    String MAX_DELAY_MILLIS = "${max.delay.millis:10000}";
+    String PRICE_DIFF = "${price.diff:0.05}";
+    String DEPTH_SIZE_STRATEGY = "${depth.size.strategies:[{\"from\":0,\"to\":4,\"discount\":\"0.5\"}]}";
+    String AGGREGATE_DELAY_MILLIS = "${aggregate.delay.millis:5000}";
+    String TRADE_AVG_WINDOW_MILLIS = "${trade.avg.window.millis:10000}";
+    String MAX_LEVEL = "${max.level:60}";
+    String MAKER_SUPPORTED_SYMBOLS = "${supported.symbols}";
+    String HUOBI_SUPPORTED = "${huobi.supported}";
+    String OKEX_SUPPORTED = "${okex.supported}";
+    String SPLIT_TRADE_RATIO = "${splitTradeRatio:1.0}";
+    String SPLIT_TRADE_SYMBOLS = "${splitTradeSymbols:[]}";
+    String SPLIT_TRADE_MAX_DELAY_MILLIS = "${splitTradeMaxDelayMillis:10000}";
+    
+    String MAKER_TRADE_USER_ID = "${maker.trade.user.id:6149}";
+    String BUY_ROBOT_UID = "${buy.robot.uid:6148}";
+    String SELL_ROBOT_UID = "${sell.robot.uid:6148}";
 
 }

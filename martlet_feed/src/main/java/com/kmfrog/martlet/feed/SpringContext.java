@@ -5,7 +5,7 @@ import static com.kmfrog.martlet.C.BHEX_DEPTH_FMT;
 import static com.kmfrog.martlet.C.BHEX_WS_URL;
 import static com.kmfrog.martlet.C.BIKUN_DEPTH_FMT;
 import static com.kmfrog.martlet.C.BIKUN_SUPPORTED;
-import static com.kmfrog.martlet.C.BIKUN_WS_URL;
+import static com.kmfrog.martlet.C.*;
 import static com.kmfrog.martlet.C.BINANCE_REST_URL;
 import static com.kmfrog.martlet.C.BINANCE_SUPPORTED;
 import static com.kmfrog.martlet.C.BINANCE_WS_DEPTH;
@@ -94,11 +94,15 @@ public class SpringContext implements CommandLineRunner {
     @Value(BHEX_DEPTH_FMT)
     private String tacDepthFmt;
     
+    
     @ApolloJsonValue(TAC_SUPPORTED)
     private Set<String> tacSupportedSymbols;
     
     @Value(MONITOR_SLEEP_MILLIS)
     private long monitorSleepMillis;
+    
+    @Value(MAX_LEVEL)
+    private int maxLevel;
     
     private Workbench workbench;
 
@@ -271,6 +275,10 @@ public class SpringContext implements CommandLineRunner {
             }
         }
         return null;
+    }
+    
+    public int getMaxLevel() {
+        return maxLevel;
     }
 
     @PreDestroy

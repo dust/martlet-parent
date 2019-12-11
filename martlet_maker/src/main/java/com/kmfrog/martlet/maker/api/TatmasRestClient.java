@@ -28,10 +28,12 @@ public class TatmasRestClient {
 	private final String apiKey;
 	private final String secret;
 	private final String signatureFmt = "AccessKeyId=%s&SignatureMethod=HmacSHA256&SignatureVersion=1&Timestamp=%s";
+	private final OkHttpClient client;
 	
 	public TatmasRestClient(String apiKey, String secret) {
 		this.apiKey = apiKey;
 		this.secret = secret;
+		client = new OkHttpClient();
 	}
 	
 	/**
@@ -234,7 +236,7 @@ public class TatmasRestClient {
 			reqBody.append("&").append(key).append("=").append(params.get(key));
 		}
 		
-		OkHttpClient client = new OkHttpClient();
+		
 		MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
 		RequestBody body = RequestBody.create(mediaType, reqBody.toString());
 		Request request = new Request.Builder()

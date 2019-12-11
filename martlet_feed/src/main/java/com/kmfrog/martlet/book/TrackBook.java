@@ -3,13 +3,20 @@ package com.kmfrog.martlet.book;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.longs.LongComparators;
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
+import it.unimi.dsi.fastutil.longs.LongSortedSets;
+import com.kmfrog.martlet.book.*;
 
+/**
+ * 开放订单簿。可用于交易中的订单管理。 `entry, remove, cancel`
+ * 
+ * @author dust Nov 18, 2019
+ *
+ */
 public class TrackBook {
 
     private final Instrument instrument;
@@ -32,7 +39,24 @@ public class TrackBook {
         return instrument;
     }
 
-    public void entry(long orderId, Side side, long price, long size) {
+//    public void entry(long orderId, Side side, long price, long size) {
+//        lock.writeLock().lock();
+//        try {
+//            if (orders.containsKey(orderId)) {
+//                return;
+//            }
+//
+//            if (side == Side.BUY) {
+//                orders.put(orderId, add(bids, orderId, side, price, size);
+//            } else {
+//                orders.put(orderId, add(asks, orderId, side, price, size));
+//            }
+//        } finally {
+//            lock.writeLock().unlock();
+//        }
+//    }
+    
+    public void entry(long orderId, Side side, long price, long size, int status) {
         lock.writeLock().lock();
         try {
             if (orders.containsKey(orderId)) {
@@ -40,9 +64,9 @@ public class TrackBook {
             }
 
             if (side == Side.BUY) {
-                orders.put(orderId, add(bids, orderId, side, price, size));
+                orders.put(orderId, add(bids, orderId, side, price, size, status));
             } else {
-                orders.put(orderId, add(asks, orderId, side, price, size));
+                orders.put(orderId, add(asks, orderId, side, price, size, status));
             }
         } finally {
             lock.writeLock().unlock();
@@ -147,13 +171,72 @@ public class TrackBook {
     }
 
     /**
+     * 获得某一侧不包含指定状态的订单id集合。
+     * 
+     * @param side
+     * @param excludeStatus
+     * @return
+     */
+    public Set<Long> getOrders(Side side, int excludeStatus) {
+        Set<Long> set = new HashSet<>();
+        Long2ObjectRBTreeMap<PriceLevel> levels = side == Side.BUY ? bids : asks;
+        lock.readLock().lock();
+        try {
+            if (!levels.isEmpty()) {
+                LongSortedSet prices = levels.keySet();
+                prices.stream().forEach(p -> set.addAll(levels.get(p.longValue()).getOrderIds(excludeStatus)));
+            }
+
+        } finally {
+            lock.readLock().unlock();
+        }
+        return set;
+    }
+
+    /**
+     * 获得某个价格的档位信息。
+     * 
+     * @param side
+     * @param price
+     * @return
+     */
+    public PriceLevel getPriceLevel(Side side, long price) {
+        Long2ObjectRBTreeMap<PriceLevel> levels = side == Side.BUY ? bids : asks;
+        lock.readLock().lock();
+        try {
+            return levels.get(price);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * 获得某一侧的全部订单价格。
+     * 
+     * @param side
+     * @return
+     */
+    public LongSortedSet getPrices(Side side) {
+        Long2ObjectRBTreeMap<PriceLevel> levels = side == Side.BUY ? bids : asks;
+        lock.readLock().lock();
+        try {
+            if (levels.isEmpty()) {
+                return LongSortedSets.EMPTY_SET;
+            }
+            return levels.keySet();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
      * 获得优于指定价位的全部订单（指定的某侧)。
      * 
      * @param side
      * @param from inclusive
      * @return
      */
-    public Set<Long> getOrdersBetter(Side side, long from) {
+    public Set<Long> getBetterOrders(Side side, long from) {
         Set<Long> set = new HashSet<>();
         Long2ObjectRBTreeMap<PriceLevel> levels = side == Side.BUY ? bids : asks;
 
@@ -178,7 +261,38 @@ public class TrackBook {
     }
 
     /**
-     * 获得较差价格的订单id
+     * 获得优于指定价位且不包含指定状态的订单集合（指定的某侧)。
+     * 
+     * @param side
+     * @param from inclusive
+     * @return
+     */
+    public Set<Long> getBetterOrders(Side side, long from, int excludeStatus) {
+        Set<Long> set = new HashSet<>();
+        Long2ObjectRBTreeMap<PriceLevel> levels = side == Side.BUY ? bids : asks;
+
+        lock.readLock().lock();
+        try {
+            // 最差的报价：指定买入价格比订单簿中最差出价（即最低买价格）还低； 指定卖出价比订单簿最差出价（即最高卖价）还高。
+            if (!levels.isEmpty()) {
+                long worst = levels.lastLongKey();
+                if ((side == Side.BUY && from < worst) || (side == Side.SELL && from > worst)) {
+                    return new HashSet<Long>();
+                }
+
+                LongSortedSet prices = levels.keySet().tailSet(from);
+                prices.stream().forEach(p -> {
+                    set.addAll(levels.get(p.longValue()).getOrderIds(excludeStatus));
+                });
+            }
+            return set;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * 获得更糟糕的买
      * 
      * @param side
      * @param from
@@ -223,14 +337,14 @@ public class TrackBook {
     }
 
     private static OrderEntry add(Long2ObjectRBTreeMap<PriceLevel> levels, long orderId, Side side, long price,
-            long size) {
+            long size, int status) {
         PriceLevel level = levels.get(price);
         if (level == null) {
             level = new PriceLevel(side, price);
             levels.put(price, level);
         }
 
-        return level.add(orderId, size);
+        return level.add(orderId, size, status);
     }
 
     /**

@@ -5,11 +5,13 @@ public class OrderEntry {
     private final PriceLevel level;
     private final long id;
     private long remainingQuantity;
+    private int status;
 
-    OrderEntry(PriceLevel level, long id, long size) {
+    OrderEntry(PriceLevel level, long id, long size, int status) {
         this.level = level;
         this.id = id;
         this.remainingQuantity = size;
+        this.status = status;
     }
 
     public PriceLevel getLevel() {
@@ -19,16 +21,24 @@ public class OrderEntry {
     long getId() {
         return id;
     }
-
-    public long getRemainingQuantity() {
-        return remainingQuantity;
+    
+    public int getStatus() {
+        return status;
+    }
+    
+    public void setStatus(int status) {
+        this.status = status;
     }
 
+    long getRemainingQuantity() {
+        return remainingQuantity;
+    }
+    
     void reduce(long quantity) {
         remainingQuantity -= quantity;
     }
-
-    void resize(long size) {
+    
+    public void resize(long size) {
         remainingQuantity = size;
     }
 
@@ -54,7 +64,9 @@ public class OrderEntry {
 
     @Override
     public String toString() {
-        return String.format("%d@%d(%d)", remainingQuantity, level.getPrice(), id);
+        return String.format("%d@%d(%d)", remainingQuantity, level.getPrice(), id); 
     }
+    
+    
 
 }

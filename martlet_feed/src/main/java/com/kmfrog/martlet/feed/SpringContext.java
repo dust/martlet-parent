@@ -1,26 +1,45 @@
 package com.kmfrog.martlet.feed;
 
 import static com.kmfrog.martlet.C.ALL_SUPPORTED_SYMBOLS;
+import static com.kmfrog.martlet.C.BHEX_DEPTH_FMT;
+import static com.kmfrog.martlet.C.BHEX_WS_URL;
+import static com.kmfrog.martlet.C.BIKUN_DEPTH_FMT;
 import static com.kmfrog.martlet.C.BIKUN_SUPPORTED;
+import static com.kmfrog.martlet.C.BIKUN_WS_URL;
+import static com.kmfrog.martlet.C.BINANCE_REST_URL;
 import static com.kmfrog.martlet.C.BINANCE_SUPPORTED;
-import static com.kmfrog.martlet.C.*;
+import static com.kmfrog.martlet.C.BINANCE_WS_DEPTH;
+import static com.kmfrog.martlet.C.BINANCE_WS_TRADE;
+import static com.kmfrog.martlet.C.MONITOR_SLEEP_MILLIS;
+import static com.kmfrog.martlet.C.PUB_DEPTH_HOST;
+import static com.kmfrog.martlet.C.PUB_DEPTH_IO_THREAD_CNT;
+import static com.kmfrog.martlet.C.PUB_DEPTH_PORT;
+import static com.kmfrog.martlet.C.PUB_TRADE_HOST;
+import static com.kmfrog.martlet.C.PUB_TRADE_PORT;
+import static com.kmfrog.martlet.C.TAC_SUPPORTED;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.PreDestroy;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import com.ctrip.framework.apollo.model.ConfigChange;
+import com.ctrip.framework.apollo.model.ConfigChangeEvent;
+import com.ctrip.framework.apollo.spring.annotation.ApolloConfigChangeListener;
 import com.ctrip.framework.apollo.spring.annotation.ApolloJsonValue;
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.feed.domain.JsonInstrument;
-import com.typesafe.config.Config;
 
 @Component
 public class SpringContext implements CommandLineRunner {
@@ -37,7 +56,7 @@ public class SpringContext implements CommandLineRunner {
     private String pubTradeHost;
     
     @Value(PUB_TRADE_PORT)
-    private String pubTradePort;
+    private int pubTradePort;
     
     @Value(PUB_DEPTH_IO_THREAD_CNT)
     private int depthIoThreadCnt;
@@ -54,8 +73,32 @@ public class SpringContext implements CommandLineRunner {
     @ApolloJsonValue(BIKUN_SUPPORTED)
     private Set<String> bikunSupportedSymbols;
     
+    @Value(BINANCE_REST_URL)
+    private String binanceRestUrl;
+    
+    @Value(BINANCE_WS_DEPTH)
+    private String binanceDepthUrl;
+    
+    @Value(BINANCE_WS_TRADE)
+    private String binanceTradeUrl;
+    
+    @Value(BIKUN_WS_URL)
+    private String bikunWsUrl;
+    
+    @Value(BIKUN_DEPTH_FMT)
+    private String bikunDepthFmt;
+    
+    @Value(BHEX_WS_URL)
+    private String tacWsUrl;
+    
+    @Value(BHEX_DEPTH_FMT)
+    private String tacDepthFmt;
+    
     @ApolloJsonValue(TAC_SUPPORTED)
     private Set<String> tacSupportedSymbols;
+    
+    @Value(MONITOR_SLEEP_MILLIS)
+    private long monitorSleepMillis;
     
     private Workbench workbench;
 
@@ -104,80 +147,68 @@ public class SpringContext implements CommandLineRunner {
         return pubDepthHost;
     }
 
-    public void setPubDepthHost(String pubDepthHost) {
-        this.pubDepthHost = pubDepthHost;
-    }
-
     public int getPubDepthPort() {
         return pubDepthPort;
-    }
-
-    public void setPubDepthPort(int pubDepthPort) {
-        this.pubDepthPort = pubDepthPort;
     }
 
     public String getPubTradeHost() {
         return pubTradeHost;
     }
 
-    public void setPubTradeHost(String pubTradeHost) {
-        this.pubTradeHost = pubTradeHost;
-    }
-
-    public String getPubTradePort() {
+    public int getPubTradePort() {
         return pubTradePort;
-    }
-
-    public void setPubTradePort(String pubTradePort) {
-        this.pubTradePort = pubTradePort;
     }
 
     public int getDepthIoThreadCnt() {
         return depthIoThreadCnt;
     }
 
-    public void setDepthIoThreadCnt(int depthIoThreadCnt) {
-        this.depthIoThreadCnt = depthIoThreadCnt;
-    }
-
     public int getTradeIoThreadCnt() {
         return tradeIoThreadCnt;
-    }
-
-    public void setTradeIoThreadCnt(int tradeIoThreadCnt) {
-        this.tradeIoThreadCnt = tradeIoThreadCnt;
     }
 
     public List<JsonInstrument> getSupportedInstruments() {
         return supportedInstruments;
     }
 
-    public void setSupportedInstruments(List<JsonInstrument> supportedInstruments) {
-        this.supportedInstruments = supportedInstruments;
-    }
-
     public Set<String> getBinanceSupportedSymbols() {
         return binanceSupportedSymbols;
-    }
-
-    public void setBinanceSupportedSymbols(Set<String> binanceSupportedSymbols) {
-        this.binanceSupportedSymbols = binanceSupportedSymbols;
     }
 
     public Set<String> getBikunSupportedSymbols() {
         return bikunSupportedSymbols;
     }
 
-    public void setBikunSupportedSymbols(Set<String> bikunSupportedSymbols) {
-        this.bikunSupportedSymbols = bikunSupportedSymbols;
-    }
-
     public Set<String> getTacSupportedSymbols() {
         return tacSupportedSymbols;
     }
 
-    public void setTacSupportedSymbols(Set<String> tacSupportedSymbols) {
-        this.tacSupportedSymbols = tacSupportedSymbols;
+    public String getTacWsUrl() {
+        return tacWsUrl;
+    }
+
+    public String getTacDepthFmt() {
+        return tacDepthFmt;
+    }
+
+    public String getBikunWsUrl() {
+        return bikunWsUrl;
+    }
+
+    public String getBikunDepthFmt() {
+        return bikunDepthFmt;
+    }
+
+    public String getBinanceDepthUrl() {
+        return binanceDepthUrl;
+    }
+
+    public String getBinanceTradeUrl() {
+        return binanceTradeUrl;
+    }
+
+    public String getBinanceRestUrl() {
+        return binanceRestUrl;
     }
 
     public Workbench getWorkbench() {
@@ -186,6 +217,65 @@ public class SpringContext implements CommandLineRunner {
 
     public void setWorkbench(Workbench workbench) {
         this.workbench = workbench;
+    }
+
+    public long getMonitorSleepMillis() {
+        return monitorSleepMillis;
+    }
+    
+    @ApolloConfigChangeListener
+    private void onChange(ConfigChangeEvent changeEvent) {
+//        String supportedSymbolKey = trimApolloConfigKey(ALL_SUPPORTED_SYMBOLS);
+//        String binanceSupportedKey = trimApolloConfigKey(BINANCE_SUPPORTED);
+//        String huobiSupportedKey = trimApolloConfigKey(HUOBI_SUPPORTED);
+//        String okexSupportedKey = trimApolloConfigKey(OKEX_SUPPORTED);
+//        if (changeEvent.isChanged(supportedSymbolKey) || changeEvent.isChanged(binanceSupportedKey)
+//                || changeEvent.isChanged(huobiSupportedKey) || changeEvent.isChanged(okexSupportedKey)) {
+//            reloadAllSupportedSymbols(changeEvent, supportedSymbolKey);
+//            Set<String> symbols = reloadStringSet(changeEvent, binanceSupportedKey);
+//            if (symbols != null) {
+//                binanceSupportedSymbols = symbols;
+//            }
+//            symbols = reloadStringSet(changeEvent, huobiSupportedKey);
+//            if (symbols != null) {
+//                huobiSupportedSymbols = symbols;
+//            }
+//            symbols = reloadStringSet(changeEvent, okexSupportedKey);
+//            if (symbols != null) {
+//                okexSupportedSymbols = symbols;
+//            }
+//            restart();
+//            logger.info("apollo.onchange. binance:{}, huobi:{}, okex:{}", binanceSupportedSymbols,
+//                    huobiSupportedSymbols, okexSupportedSymbols);
+//        }
+    }
+
+    private void reloadAllSupportedSymbols(ConfigChangeEvent changeEvent, String supportedSymbolKey) {
+        if (changeEvent.isChanged(supportedSymbolKey)) {
+            ConfigChange symbolChange = changeEvent.getChange(supportedSymbolKey);
+            String newValue = symbolChange.getNewValue();
+            Gson gson = new Gson();
+            supportedInstruments = gson.fromJson(newValue,
+                    TypeToken.getParameterized(List.class, JsonInstrument.class).getType());
+        }
+    }
+
+    private Set<String> reloadStringSet(ConfigChangeEvent changeEvent, String key) {
+        if (changeEvent.isChanged(key)) {
+            String v = changeEvent.getChange(key).getNewValue();
+            if (v != null) {
+                String[] arr = v.split(",");
+                Set<String> set = new HashSet<>();
+                set.addAll(Arrays.asList(arr));
+                return set;
+            }
+        }
+        return null;
+    }
+
+    @PreDestroy
+    public void destroy() {
+        workbench.destroy();
     }
 
     // private Map<Object, Object> buildConfigMap() {

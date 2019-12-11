@@ -36,7 +36,7 @@ public class FeedBroadcast {
         publisher.send(message);
     }
 
-    public synchronized void destory() {
+    public synchronized void destroy() {
         publisher.close();
         ctx.close();
     }

@@ -60,7 +60,7 @@ public class WebSocketDaemon {
         if (BaseWebSocketHandler.DBG) {
             handler.onMessageWithStats(session, msg);
         } else {
-            handler.onMessage(session, msg);
+            handler.onMessageWithLog(session, msg);
         }
     }
 
@@ -73,6 +73,14 @@ public class WebSocketDaemon {
         session = handler.keepAlive();
     }
     
+    public long getLastReceived() {
+        return handler.lastReceived;
+    }
+    
+    public String getHandlerClazz() {
+        return handler.getClass().getSimpleName();
+    }
+    
     public void close(int status, String reason) {
         handler.close(status, reason);
     }
@@ -82,9 +90,8 @@ public class WebSocketDaemon {
     }
 
     public void dumpStats(PrintStream ps){
-        handler.dumpStats(ps);
     }
-    
+
     public void subscribeSymbol(String symbol, WsDataListener baseDepth) {
         handler.subscribeSymbol(symbol, baseDepth);
     }
@@ -94,3 +101,4 @@ public class WebSocketDaemon {
     }
 
 }
+

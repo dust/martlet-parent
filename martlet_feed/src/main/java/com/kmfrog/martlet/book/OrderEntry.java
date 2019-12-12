@@ -30,7 +30,7 @@ public class OrderEntry {
         this.status = status;
     }
 
-    long getRemainingQuantity() {
+    public long getRemainingQuantity() {
         return remainingQuantity;
     }
     

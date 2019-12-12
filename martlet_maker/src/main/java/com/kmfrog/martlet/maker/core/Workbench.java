@@ -95,7 +95,7 @@ public class Workbench implements Provider {
         tradeFeed = new TradeFeed(depthHost, tradePort, tradeThreads);
         tradeFeed.start();
 
-        openOrderTracker = new OpenOrderTracker(Source.Bitrue, null, this);
+        openOrderTracker = new OpenOrderTracker(Source.Tatmas, null, this);
         openOrderTracker.start();
     }
 
@@ -360,6 +360,26 @@ public class Workbench implements Provider {
     @Override
     public Future<?> submit(Exec exec) {
         return executor.submit(exec);
+    }
+    
+    @Override
+    public String getTatmasApiKey() {
+    	return springContext.getTatmasApiKey();
+    }
+    
+    @Override
+    public String getTatmasSecretKey() {
+    	return springContext.getTatmasSecretKey();
+    }
+    
+    @Override
+    public String getTatmasTradeApiKey() {
+    	return springContext.getTatmasTradeApiKey();
+    }
+    
+    @Override
+    public String getTatmasTradeSecretKey() {
+    	return springContext.getTatmasTradeSecretKey();
     }
 
     public void destory() {

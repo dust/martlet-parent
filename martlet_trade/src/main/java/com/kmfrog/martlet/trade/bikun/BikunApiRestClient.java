@@ -220,16 +220,64 @@ public class BikunApiRestClient {
 		return null;
     }
     
-    public void cancelOrder() {
-    	
+    public void cancelOrder(String orderId, String symbol) {
+    	/** 封装需要签名的参数 */
+		long time = new Date().getTime();
+		TreeMap<String, String> params = new TreeMap<String, String>();
+		params.put("order_id", orderId);
+		params.put("symbol", symbol);
+		params.put("api_key", apiKey);
+		params.put("time", time+"");
+		
+		/** 拼接签名字符串，md5签名 */
+        StringBuilder result = new StringBuilder();
+        StringBuilder reqBody = new StringBuilder();
+        Set<Entry<String, String>> entrys = params.entrySet();
+        for (Entry<String, String> param : entrys) {
+            /** 去掉签名字段 */
+            if(param.getKey().equals("sign")){
+                continue;
+            }
+            /** 空参数不参与签名 */
+            if(param.getValue()!=null) {
+                result.append(param.getKey());
+                result.append(param.getValue().toString());
+            }
+            reqBody.append(param.getKey()).append("=").append(param.getValue()).append("&");
+        }
+        result.append(secret);
+        String sign = getMD5(result.toString());
+        reqBody.append("sign=").append(sign);
+		
+		OkHttpClient client = new OkHttpClient();
+		MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+		RequestBody body = RequestBody.create(mediaType, reqBody.toString());
+		Request request = new Request.Builder()
+				  .url(baseUrl + "/open/api/cancel_order")
+				  .post(body)
+				  .addHeader("Content-Type", "application/x-www-form-urlencoded")
+				  .build();
+
+		try {
+			Response resp = client.newCall(request).execute();
+			System.out.println(resp.body().string());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			
+		}
     }
     
     public static void main(String[] args) {
-    	String baseUrl = "https://www.bikun.io/exchange-open-api";
+//    	String baseUrl = "https://www.bikun.io/exchange-open-api";
+    	String baseUrl = "https://openapi.bikun.io";
     	String apiKey = "c31b2d41d6e70f4f8103767b284071fb";
     	String secret = "3f2d5692476c0c7e9541e50172eeebb8";
     	BikunApiRestClient client = new BikunApiRestClient(baseUrl, apiKey, secret);
-    	client.getOpenOrder("aic1usdt", "1", "100");
+//    	client.getOpenOrder("aic1usdt", "1", "100");
+    	client.cancelOrder("96766", "aic1usdt");
+    	client.cancelOrder("96769", "aic1usdt");
     }
 
 }

@@ -16,14 +16,18 @@ public class CancelExec extends Exec{
 	private final boolean isOpenOnly;
 	private final Instrument instrument;
 	private final Logger logger;
+	String api;
+	String secret;
 
-	public CancelExec(Instrument instrument, Set<Long> orderIds, boolean isOpenOnly, TrackBook trackBook, DepthService depthService, Logger logger) {
+	public CancelExec(Instrument instrument, Set<Long> orderIds, boolean isOpenOnly, TrackBook trackBook, DepthService depthService, String api, String secret, Logger logger) {
 		super(System.currentTimeMillis());
 		this.trackBook = trackBook;
 		this.orderIds = orderIds;
 		this.depthService = depthService;
 		this.isOpenOnly = isOpenOnly;
 		this.instrument = instrument;
+		this.api = api;
+		this.secret = secret;
 		this.logger = logger;
 		
 	}
@@ -31,10 +35,12 @@ public class CancelExec extends Exec{
 	@Override
 	public void run() {
 		for(Long orderId: orderIds) {
-			int effects = depthService.cancelOpenOrder(orderId);
-			if (effects == 1) {
-//                trackBook.remove(orderId);
-            }
+			if(trackBook.getOrder(orderId)!=null) {
+				int effects = depthService.cancelOpenOrder(orderId, api, secret);
+				if (effects == 1) {
+	                trackBook.remove(orderId);
+	            }
+			}
 		}
 	}
 

@@ -43,7 +43,6 @@ public class DepthServiceImpl implements DepthService {
         int pageNo = 1;
         int pageSize = 1000;
         String text = client.getOpenOrder(symbol, side, pageNo, pageSize, api, secret);
-
         List<Order> ret = new ArrayList<Order>();
 
         JSONObject data = JSONObject.parseObject(text);
@@ -54,6 +53,9 @@ public class DepthServiceImpl implements DepthService {
             BigDecimal price = orderJson.getBigDecimal("price");
             BigDecimal amount = orderJson.getBigDecimal("amount");
             Order order = Order.buildOrderByPriceLevel(orderJson.getString("symbol"), sideObj, price, amount, userId);
+            order.setId(orderJson.getLongValue("orderId"));
+            order.setDealVolume(orderJson.getBigDecimal("tradedAmount"));
+            order.setStatus(1);
             ret.add(order);
         }
 

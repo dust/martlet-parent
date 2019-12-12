@@ -27,6 +27,8 @@ public class CheckVolumeExec extends Exec {
     Instrument instrument;
     TrackBook trackBook;
     Logger logger;
+    final String api;
+    final String secret;
 
     public CheckVolumeExec(Instrument instrument, Provider provider, TrackBook trackBook, Logger logger) {
         super(System.currentTimeMillis());
@@ -34,6 +36,8 @@ public class CheckVolumeExec extends Exec {
         this.provider = provider;
         this.trackBook = trackBook;
         this.logger = logger;
+        this.api = provider.getTatmasApiKey();
+        this.secret = provider.getTatmasSecretKey();
     }
 
     @Override
@@ -62,7 +66,7 @@ public class CheckVolumeExec extends Exec {
         
         if (shrinkOrderIds.size() > 0) {
             provider.submit(
-                    new CancelExec(instrument, shrinkOrderIds, false, trackBook, provider.getDepthService(), logger));
+                    new CancelExec(instrument, shrinkOrderIds, false, trackBook, provider.getDepthService(), api, secret, logger));
             if (logger.isInfoEnabled()) {
                 logger.info("{} shrink orders: {}", instrument.asString(), shrinkOrderIds);
             }

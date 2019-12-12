@@ -80,7 +80,7 @@ public class SpringContext implements CommandLineRunner {
     @Value(PREFER_SOURCE)
     private String preferSourceName;
 
-    @Value(ALL_SOURCES)
+    @ApolloJsonValue(ALL_SOURCES)
     private String[] allSource;
 
     @Value(TRADE_AVG_WINDOW_MILLIS)
@@ -146,7 +146,6 @@ public class SpringContext implements CommandLineRunner {
     private Workbench workbench;
 
     public void run(String... args) throws Exception {
-
         Map<String, Instrument> allInstrumentMap = supportedInstruments.stream()
                 .collect(Collectors.toMap(JsonInstrument::getName,
                         v -> new Instrument(v.getName().toUpperCase(), v.getP(), v.getV(), v.getShowPrice())));

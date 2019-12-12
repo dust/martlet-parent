@@ -82,6 +82,7 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
                         && System.currentTimeMillis() - lastAct.get() < provider.getMakerSleepMillis(symbolInfo)) {
                     continue;
                 }
+
                 lastAct.set(System.currentTimeMillis());
                 // System.out.format("%s - %d - %d\n", getClass(), lastAct.get(), System.currentTimeMillis());
 
@@ -98,7 +99,7 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
                                 allCancelIds.toString());
                     }
                     // 比较危险的订单，状态为0的订单也须要撤掉。
-                    provider.submit(new CancelExec(instrument, allCancelIds, false, trackBook, depthService, logger));
+                    provider.submit(new CancelExec(instrument, allCancelIds, false, trackBook, depthService, provider.getTatmasApiKey(), provider.getTatmasSecretKey(), logger));
                 }
 
 //                IOrderBook srcBook = src == Source.Bitrue ? book : provider.getAggBook(instrument);
@@ -133,12 +134,12 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
         LongSortedSet asks = mixBook.getAskPrices().tailSet(bestOffer);
         LongSortedSet openBids = trackBook.getPrices(Side.BUY);
         LongSortedSet openAsks = trackBook.getPrices(Side.SELL);
-
+        
         Set<Long> addBids = Sets.difference(bids, openBids);
         Set<Long> addAsks = Sets.difference(asks, openAsks);
         Set<Long> rmBids = Sets.difference(openBids, bids);
         Set<Long> rmAsks = Sets.difference(openAsks, asks);
-
+        
         // 需要排除的状态。初始状态订单不撤。
         int initStatus = 0;
         Set<Long> cancelBidOrders = new HashSet<>();
@@ -150,7 +151,7 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
             if (logger.isDebugEnabled()) {
                 logger.debug("{} {} cancel open orders : {}", src, instrument.asString(), all.toString());
             }
-            provider.submit(new CancelExec(instrument, all, false, trackBook, depthService, logger));
+            provider.submit(new CancelExec(instrument, all, false, trackBook, depthService, provider.getTatmasApiKey(), provider.getTatmasSecretKey(), logger));
         }
 
         List<Order> allOrders = buildOrder(Side.BUY, addBids, mixBook, symbolInfo);
@@ -160,8 +161,8 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
             if (logger.isDebugEnabled()) {
                 logger.debug("{} {} place orders : {}", src, instrument.asString(), allOrders.toString());
             }
-            TradeService tradeService = provider.getTradeService();
-            provider.submit(new PlaceOrderExec(instrument, allOrders, depthService, tradeService, trackBook, logger));
+//            TradeService tradeService = provider.getTradeService();
+            provider.submit(new PlaceOrderExec(instrument, allOrders, depthService, provider.getTatmasApiKey(), provider.getTatmasSecretKey(), trackBook, logger));
         }
 
         // 删除order mixBook以外的全部订单
@@ -175,7 +176,7 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
             if (logger.isDebugEnabled()) {
                 logger.debug("{} {} cancel out of book : {}", src, instrument.asString(), outOfBookOrderIds.toString());
             }
-            provider.submit(new CancelExec(instrument, outOfBookOrderIds, false, trackBook, depthService, logger));
+            provider.submit(new CancelExec(instrument, outOfBookOrderIds, false, trackBook, depthService, provider.getTatmasApiKey(), provider.getTatmasSecretKey(), logger));
         }
     }
 

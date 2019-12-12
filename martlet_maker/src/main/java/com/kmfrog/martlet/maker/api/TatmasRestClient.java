@@ -12,6 +12,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
 import com.kmfrog.martlet.book.Side;
@@ -23,6 +24,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+@Component
 public class TatmasRestClient {
 
     static Logger logger = LoggerFactory.getLogger(TatmasRestClient.class);
@@ -49,9 +51,9 @@ public class TatmasRestClient {
      * @param orderId
      * @return
      */
-    public String getOrderDetail(String orderId, String api, String secret) {
+    public String getOrderDetail(Long orderId, String api, String secret) {
         Map<String, String> params = new HashMap<String, String>();
-        params.put("orderId", orderId);
+        params.put("orderId", String.valueOf(orderId));
 
         try {
             Response res = doPost("http://tatmas-exchange.com/exchange/order/open/detail", api, secret, params);
@@ -106,19 +108,19 @@ public class TatmasRestClient {
     public boolean cancelOrder(Long orderId, String api, String secret) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("orderId", String.valueOf(orderId));
-
+        
         try {
             Response res = doPost("http://tatmas-exchange.com/exchange/order/open/cancel", api, secret, params);
             if (res.isSuccessful()) {
                 JSONObject data = JSONObject.parseObject(res.body().string());
                 if (data.containsKey("code") && data.getInteger("code") != 0) {
-                    logger.warn(" cancelOrder failed {}: {}", data.getString("message"), orderId);
+//                    logger.warn(" cancelOrder failed {}: {}", data.getString("message"), orderId);
                     return false;
                 }
                 return true;
             }
         } catch (Exception ex) {
-            logger.warn(" cancelOrder exception {}: {}", ex.getMessage(), orderId);
+//            logger.warn(" cancelOrder exception {}: {}", ex.getMessage(), orderId);
         }
         return false;
     }
@@ -149,10 +151,10 @@ public class TatmasRestClient {
 
         try {
             Response res = doPost("http://tatmas-exchange.com/exchange/order/open/personal/current", api, secret, params);
-            System.out.println(res.body().string());
-            // if(res.isSuccessful()) {
-            // return res.body().string();
-            // }
+            
+            if(res.isSuccessful()) {
+            	return res.body().string();
+            }
         } catch (Exception ex) {
             logger.warn(" getOpenOrder exception {}: {} {} {} {}", ex.getMessage(), symbol, direction, pageNo,
                     pageSize);
@@ -280,10 +282,10 @@ public class TatmasRestClient {
     public String getTatmasSymbol(String symbol) {
         if (symbol.endsWith("USDT")) {
             // BTCUSDT -> 0, smiles(1,5)
-            return String.format("%d/%d", symbol.substring(0, symbol.length() - 4),
+            return String.format("%s/%s", symbol.substring(0, symbol.length() - 4),
                     symbol.substring(symbol.length() - 4));
         }
-        return String.format("%d/%d", symbol.substring(0, symbol.length() - 3),
+        return String.format("%s/%s", symbol.substring(0, symbol.length() - 3),
                 symbol.substring(symbol.length() - 3));
     }
 
@@ -296,13 +298,17 @@ public class TatmasRestClient {
             String apiKey = "34b0792b-e292-45fe-a9a3-6b3eb53d4912";
             String secret = "e7fe3eff-8b64-4574-b476-af55314d95aa";
             TatmasRestClient client = new TatmasRestClient(/*apiKey, secret*/);
-            // System.out.println(client.getDepth("BTC/USDT"));
-            // System.out.println(client.limitBuy("BTC/USDT", "5000", "0.001"));
+            
+//            System.out.println(client.limitBuy("ETHUSDT", "148", "0.001", apiKey, secret));
+//            System.out.println(client.limitSell("ETHUSDT", "148", "0.001", apiKey, secret));
+            
+//             System.out.println(client.getDepth("ETHUSDT", apiKey, secret));
+//             System.out.println(client.limitBuy("ETHUSDT", "105.1", "0.001", apiKey, secret));
             // System.out.println(client.cancelOrder("E157602986649923"));
-            // System.out.println(client.getOrderDetail("E157598654446490"));
+             System.out.println(client.getOrderDetail(654695783345422336l, apiKey, secret));
 
-            // System.out.println(client.getHistoryOrder("BTC/USDT", startTime, endTime, Side.BUY, 2, 1, 10));
-            // System.out.println(client.getOpenOrder("BTC/USDT", Side.BUY, 1, 10));
+//             System.out.println(client.getHistoryOrder("ETHUSDT", startTime, endTime, Side.BUY, 2, 1, 10, apiKey, secret));
+//             System.out.println(client.getOpenOrder("ETHUSDT", Side.BUY, 1, 10, apiKey, secret));
         } catch (Exception ex) {
             ex.printStackTrace();
         }

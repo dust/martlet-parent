@@ -14,5 +14,6 @@ public enum Source {
     Bitrue,
     Bhex,
     Bikun,
-    Loex
+    Loex,
+    Tatmas
 }

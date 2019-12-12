@@ -37,10 +37,10 @@ public class PlaceOrderExec extends Exec{
 		try {
 		    int initStatus = 0;
 			orders.stream().forEach((o)->{
-				depthService.insertOrder(o, api, secret);
+				long orderId = depthService.insertOrder(o, api, secret);
 				long price = o.getPrice().multiply(BigDecimal.valueOf(instrument.getPriceFactor())).longValue();
                 long size = o.getVolume().multiply(BigDecimal.valueOf(instrument.getSizeFactor())).longValue();
-                trackBook.entry(o.getId(), o.getSide(), price, size, initStatus);
+                trackBook.entry(orderId, o.getSide(), price, size, initStatus);
 				
 			});
 		} catch (Exception ex) {

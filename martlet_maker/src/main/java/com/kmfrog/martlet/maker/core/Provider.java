@@ -86,4 +86,11 @@ public interface Provider {
     
     int getMakerTradeUserId(SymbolAoWithFeatureAndExtra symbolInfo);
 
+    String getTatmasApiKey();
+    
+    String getTatmasSecretKey();
+    
+    String getTatmasTradeApiKey();
+    
+    String getTatmasTradeSecretKey();
 }

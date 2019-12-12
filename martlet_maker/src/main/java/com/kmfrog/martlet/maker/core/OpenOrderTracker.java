@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,8 @@ public class OpenOrderTracker extends Thread {
     final Source src;
     final Provider provider;
     final DepthService depthService;
+    private final AtomicLong lastCheckVolumeAct = new AtomicLong(0L);
+    private final AtomicLong lastOpenOrderAct = new AtomicLong(0L);
 
     private AtomicBoolean isQuit = new AtomicBoolean(false);
 
@@ -71,19 +74,35 @@ public class OpenOrderTracker extends Thread {
                 Thread.sleep(provider.getOpenOrderSleepMillis());
                 lock.lock();
                 try {
-                    for (Instrument instrument : instruments) {
-                        TrackBook trackBook = provider.getTrackBook(src, instrument);
-                        SymbolAoWithFeatureAndExtra symbolInfo = provider.getSymbolInfo(instrument);
-                        List<Order> openBids = depthService.getOpenOrders(instrument.asString(), Side.BUY,
-                                provider.getBuyRobotId(symbolInfo));
-                        List<Order> openAsks = depthService.getOpenOrders(instrument.asString(), Side.SELL,
-                                provider.getBuyRobotId(symbolInfo));
-                        // System.out.println("openBids:"+openBids+"\nopenAsk:"+openAsks);
-                        trackOpenOrders(instrument, trackBook, openBids, openAsks);
-                        provider.submit(new CheckVolumeExec(instrument, provider, trackBook, logger));
-
-                        provider.submit(new CheckTradeOrderExec(src, instrument, symbolInfo, provider, logger));
-                    }
+                	/**
+                	 * checkTradeOrder
+                	 */
+                	long nowTime = System.currentTimeMillis();
+                	for(Instrument instrument:instruments) {
+                		SymbolAoWithFeatureAndExtra symbolInfo = provider.getSymbolInfo(instrument);
+                		provider.submit(new CheckTradeOrderExec(src, instrument, symbolInfo, provider, logger));
+                	}
+                	
+                	if((nowTime - lastCheckVolumeAct.get()) > 13000) {
+                		lastCheckVolumeAct.set(nowTime);
+                		for(Instrument instrument:instruments) {
+                    		TrackBook trackBook = provider.getTrackBook(src, instrument);
+                    		provider.submit(new CheckVolumeExec(instrument, provider, trackBook, logger));
+                    	}
+                	}
+                	
+                	if((nowTime - lastOpenOrderAct.get()) > 5000) {
+                		lastOpenOrderAct.set(nowTime);
+                		for (Instrument instrument : instruments) {
+                            TrackBook trackBook = provider.getTrackBook(src, instrument);
+                            SymbolAoWithFeatureAndExtra symbolInfo = provider.getSymbolInfo(instrument);
+                            List<Order> openBids = depthService.getOpenOrders(instrument.asString(), Side.BUY,
+                                    provider.getBuyRobotId(symbolInfo), provider.getTatmasApiKey(), provider.getTatmasSecretKey());
+                            List<Order> openAsks = depthService.getOpenOrders(instrument.asString(), Side.SELL,
+                                    provider.getBuyRobotId(symbolInfo), provider.getTatmasApiKey(), provider.getTatmasSecretKey());
+                            trackOpenOrders(instrument, trackBook, openBids, openAsks);
+                        }
+                	}
                 } catch (Exception ex) {
                     logger.warn(ex.getMessage(), ex);
                 } finally {
@@ -102,10 +121,10 @@ public class OpenOrderTracker extends Thread {
         Set<Long> openAskSet = openAsks.stream().map(ord -> ord.getId()).collect(Collectors.toSet());
         Set<Long> trackBidSet = book.getOrders(Side.BUY);
         Set<Long> trackAskSet = book.getOrders(Side.SELL);
-        // System.out.println("openBidSet:"+openBidSet);
-        // System.out.println("trackBidSet:"+trackBidSet);
-        // System.out.println("openAskSet:"+openAskSet);
-        // System.out.println("trackAskSet"+trackAskSet);
+         System.out.println("openBidSet:"+openBidSet);
+         System.out.println("trackBidSet:"+trackBidSet);
+         System.out.println("openAskSet:"+openAskSet);
+         System.out.println("trackAskSet"+trackAskSet);
 //        if (logger.isInfoEnabled()) {
 //            logger.info("{} {} trackBook bids: {} | {}", src, instrument.asString(), book.dump(Side.BUY), openBidSet);
 //            logger.info("{} {} trackBook asks: {} | {}", src, instrument.asString(), book.dump(Side.SELL), openAskSet);

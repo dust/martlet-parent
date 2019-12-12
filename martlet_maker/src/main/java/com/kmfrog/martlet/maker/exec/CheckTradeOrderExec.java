@@ -28,6 +28,8 @@ public class CheckTradeOrderExec extends Exec {
     final Provider provider;
     final DepthService depthService;
     final Logger logger;
+    final String api;
+    final String secret;
     // static Logger logger = LoggerFactory.getLogger(CheckTradeOrderExec.class);
 
     public CheckTradeOrderExec(Source src, Instrument instrument, SymbolAoWithFeatureAndExtra symbolInfo,
@@ -38,16 +40,17 @@ public class CheckTradeOrderExec extends Exec {
         this.instrument = instrument;
         this.provider = provider;
         this.logger = logger;
+        this.api = provider.getTatmasApiKey();
+        this.secret = provider.getTatmasSecretKey();
         depthService = provider.getDepthService();
     }
 
     @Override
     public void run() {
         try {
-
             Integer tradeUserId = provider.getMakerTradeUserId(symbolInfo);
-            List<Order> openBidTradeOrders = depthService.getOpenOrders(instrument.asString(), Side.BUY, tradeUserId);
-            List<Order> openAskTradeOrders = depthService.getOpenOrders(instrument.asString(), Side.SELL, tradeUserId);
+            List<Order> openBidTradeOrders = depthService.getOpenOrders(instrument.asString(), Side.BUY, tradeUserId, api, secret);
+            List<Order> openAskTradeOrders = depthService.getOpenOrders(instrument.asString(), Side.SELL, tradeUserId, api, secret);
 
             TrackBook openTradeBook = new TrackBook(instrument);
             openBidTradeOrders.forEach(ord -> {
@@ -91,7 +94,7 @@ public class CheckTradeOrderExec extends Exec {
                     logger.info("cancel SplitTradeOrder bids: {}, ask:{}, orders:{}", diff1.toString(),
                             diff2.toString(), rmIds.toString());
                 }
-                provider.submit(new CancelExec(instrument, rmIds, false, openTradeBook, depthService, logger));
+                provider.submit(new CancelExec(instrument, rmIds, false, openTradeBook, depthService, api, secret, logger));
             }
         } catch (Exception ex) {
             logger.warn("{}-{}-{} {}, {}", src.name(), instrument.asString(), instrument.asLong(),

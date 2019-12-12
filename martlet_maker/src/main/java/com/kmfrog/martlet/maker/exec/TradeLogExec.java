@@ -38,6 +38,8 @@ public class TradeLogExec extends Exec {
     Instrument instrument;
     Provider provider;
     Logger logger;
+    final String api;
+    final String secret;
 
     public TradeLogExec(TradeLog log, Source src, Instrument instrument, Provider provider, Logger logger) {
         super(System.currentTimeMillis());
@@ -46,6 +48,8 @@ public class TradeLogExec extends Exec {
         this.instrument = instrument;
         this.provider = provider;
         this.logger = logger;
+        this.api = provider.getTatmasTradeApiKey();
+        this.secret = provider.getTatmasTradeSecretKey();
         this.tradeService = provider.getTradeService();
         this.depthService = provider.getDepthService();
 
@@ -79,13 +83,13 @@ public class TradeLogExec extends Exec {
                 }
                 return;
             }
-
+            
             SymbolAoWithFeatureAndExtra symbolInfo = provider.getSymbolInfo(instrument);
             BigDecimal originPrice = Fmt.dec(tradePrice, instrument.getPriceFractionDigits());
             BigDecimal originVolume = Fmt.dec(log.getVolume(), instrument.getSizeFractionDigits());
             Optional<BigDecimal> fixedVolumeOpt = getFixedVolume(symbolInfo, originVolume, src, logger);
             Optional<BigDecimal> fixedPriceOpt = getFixedPrice(instrument, symbolInfo, originPrice, logger);
-            // System.out.println(src+"|"+instrument.asString()+"|"+fixedVolumeOpt.isPresent()+"|"+fixedPriceOpt.isPresent()+"|"+log.toString());
+//            System.out.println(src+"|"+instrument.asString()+"|"+fixedVolumeOpt.isPresent()+"|"+fixedPriceOpt.isPresent()+"|"+log.toString());
             if (fixedVolumeOpt.isPresent() && fixedPriceOpt.isPresent()) {
                 BigDecimal newVolume = fixedVolumeOpt.get();
                 BigDecimal newPrice = fixedPriceOpt.get();
@@ -97,15 +101,15 @@ public class TradeLogExec extends Exec {
 //                BigDecimal ask1 = priceRange.getRight();
 
 //                if (newPrice.compareTo(bid1) >= 0 && newPrice.compareTo(ask1) <= 0) {
-                    if (provider.getSplitTradeSymbols().contains(symbolName)
-                            && System.currentTimeMillis() - log.getTimestamp() < provider
+                    if (/*provider.getSplitTradeSymbols().contains(symbolName)
+                            && */ System.currentTimeMillis() - log.getTimestamp() < provider
                                     .getSplitTradeMaxDelayMillis(symbolInfo)
                             && Math.random() < provider.getSplitTradeRatio(symbolInfo)) {
                         List<Order> splitOrders = new ArrayList<>();
                         splitOrders.add(Order.buildOrderByPriceLevel(instrument.asString(), Side.BUY, newPrice, newVolume, provider.getMakerTradeUserId(symbolInfo)));
                         splitOrders.add(Order.buildOrderByPriceLevel(instrument.asString(), Side.SELL, newPrice, newVolume, provider.getMakerTradeUserId(symbolInfo)));
-                        provider.submit(new PlaceOrderExec(instrument, splitOrders, provider.getDepthService(),
-                                tradeService, trackBook, logger));
+//                        System.out.println(String.format("%s-%s-%s", String.valueOf(newPrice), String.valueOf(newVolume), String.valueOf(provider.getMakerTradeUserId(symbolInfo))));
+                        provider.submit(new PlaceOrderExec(instrument, splitOrders, provider.getDepthService(), api, secret, trackBook, logger));
                         if(logger.isInfoEnabled()) {
                             logger.info("{} {} trade split to depth: {}@{}", src, instrument.asString(), newVolume, newPrice);
                         }

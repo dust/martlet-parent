@@ -44,8 +44,7 @@ public class CheckVolumeExec extends Exec {
     public void run() {
         SymbolAoWithFeatureAndExtra symbolInfo = provider.getSymbolInfo(instrument);
         Source preferSource = provider.getPreferSource(symbolInfo);
-        IOrderBook aggBook = preferSource == Source.Bitrue ? provider.getOrderBook(preferSource, instrument)
-                : provider.getAggBook(instrument);
+        IOrderBook aggBook = provider.getOrderBook(preferSource, instrument);
         if (aggBook.getAskPrices().isEmpty() || aggBook.getBidPrices().isEmpty()) {
             logger.warn("{} aggregate book is empty: {},{}", instrument.asString(), aggBook.getAskPrices().isEmpty(),
                     aggBook.getBidPrices().isEmpty());

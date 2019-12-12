@@ -40,8 +40,8 @@ public class CheckTradeOrderExec extends Exec {
         this.instrument = instrument;
         this.provider = provider;
         this.logger = logger;
-        this.api = provider.getTatmasApiKey();
-        this.secret = provider.getTatmasSecretKey();
+        api = provider.getTatmasTradeApiKey();
+        secret = provider.getTatmasTradeSecretKey();
         depthService = provider.getDepthService();
     }
 

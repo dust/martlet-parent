@@ -46,7 +46,7 @@ public class OpenOrderTracker extends Thread {
     private AtomicBoolean isQuit = new AtomicBoolean(false);
 
     public OpenOrderTracker(Source src, List<Instrument> instruments, Provider provider) {
-        super(String.format("%s Open Order Tracker", src.name()));
+        super(String.format("%s OpenOrderTracker", src.name()));
         this.src = src;
         this.instruments = instruments == null ? new ArrayList<>() : instruments;
         this.provider = provider;
@@ -83,7 +83,7 @@ public class OpenOrderTracker extends Thread {
                 		provider.submit(new CheckTradeOrderExec(src, instrument, symbolInfo, provider, logger));
                 	}
                 	
-                	if((nowTime - lastCheckVolumeAct.get()) > 13000) {
+                	if((nowTime - lastCheckVolumeAct.get()) > provider.getOpenOrderSleepMillis() * 10) {
                 		lastCheckVolumeAct.set(nowTime);
                 		for(Instrument instrument:instruments) {
                     		TrackBook trackBook = provider.getTrackBook(src, instrument);
@@ -91,7 +91,7 @@ public class OpenOrderTracker extends Thread {
                     	}
                 	}
                 	
-                	if((nowTime - lastOpenOrderAct.get()) > 5000) {
+                	if((nowTime - lastOpenOrderAct.get()) > provider.getOpenOrderSleepMillis() * 4) {
                 		lastOpenOrderAct.set(nowTime);
                 		for (Instrument instrument : instruments) {
                             TrackBook trackBook = provider.getTrackBook(src, instrument);
@@ -121,10 +121,10 @@ public class OpenOrderTracker extends Thread {
         Set<Long> openAskSet = openAsks.stream().map(ord -> ord.getId()).collect(Collectors.toSet());
         Set<Long> trackBidSet = book.getOrders(Side.BUY);
         Set<Long> trackAskSet = book.getOrders(Side.SELL);
-         System.out.println("openBidSet:"+openBidSet);
-         System.out.println("trackBidSet:"+trackBidSet);
-         System.out.println("openAskSet:"+openAskSet);
-         System.out.println("trackAskSet"+trackAskSet);
+//         System.out.println("openBidSet:"+openBidSet);
+//         System.out.println("trackBidSet:"+trackBidSet);
+//         System.out.println("openAskSet:"+openAskSet);
+//         System.out.println("trackAskSet"+trackAskSet);
 //        if (logger.isInfoEnabled()) {
 //            logger.info("{} {} trackBook bids: {} | {}", src, instrument.asString(), book.dump(Side.BUY), openBidSet);
 //            logger.info("{} {} trackBook asks: {} | {}", src, instrument.asString(), book.dump(Side.SELL), openAskSet);

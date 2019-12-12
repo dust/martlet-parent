@@ -106,7 +106,7 @@ public interface C {
     String OKEX_SUPPORTED = "${okex.supported}";
     String SPLIT_TRADE_RATIO = "${splitTradeRatio:1.0}";
     String SPLIT_TRADE_SYMBOLS = "${splitTradeSymbols:[]}";
-    String SPLIT_TRADE_MAX_DELAY_MILLIS = "${splitTradeMaxDelayMillis:10000}";
+    String SPLIT_TRADE_MAX_DELAY_MILLIS = "${splitTradeMaxDelayMillis:19000}";
     
     String MAKER_TRADE_USER_ID = "${maker.trade.user.id:6149}";
     String BUY_ROBOT_UID = "${buy.robot.uid:6148}";

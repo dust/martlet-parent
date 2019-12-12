@@ -1,5 +1,6 @@
 package com.kmfrog.martlet.maker.core;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,7 @@ public class Workbench implements Provider {
     private final Logger logger = LoggerFactory.getLogger(Workbench.class);
 
     private static ExecutorService executor = Executors
-            .newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("Loki-Exec-%d").build());
+            .newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("Maker-Exec-%d").build());
 
     /** 一定时间窗口的实时成交流水均值。 **/
     final Map<Source, Long2ObjectArrayMap<RollingTimeSpan<TradeLog>>> multiSrcLastAvgTrade;
@@ -263,6 +264,10 @@ public class Workbench implements Provider {
         // return cccClient.getSymbolInfoByName(instrument.asString().toLowerCase());
         return null;
     }
+    
+    public BigDecimal getTradeVolumeFactor(SymbolAoWithFeatureAndExtra symbolInfo) {
+        return springContext.getTradeVolumeFactor();
+    }
 
     @Override
     public Set<String> getSplitTradeSymbols() {
@@ -395,7 +400,7 @@ public class Workbench implements Provider {
                         makesureTradeLog(src, inst.asLong());
                         makesureOrderBook(src, inst.asLong());
                     }
-                    makesureAggregateOrderBook(inst.asLong());
+//                    makesureAggregateOrderBook(inst.asLong());
                     makesureMaker(inst);
                     makesureTrade(inst);
                 }
@@ -416,7 +421,7 @@ public class Workbench implements Provider {
                     }
                 }
 
-                aggBooks.remove(lng.longValue());
+//                aggBooks.remove(lng.longValue());
                 InstrumentMaker maker = instrumentMakers.get(lng);
                 if (maker != null) {
                     depthFeed.unregister(lng);

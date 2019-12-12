@@ -16,16 +16,18 @@ public class PlaceOrderExec extends Exec{
 	protected TrackBook trackBook;
 	protected List<Order> orders;
 	DepthService depthService;
-	TradeService tradeService;
+	String api;
+	String secret;
 	Instrument instrument;
 	Logger logger;
 
-	public PlaceOrderExec(Instrument instrument, List<Order> orders, DepthService depthService, TradeService tradeService, TrackBook trackBook, Logger logger) {
+	public PlaceOrderExec(Instrument instrument, List<Order> orders, DepthService depthService, String api, String secret, TrackBook trackBook, Logger logger) {
 		super(System.currentTimeMillis());
 		this.trackBook = trackBook;
 		this.orders = orders;
 		this.depthService = depthService;
-		this.tradeService = tradeService;
+		this.api = api;
+		this.secret = secret;
 		this.instrument = instrument;
 		this.logger = logger;
 	}
@@ -35,7 +37,7 @@ public class PlaceOrderExec extends Exec{
 		try {
 		    int initStatus = 0;
 			orders.stream().forEach((o)->{
-				depthService.insertOrder(o);
+				depthService.insertOrder(o, api, secret);
 				long price = o.getPrice().multiply(BigDecimal.valueOf(instrument.getPriceFactor())).longValue();
                 long size = o.getVolume().multiply(BigDecimal.valueOf(instrument.getSizeFactor())).longValue();
                 trackBook.entry(o.getId(), o.getSide(), price, size, initStatus);

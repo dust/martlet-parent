@@ -101,8 +101,8 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
                     provider.submit(new CancelExec(instrument, allCancelIds, false, trackBook, depthService, logger));
                 }
 
-                IOrderBook srcBook = src == Source.Bitrue ? book : provider.getAggBook(instrument);
-                mirrorDepthFromSrcBook(src, bbo[0], bbo[1], srcBook, depthService, symbolInfo);
+//                IOrderBook srcBook = src == Source.Bitrue ? book : provider.getAggBook(instrument);
+                mirrorDepthFromSrcBook(src, bbo[0], bbo[1], book, depthService, symbolInfo);
 
             } catch (InterruptedException ex) {
                 logger.warn("{} Interrupted.{}", instrument.asString(), ex.getMessage());

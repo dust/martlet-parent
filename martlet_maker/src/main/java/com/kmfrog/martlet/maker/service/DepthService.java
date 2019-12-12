@@ -8,10 +8,10 @@ import com.kmfrog.martlet.maker.model.entity.Order;
 
 public interface DepthService {
 	
-    Integer cancelOpenOrder(Long orderId);
+    Integer cancelOpenOrder(Long orderId, String api, String secret);
     
-    Long insertOrder(Order order);
+    Long insertOrder(Order order, String api, String secret);
     
-    List<Order> getOpenOrders(String symbol, Side side, Integer userId);
+    List<Order> getOpenOrders(String symbol, Side side, Integer userId, String api, String secret);
 }
 

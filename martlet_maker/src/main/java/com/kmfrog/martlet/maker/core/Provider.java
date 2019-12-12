@@ -1,5 +1,6 @@
 package com.kmfrog.martlet.maker.core;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -74,6 +75,8 @@ public interface Provider {
     SymbolAoWithFeatureAndExtra getSymbolInfo(Instrument instrument);
 
     List<VolumeStrategy> getVolumeStrategy(SymbolAoWithFeatureAndExtra symbolInfo);
+    
+    BigDecimal getTradeVolumeFactor(SymbolAoWithFeatureAndExtra symbolInfo);
 
     int getMaxLevel(SymbolAoWithFeatureAndExtra symbolInfo);
     

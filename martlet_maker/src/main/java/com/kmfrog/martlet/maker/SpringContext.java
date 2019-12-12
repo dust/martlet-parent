@@ -1,6 +1,6 @@
 package com.kmfrog.martlet.maker;
 
-import static com.kmfrog.martlet.C.ALL_SOURCES;
+import static com.kmfrog.martlet.C.*;
 import static com.kmfrog.martlet.C.ALL_SUPPORTED_SYMBOLS;
 import static com.kmfrog.martlet.C.BUY_ROBOT_UID;
 import static com.kmfrog.martlet.C.DEPTH_FEED_HOST;
@@ -24,7 +24,9 @@ import static com.kmfrog.martlet.C.TRADE_AVG_WINDOW_MILLIS;
 import static com.kmfrog.martlet.C.TRADE_FEED_HOST;
 import static com.kmfrog.martlet.C.TRADE_FEED_IO_THREAD_CNT;
 import static com.kmfrog.martlet.C.TRADE_FEED_PORT;
+import static com.kmfrog.martlet.C.TRADE_VOLUME_FACTOR;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -126,6 +128,21 @@ public class SpringContext implements CommandLineRunner {
     @Value(SELL_ROBOT_UID)
     private int sellRobotId;
 
+    @Value(TRADE_VOLUME_FACTOR)
+    private double tradeVolumeFactor;
+
+    @Value(TATMAS_API_KEY_DEPTH)
+    private String tatmasApiKey;
+
+    @Value(TATMAS_SECRET_KEY_DEPTH)
+    private String tatmasSecretKey;
+
+    @Value(TATMAS_API_KEY_TRADE)
+    private String tatmasTradeApiKey;
+
+    @Value(TATMAS_SECRET_KEY_TRADE)
+    private String tatmasTradeSecretKey;
+
     private Workbench workbench;
 
     public void run(String... args) throws Exception {
@@ -150,7 +167,7 @@ public class SpringContext implements CommandLineRunner {
     public TradeService getTradeService() {
         return tradeService;
     }
-    
+
     @ApolloConfigChangeListener
     private void onChange(ConfigChangeEvent changeEvent) {
         // ${xxx} -> xxx
@@ -268,8 +285,9 @@ public class SpringContext implements CommandLineRunner {
         Gson gson = new Gson();
         supportedInstruments = gson.fromJson(newValue,
                 TypeToken.getParameterized(List.class, JsonInstrument.class).getType());
-        Map<String, Instrument> allInstrumentMap = supportedInstruments.stream().collect(Collectors
-                .toMap(JsonInstrument::getName, v -> new Instrument(v.getName().toUpperCase(), v.getP(), v.getV(), v.getShowPrice())));
+        Map<String, Instrument> allInstrumentMap = supportedInstruments.stream()
+                .collect(Collectors.toMap(JsonInstrument::getName,
+                        v -> new Instrument(v.getName().toUpperCase(), v.getP(), v.getV(), v.getShowPrice())));
         // Set<String> allSymbol = allInstrumentMap.keySet();
         // Set<String> supportedSymbol = FeedUtils.parseInstrumentName(C.BINANCE_INSTRUMENTS);
         workbench.start(allInstrumentMap);
@@ -375,4 +393,23 @@ public class SpringContext implements CommandLineRunner {
         return buyRobotId;
     }
 
+    public BigDecimal getTradeVolumeFactor() {
+        return BigDecimal.valueOf(tradeVolumeFactor);
+    }
+
+    public String getTatmasApiKey() {
+        return tatmasApiKey;
+    }
+
+    public String getTatmasSecretKey() {
+        return tatmasSecretKey;
+    }
+
+    public String getTatmasTradeApiKey() {
+        return tatmasTradeApiKey;
+    }
+
+    public String getTatmasTradeSecretKey() {
+        return tatmasTradeSecretKey;
+    }
 }

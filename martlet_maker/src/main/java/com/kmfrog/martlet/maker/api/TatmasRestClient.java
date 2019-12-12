@@ -5,15 +5,17 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.alibaba.fastjson.JSONObject;
 import com.kmfrog.martlet.book.Side;
+import com.kmfrog.martlet.maker.SpringContext;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -25,14 +27,19 @@ public class TatmasRestClient {
 
     static Logger logger = LoggerFactory.getLogger(TatmasRestClient.class);
 
-    private final String apiKey;
-    private final String secret;
+//    @Autowired
+//    SpringContext springContext;
+    
+//    private String apiKey;
+//    private String secret;
     private final String signatureFmt = "AccessKeyId=%s&SignatureMethod=HmacSHA256&SignatureVersion=1&Timestamp=%s";
     private final OkHttpClient client;
+    
 
-    public TatmasRestClient(String apiKey, String secret) {
-        this.apiKey = apiKey;
-        this.secret = secret;
+    public TatmasRestClient(/* String apiKey, String secret */) {
+//        this.apiKey = apiKey;
+//        this.secret = secret;
+       
         client = new OkHttpClient();
     }
 
@@ -42,12 +49,12 @@ public class TatmasRestClient {
      * @param orderId
      * @return
      */
-    public String getOrderDetail(String orderId) {
+    public String getOrderDetail(String orderId, String api, String secret) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("orderId", orderId);
 
         try {
-            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/detail", params);
+            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/detail", api, secret, params);
             if (res.isSuccessful()) {
                 return res.body().string();
             }
@@ -71,7 +78,7 @@ public class TatmasRestClient {
      *         {"content":[{"orderId":"E157598654446490","memberId":6148,"type":"LIMIT_PRICE","amount":0.00100000,"symbol":"BTC/USDT","tradedAmount":0E-16,"turnover":0E-16,"coinSymbol":"BTC","baseSymbol":"USDT","status":"CANCELED","direction":"BUY","price":5000.00000000,"time":1575986544464,"completedTime":null,"canceledTime":1575987356767,"useDiscount":"0","detail":[],"completed":true}],"last":true,"totalElements":1,"totalPages":1,"first":true,"sort":[{"direction":"DESC","property":"time","ignoreCase":false,"nullHandling":"NATIVE","ascending":false,"descending":true}],"numberOfElements":1,"size":10,"number":0}
      */
     public String getHistoryOrder(String symbol, long startTime, long endTime, Side side, int status, int pageNo,
-            int pageSize) {
+            int pageSize, String api, String secret) {
         Map<String, String> params = new HashMap<String, String>();
         String direction = side == Side.BUY ? "0" : "1";
         params.put("type", "1");
@@ -84,7 +91,7 @@ public class TatmasRestClient {
         params.put("pageSize", String.valueOf(pageSize));
 
         try {
-            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/personal/history", params);
+            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/personal/history", api, secret, params);
             if (res.isSuccessful()) {
                 return res.body().string();
             }
@@ -96,12 +103,12 @@ public class TatmasRestClient {
         return null;
     }
 
-    public boolean cancelOrder(Long orderId) {
+    public boolean cancelOrder(Long orderId, String api, String secret) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("orderId", String.valueOf(orderId));
 
         try {
-            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/cancel", params);
+            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/cancel", api, secret, params);
             if (res.isSuccessful()) {
                 JSONObject data = JSONObject.parseObject(res.body().string());
                 if (data.containsKey("code") && data.getInteger("code") != 0) {
@@ -127,7 +134,7 @@ public class TatmasRestClient {
      * @param pageSize
      * @return
      */
-    public String getOpenOrder(String symbol, Side side, int pageNo, int pageSize) {
+    public String getOpenOrder(String symbol, Side side, int pageNo, int pageSize, String api, String secret) {
         Map<String, String> params = new HashMap<String, String>();
         String direction = side == Side.BUY ? "0" : "1";
         params.put("type", "1");
@@ -141,7 +148,7 @@ public class TatmasRestClient {
         params.put("pageSize", String.valueOf(pageSize));
 
         try {
-            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/personal/current", params);
+            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/personal/current", api, secret, params);
             System.out.println(res.body().string());
             // if(res.isSuccessful()) {
             // return res.body().string();
@@ -160,8 +167,8 @@ public class TatmasRestClient {
      * @param amount
      * @return 订单号 ""
      */
-    public Long limitBuy(String symbol, String price, String amount) {
-        return limitOrder(Side.BUY, symbol, price, amount);
+    public Long limitBuy(String symbol, String price, String amount, String api, String secret) {
+        return limitOrder(Side.BUY, symbol, price, amount, api, secret);
     }
 
     /**
@@ -171,8 +178,8 @@ public class TatmasRestClient {
      * @param amount
      * @return 订单号 ""
      */
-    public Long limitSell(String symbol, String price, String amount) {
-        return limitOrder(Side.SELL, symbol, price, amount);
+    public Long limitSell(String symbol, String price, String amount, String api, String secret) {
+        return limitOrder(Side.SELL, symbol, price, amount, api, secret);
     }
 
     /**
@@ -185,7 +192,7 @@ public class TatmasRestClient {
      * 
      *         {"code":0,"message":"success","totalPage":null,"totalElement":null,"data":"E157602986649923"}
      */
-    public Long limitOrder(Side side, String symbol, String price, String amount) {
+    public Long limitOrder(Side side, String symbol, String price, String amount, String apiKey, String secretKey) {
         Map<String, String> params = new HashMap<String, String>();
         String direction = side == Side.BUY ? "0" : "1";
         params.put("type", "1"); // 0,市价 1,限价
@@ -195,7 +202,7 @@ public class TatmasRestClient {
         params.put("amount", amount);
 
         try {
-            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/add", params);
+            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/add", apiKey, secretKey, params);
             if (res.isSuccessful()) {
                 String str = res.body().string();
                 JSONObject data = JSONObject.parseObject(str);
@@ -212,11 +219,11 @@ public class TatmasRestClient {
      * @param symbol
      * @return {"ask":{"minAmount":9.99500000,"highestPrice":7403.37380000,"symbol":"BTC/USDT","lowestPrice":7403.37380000,"maxAmount":9.99500000,"items":[{"amount":9.99500000,"price":7403.37380000}],"direction":"SELL"},"bid":{"minAmount":0.00100000,"highestPrice":7143.70910000,"symbol":"BTC/USDT","lowestPrice":5000.00000000,"maxAmount":0.50000000,"items":[{"amount":0.50000000,"price":7143.70910000},{"amount":0.00100000,"price":5000.00000000}],"direction":"BUY"}}
      */
-    public String getDepth(String symbol) {
+    public String getDepth(String symbol, String apiKey, String secretKey) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("symbol", getTatmasSymbol(symbol.toUpperCase()));
         try {
-            Response res = doPost("http://tatmas-exchange.com/market/open/exchange-plate-full", params);
+            Response res = doPost("http://tatmas-exchange.com/market/open/exchange-plate-full", apiKey, secretKey, params);
             if (res.isSuccessful()) {
                 return res.body().string();
             }
@@ -226,9 +233,12 @@ public class TatmasRestClient {
         return null;
     }
 
-    private Response doPost(String url, Map<String, String> params) throws Exception {
-        String data = String.format(this.signatureFmt, apiKey, System.currentTimeMillis());
-        String signature = URLEncoder.encode(TatmasRestClient.HMACSHA256(data, secret), "UTF-8");
+    private Response doPost(String url, String apiKey, String secretKey, Map<String, String> params) throws Exception {
+//        String data = String.format(this.signatureFmt, apiKey, System.currentTimeMillis());
+//        String signature = URLEncoder.encode(TatmasRestClient.HMACSHA256(data, secret), "UTF-8");
+      String data = String.format(signatureFmt, apiKey, System.currentTimeMillis());
+      String signature = URLEncoder.encode(TatmasRestClient.HMACSHA256(data, secretKey), "UTF-8");
+
         StringBuilder reqBody = new StringBuilder();
         reqBody.append(data).append("&Signature=").append(signature);
 
@@ -285,7 +295,7 @@ public class TatmasRestClient {
 
             String apiKey = "34b0792b-e292-45fe-a9a3-6b3eb53d4912";
             String secret = "e7fe3eff-8b64-4574-b476-af55314d95aa";
-            TatmasRestClient client = new TatmasRestClient(apiKey, secret);
+            TatmasRestClient client = new TatmasRestClient(/*apiKey, secret*/);
             // System.out.println(client.getDepth("BTC/USDT"));
             // System.out.println(client.limitBuy("BTC/USDT", "5000", "0.001"));
             // System.out.println(client.cancelOrder("E157602986649923"));

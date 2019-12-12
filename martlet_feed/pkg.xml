@@ -106,11 +106,6 @@
 			<version>1.10</version>
 		</dependency>
 		<dependency>
-			<groupId>commons-codec</groupId>
-			<artifactId>commons-codec</artifactId>
-			<version>1.10</version>
-		</dependency>
-		<dependency>
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>websocket-client</artifactId>
 			<version>9.4.21.v20190926</version>

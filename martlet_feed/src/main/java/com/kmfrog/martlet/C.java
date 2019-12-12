@@ -111,5 +111,13 @@ public interface C {
     String MAKER_TRADE_USER_ID = "${maker.trade.user.id:6149}";
     String BUY_ROBOT_UID = "${buy.robot.uid:6148}";
     String SELL_ROBOT_UID = "${sell.robot.uid:6148}";
+    String TRADE_VOLUME_FACTOR = "${trade.volume.factor:0.3}";
+    
+    String TATMAS_API_KEY_DEPTH = "${tatmas.api.key}";
+    String TATMAS_SECRET_KEY_DEPTH = "${tatmas.secret.key}";
+    
+    String TATMAS_API_KEY_TRADE = "${tatmas.api.key.trade}";
+    String TATMAS_SECRET_KEY_TRADE = "${tatmas.secret.key.trade}";
+    
 
 }

@@ -329,7 +329,7 @@ public class TatmasRestClient {
 //            System.out.println(client.limitBuy("ETHUSDT", "148", "0.001", apiKey, secret));
 //            System.out.println(client.limitSell("ETHUSDT", "148", "0.001", apiKey, secret));
             
-             System.out.println(client.getDepth("ETHUSDT", apiKey, secret));
+//             System.out.println(client.getDepth("ETHUSDT", apiKey, secret));
 //             System.out.println(client.limitBuy("ETHUSDT", "105.1", "0.001", apiKey, secret));
             // System.out.println(client.cancelOrder("E157602986649923"));
 //             System.out.println(client.getOrderDetail(654695783345422336l, apiKey, secret));

@@ -11,12 +11,10 @@ import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
 import com.kmfrog.martlet.book.Side;
-import com.kmfrog.martlet.maker.SpringContext;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -54,14 +52,18 @@ public class TatmasRestClient {
     public String getOrderDetail(Long orderId, String api, String secret) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("orderId", String.valueOf(orderId));
-
+        Response res = null;
         try {
-            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/detail", api, secret, params);
+            res = doPost("http://tatmas-exchange.com/exchange/order/open/detail", api, secret, params);
             if (res.isSuccessful()) {
-                return res.body().string();
+            	return res.body().string();
             }
         } catch (Exception ex) {
             logger.warn("getOrderDetail exception {}: {}", ex.getMessage(), orderId);
+        } finally {
+        	if(res != null) {
+        		res.body().close();
+        	}
         }
         return null;
     }
@@ -91,15 +93,20 @@ public class TatmasRestClient {
         params.put("status", String.valueOf(status));
         params.put("pageNo", String.valueOf(pageNo));
         params.put("pageSize", String.valueOf(pageSize));
-
+        
+        Response res = null;
         try {
-            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/personal/history", api, secret, params);
+            res = doPost("http://tatmas-exchange.com/exchange/order/open/personal/history", api, secret, params);
             if (res.isSuccessful()) {
                 return res.body().string();
             }
         } catch (Exception ex) {
             logger.warn(" getHistoryOrder exception {}: {} {} {} {} {} {} {}", ex.getMessage(), symbol,
                     String.valueOf(startTime), String.valueOf(endTime), direction, status, pageNo, pageSize);
+        } finally {
+        	if(res != null) {
+        		res.body().close();
+        	}
         }
 
         return null;
@@ -109,8 +116,9 @@ public class TatmasRestClient {
         Map<String, String> params = new HashMap<String, String>();
         params.put("orderId", String.valueOf(orderId));
         
+        Response res = null;
         try {
-            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/cancel", api, secret, params);
+            res = doPost("http://tatmas-exchange.com/exchange/order/open/cancel", api, secret, params);
             if (res.isSuccessful()) {
                 JSONObject data = JSONObject.parseObject(res.body().string());
                 if (data.containsKey("code") && data.getInteger("code") != 0) {
@@ -121,6 +129,10 @@ public class TatmasRestClient {
             }
         } catch (Exception ex) {
 //            logger.warn(" cancelOrder exception {}: {}", ex.getMessage(), orderId);
+        } finally {
+        	if(res != null) {
+        		res.body().close();
+        	}
         }
         return false;
     }
@@ -148,9 +160,10 @@ public class TatmasRestClient {
         params.put("direction", direction);
         params.put("pageNo", String.valueOf(pageNo));
         params.put("pageSize", String.valueOf(pageSize));
-
+        
+        Response res = null;
         try {
-            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/personal/current", api, secret, params);
+            res = doPost("http://tatmas-exchange.com/exchange/order/open/personal/current", api, secret, params);
             
             if(res.isSuccessful()) {
             	return res.body().string();
@@ -158,6 +171,10 @@ public class TatmasRestClient {
         } catch (Exception ex) {
             logger.warn(" getOpenOrder exception {}: {} {} {} {}", ex.getMessage(), symbol, direction, pageNo,
                     pageSize);
+        } finally {
+        	if(res != null) {
+        		res.body().close();
+        	}
         }
         return null;
     }
@@ -203,8 +220,9 @@ public class TatmasRestClient {
         params.put("price", price);
         params.put("amount", amount);
 
+        Response res = null;
         try {
-            Response res = doPost("http://tatmas-exchange.com/exchange/order/open/add", apiKey, secretKey, params);
+            res = doPost("http://tatmas-exchange.com/exchange/order/open/add", apiKey, secretKey, params);
             if (res.isSuccessful()) {
                 String str = res.body().string();
                 JSONObject data = JSONObject.parseObject(str);
@@ -213,6 +231,10 @@ public class TatmasRestClient {
         } catch (Exception ex) {
             logger.warn(" limitOrder exception {}: {} {} {} {}", direction, symbol, price, amount, ex.getMessage());
             ex.printStackTrace();
+        } finally {
+        	if(res != null) {
+        		res.body().close();
+        	}
         }
         return null;
     }
@@ -225,13 +247,18 @@ public class TatmasRestClient {
     public String getDepth(String symbol, String apiKey, String secretKey) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("symbol", getTatmasSymbol(symbol.toUpperCase()));
+        Response res = null;
         try {
-            Response res = doPost("http://tatmas-exchange.com/market/open/exchange-plate-full", apiKey, secretKey, params);
+            res = doPost("http://tatmas-exchange.com/market/open/exchange-plate-full", apiKey, secretKey, params);
             if (res.isSuccessful()) {
                 return res.body().string();
             }
         } catch (Exception ex) {
             logger.warn(" getDepth exception {}: {}", ex.getMessage(), symbol);
+        } finally {
+        	if(res != null) {
+        		res.body().close();
+        	}
         }
         return null;
     }
@@ -303,10 +330,10 @@ public class TatmasRestClient {
 //            System.out.println(client.limitBuy("ETHUSDT", "148", "0.001", apiKey, secret));
 //            System.out.println(client.limitSell("ETHUSDT", "148", "0.001", apiKey, secret));
             
-//             System.out.println(client.getDepth("ETHUSDT", apiKey, secret));
+             System.out.println(client.getDepth("ETHUSDT", apiKey, secret));
 //             System.out.println(client.limitBuy("ETHUSDT", "105.1", "0.001", apiKey, secret));
             // System.out.println(client.cancelOrder("E157602986649923"));
-             System.out.println(client.getOrderDetail(654695783345422336l, apiKey, secret));
+//             System.out.println(client.getOrderDetail(654695783345422336l, apiKey, secret));
 
 //             System.out.println(client.getHistoryOrder("ETHUSDT", startTime, endTime, Side.BUY, 2, 1, 10, apiKey, secret));
 //             System.out.println(client.getOpenOrder("ETHUSDT", Side.BUY, 1, 10, apiKey, secret));

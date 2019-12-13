@@ -296,8 +296,7 @@ public class TatmasRestClient {
             long startTime = format.parse("2019-12-01 00:00:00").getTime();
             long endTime = format.parse("2019-12-30 00:00:00").getTime();
 
-            String apiKey = "34b0792b-e292-45fe-a9a3-6b3eb53d4912";
-            String secret = "e7fe3eff-8b64-4574-b476-af55314d95aa";
+            
             TatmasRestClient client = new TatmasRestClient(/*apiKey, secret*/);
             
 //            System.out.println(client.limitBuy("ETHUSDT", "148", "0.001", apiKey, secret));
@@ -306,7 +305,7 @@ public class TatmasRestClient {
 //             System.out.println(client.getDepth("ETHUSDT", apiKey, secret));
 //             System.out.println(client.limitBuy("ETHUSDT", "105.1", "0.001", apiKey, secret));
             // System.out.println(client.cancelOrder("E157602986649923"));
-             System.out.println(client.getOrderDetail(654695783345422336l, apiKey, secret));
+//             System.out.println(client.getOrderDetail(654695783345422336l, apiKey, secret));
 
 //             System.out.println(client.getHistoryOrder("ETHUSDT", startTime, endTime, Side.BUY, 2, 1, 10, apiKey, secret));
 //             System.out.println(client.getOpenOrder("ETHUSDT", Side.BUY, 1, 10, apiKey, secret));

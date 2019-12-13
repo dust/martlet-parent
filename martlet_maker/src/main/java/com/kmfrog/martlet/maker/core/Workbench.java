@@ -92,7 +92,7 @@ public class Workbench implements Provider {
         String tradeHost = springContext.getTradeFeedHost();
         int tradePort = springContext.getTradeFeedPort();
         int tradeThreads = springContext.getTradeFeedThreadCnt();
-        tradeFeed = new TradeFeed(depthHost, tradePort, tradeThreads);
+        tradeFeed = new TradeFeed(tradeHost, tradePort, tradeThreads);
         tradeFeed.start();
 
         openOrderTracker = new OpenOrderTracker(Source.Tatmas, null, this);

@@ -45,6 +45,7 @@ public class PlaceOrderExec extends Exec{
 			});
 		} catch (Exception ex) {
 			logger.warn("{} placeOrder {}, {}", instrument.asString(), ex.getMessage(), orders.toString());
+			ex.printStackTrace();
 		}
 	}
 

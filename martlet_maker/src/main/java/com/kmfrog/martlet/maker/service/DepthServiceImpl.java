@@ -4,17 +4,22 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.parser.DefaultJSONParser;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.maker.api.TatmasRestClient;
 import com.kmfrog.martlet.maker.model.entity.Order;
 
 @Service
 public class DepthServiceImpl implements DepthService {
+
+    private Logger logger = LoggerFactory.getLogger(DepthServiceImpl.class);
 
     @Autowired
     private TatmasRestClient client;
@@ -44,19 +49,32 @@ public class DepthServiceImpl implements DepthService {
         int pageSize = 1000;
         String text = client.getOpenOrder(symbol, side, pageNo, pageSize, api, secret);
         List<Order> ret = new ArrayList<Order>();
+        DefaultJSONParser parser = new DefaultJSONParser(text);
 
-        JSONObject data = JSONObject.parseObject(text);
-        JSONArray content = data.getJSONArray("content");
-        for (Object o : content) {
-            JSONObject orderJson = (JSONObject) o;
-            Side sideObj = orderJson.getString("direction").equals("BUY") ? Side.BUY : Side.SELL;
-            BigDecimal price = orderJson.getBigDecimal("price");
-            BigDecimal amount = orderJson.getBigDecimal("amount");
-            Order order = Order.buildOrderByPriceLevel(orderJson.getString("symbol"), sideObj, price, amount, userId);
-            order.setId(orderJson.getLongValue("orderId"));
-            order.setDealVolume(orderJson.getBigDecimal("tradedAmount"));
-            order.setStatus(1);
-            ret.add(order);
+        try {
+            JSONObject data = parser.parseObject();
+            if (data != null) {
+                JSONArray content = data.getJSONArray("content");
+                for (Object o : content) {
+                    JSONObject orderJson = (JSONObject) o;
+                    Side sideObj = orderJson.getString("direction").equals("BUY") ? Side.BUY : Side.SELL;
+                    BigDecimal price = orderJson.getBigDecimal("price");
+                    BigDecimal amount = orderJson.getBigDecimal("amount");
+                    Order order = Order.buildOrderByPriceLevel(orderJson.getString("symbol"), sideObj, price, amount,
+                            userId);
+                    order.setId(orderJson.getLongValue("orderId"));
+                    order.setDealVolume(orderJson.getBigDecimal("tradedAmount"));
+                    order.setStatus(1);
+                    ret.add(order);
+                }
+            } else {
+                logger.warn("getOpenOrders:{},{},{}", symbol, side, text);
+            }
+        } catch (Exception ex) {
+            logger.warn("{}-{}", text, ex.getMessage(), ex);
+        }
+        finally {
+            parser.close();
         }
 
         return ret;

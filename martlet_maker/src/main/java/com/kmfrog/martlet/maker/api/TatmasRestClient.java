@@ -211,7 +211,8 @@ public class TatmasRestClient {
                 return data.getLong("data");
             }
         } catch (Exception ex) {
-            logger.warn(" limitOrder exception {}: {} {} {} {}", direction, symbol, price, amount);
+            logger.warn(" limitOrder exception {}: {} {} {} {}", direction, symbol, price, amount, ex.getMessage());
+            ex.printStackTrace();
         }
         return null;
     }

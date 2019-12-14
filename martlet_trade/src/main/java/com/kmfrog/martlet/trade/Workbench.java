@@ -21,6 +21,7 @@ import com.kmfrog.martlet.feed.DepthFeed;
 import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.feed.loex.LoexApiRestClient;
+import com.kmfrog.martlet.trade.SpringContext;
 import com.kmfrog.martlet.trade.bikun.BikunApiRestClient;
 import com.kmfrog.martlet.trade.bikun.BikunInstrumentSoloDunk;
 import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
@@ -62,8 +63,11 @@ public class Workbench implements Provider {
     // final TradeFeed tradeFeed;
     /** 默认来源 **/
     Source[] defSources = C.DEF_SOURCES;
+    
+    final SpringContext springContext;
 
-    public Workbench() {
+    public Workbench(SpringContext springContext) {
+    	this.springContext = springContext;
         multiSrcTradeLogs = new ConcurrentHashMap<>();
         multiSrcOrderBooks = new ConcurrentHashMap<>();
         trackBooks = new Long2ObjectArrayMap<>();
@@ -243,49 +247,58 @@ public class Workbench implements Provider {
     		startLoexHedgeInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);
     	}
     }
+    
+    public int getSpreadLowLimitMillesimal() {
+        return this.springContext.getSpreadLowLimitMillesimal();
+    }
+    
+    public int getMaxLevel() {
+    	return springContext.getMaxLevel();
+    }
+
 
     public static void main(String[] args) {
-        Workbench app = new Workbench();
-        Config cfg = ConfigFactory.load();
-        String baseUrl = cfg.getString("api.base.url");
-        String apiKey = cfg.getString("api.key");
-        String secret = cfg.getString("api.secret");
-
-        BrokerApiRestClient client = BrokerApiClientFactory.newInstance(baseUrl, apiKey, secret).newRestClient();
-        Map<String, Object> cfgArgs = FeedUtils.parseConfigArgs(cfg.getString("hedge.args"));
-        List<Instrument> hedgeInstruments = FeedUtils.parseInstruments(cfg.getString("instruments"));
-        List<Instrument> occupyInstruments = FeedUtils.parseInstruments(cfg.getString("triangle.instruments"));
-        List<Instrument> all = new ArrayList<>();
-        all.addAll(hedgeInstruments);
-        all.addAll(occupyInstruments);
-        // app.start(Source.Bhex, hedgeInstruments, all, cfgArgs, client);
-        Instrument ca = occupyInstruments.get(0);
-        Instrument ab = occupyInstruments.get(1);
-        Instrument cb = occupyInstruments.get(2);
-        Map<String, String> caArgs = (Map<String, String>) cfgArgs.get(ca.asString());
-        Map<String, String> cbArgs = (Map<String, String>) cfgArgs.get(cb.asString());
-
-        app.startOpenOrderTracker(Source.Bhex, all.toArray(new Instrument[all.size()]), client);
-
-        // app.startOccupyInstrument(Source.Bhex, ca, ab, cb, client, caArgs, cbArgs);
-        // app.startHedgeInstrument(Source.Bhex, ca, caArgs, client);
-        // app.startHedgeInstrument(Source.Bhex, cb, cbArgs, client);
-
-        try {
-            while (true) {
-                Thread.sleep(10000);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-        try {
-            // app.tradeFeed.quit();
-            app.depthFeed.quit();
-            Thread.sleep(100);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+//        Workbench app = new Workbench();
+//        Config cfg = ConfigFactory.load();
+//        String baseUrl = cfg.getString("api.base.url");
+//        String apiKey = cfg.getString("api.key");
+//        String secret = cfg.getString("api.secret");
+//
+//        BrokerApiRestClient client = BrokerApiClientFactory.newInstance(baseUrl, apiKey, secret).newRestClient();
+//        Map<String, Object> cfgArgs = FeedUtils.parseConfigArgs(cfg.getString("hedge.args"));
+//        List<Instrument> hedgeInstruments = FeedUtils.parseInstruments(cfg.getString("instruments"));
+//        List<Instrument> occupyInstruments = FeedUtils.parseInstruments(cfg.getString("triangle.instruments"));
+//        List<Instrument> all = new ArrayList<>();
+//        all.addAll(hedgeInstruments);
+//        all.addAll(occupyInstruments);
+//        // app.start(Source.Bhex, hedgeInstruments, all, cfgArgs, client);
+//        Instrument ca = occupyInstruments.get(0);
+//        Instrument ab = occupyInstruments.get(1);
+//        Instrument cb = occupyInstruments.get(2);
+//        Map<String, String> caArgs = (Map<String, String>) cfgArgs.get(ca.asString());
+//        Map<String, String> cbArgs = (Map<String, String>) cfgArgs.get(cb.asString());
+//
+//        app.startOpenOrderTracker(Source.Bhex, all.toArray(new Instrument[all.size()]), client);
+//
+//        // app.startOccupyInstrument(Source.Bhex, ca, ab, cb, client, caArgs, cbArgs);
+//        // app.startHedgeInstrument(Source.Bhex, ca, caArgs, client);
+//        // app.startHedgeInstrument(Source.Bhex, cb, cbArgs, client);
+//
+//        try {
+//            while (true) {
+//                Thread.sleep(10000);
+//            }
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
+//
+//        try {
+//            // app.tradeFeed.quit();
+//            app.depthFeed.quit();
+//            Thread.sleep(100);
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
 
     }
 }

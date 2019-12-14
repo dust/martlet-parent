@@ -8,6 +8,7 @@ import com.kmfrog.martlet.book.RollingTimeSpan;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.Source;
+import com.kmfrog.martlet.feed.domain.SymbolAoWithFeatureAndExtra;
 import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.trade.exec.Exec;
 
@@ -27,5 +28,9 @@ public interface Provider {
     TrackBook getTrackBook(Source src, Instrument instrument);
 
     void setOrderBook(Source src, Instrument instrument, IOrderBook book);    
+    
+    int getMaxLevel();
+    
+    int getSpreadLowLimitMillesimal();
     
 }

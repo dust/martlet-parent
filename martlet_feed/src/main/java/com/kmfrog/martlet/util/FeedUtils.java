@@ -174,6 +174,11 @@ public class FeedUtils {
         Random rnd = new Random(System.currentTimeMillis());
         return (long) (min + rnd.nextDouble() * (max - min));
     }
+    
+    public static long between(long min, long max, double spread) {
+    	Random rnd = new Random(System.currentTimeMillis());
+    	return (long) (min + rnd.nextDouble() * (max - min) * spread);
+    }
 
     public static void main(String[] args) {
         String originText = "[0,4779519138295206944,1572598396807,1572598397029,[[912716000000,5473100,\"3;5473100\"],[912710000000,694494730,\"2;694494730\"],[912707000000,227235000,\"3;227235000\"],[912700000000,3499999,\"2;3499999\"],[912680000000,2164413,\"2;2164413\"]],[[912720000000,42346318,\"2;42346318\"],[912727000000,2715900,\"3;2715900\"],[912795000000,1000,\"1;1000\"],[912820000000,219129,\"2;219129\"],[912970000000,51110000,\"3;51110000\"]]]";

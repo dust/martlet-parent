@@ -125,7 +125,7 @@ public class OpenOrderTracker extends Thread {
             BigDecimal decSize = new BigDecimal(order.getOrigQty());
             long price = decPrice.multiply(BigDecimal.valueOf(instrument.getPriceFactor())).longValue();
             long size = decSize.multiply(BigDecimal.valueOf(instrument.getSizeFactor())).longValue();
-            book.entry(orderId, order.getSide() == OrderSide.BUY ? Side.BUY : Side.SELL, price, size);
+            book.entry(orderId, order.getSide() == OrderSide.BUY ? Side.BUY : Side.SELL, price, size, 0);
         });
     }
 

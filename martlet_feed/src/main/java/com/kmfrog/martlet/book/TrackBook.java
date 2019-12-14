@@ -385,5 +385,35 @@ public class TrackBook {
             lock.readLock().unlock();
         }
     }
+    
+    /**
+     * 获得优于指定价位的全部订单（指定的某侧)。
+     * 
+     * @param side
+     * @param from inclusive
+     * @return
+     */
+    public Set<Long> getOrdersBetter(Side side, long from){
+        lock.readLock().lock();
+        try {
+            Set<Long> set = new HashSet<>();
+            Long2ObjectRBTreeMap<PriceLevel> levels = side == Side.BUY ? bids : asks;
+            //最差的报价：指定买入价格比订单簿中最差出价（即最低买价格）还低； 指定卖出价比订单簿最差出价（即最高卖价）还高。
+            long worst = levels.lastLongKey();
+            if((side==Side.BUY && from < worst) || (side==Side.SELL && from > worst)) {
+                return new HashSet<Long>();
+            }
+
+            if (!levels.isEmpty()) {
+                LongSortedSet prices = levels.subMap(from, worst).keySet();
+                prices.stream().forEach(p -> {
+                    set.addAll(levels.get(p.longValue()).getOrderIds());
+                });
+            }
+            return set;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
 
 }

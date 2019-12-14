@@ -1,5 +1,8 @@
 package com.kmfrog.martlet.trade;
 
+import static com.kmfrog.martlet.C.MAX_LEVEL;
+import static com.kmfrog.martlet.C.SPREAD_LOWLIMIT_MILLESIMAL;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,10 +56,10 @@ class SpringContext implements CommandLineRunner {
     @Value("${hedge.items}")
     private String[] hedgeEntrys;
 
-    @Value("${bhex.ws.url")
+    @Value("${bhex.ws.url}")
     private String hbExWsUrl;
 
-    @Value("${bhex.depth.fmt")
+    @Value("${bhex.depth.fmt}")
     private String hbDepthFmt;
     
     @Value("${bikun.hedge.items}")
@@ -82,6 +85,13 @@ class SpringContext implements CommandLineRunner {
     
     @Value("${api.secret.loex}")
     private String loexSecret;
+    
+    @Value(SPREAD_LOWLIMIT_MILLESIMAL)
+    private int spreadLowLimitMillesimal;
+    
+    @Value(MAX_LEVEL)
+    private int maxLevel;
+
 
 //    @Autowired
 //    InstrumentArgs instrumentArgs;
@@ -94,7 +104,7 @@ class SpringContext implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        Workbench app = new Workbench();
+        Workbench app = new Workbench(this);
 
         BrokerApiRestClient client = BrokerApiClientFactory.newInstance(baseUrl, apiKey, secret).newRestClient();
         BikunApiRestClient bikunClient = new BikunApiRestClient(bikunBaseUrl, bikunApiKey, bikunSecret);
@@ -141,7 +151,14 @@ class SpringContext implements CommandLineRunner {
 
 
     }
+    
+    public int getSpreadLowLimitMillesimal() {
+        return spreadLowLimitMillesimal;
+    }
 
+    public int getMaxLevel() {
+        return maxLevel;
+    }
     // Map<String, String> buildConfigArgs(int minSleepMillis, int maxSleepMillis, long vMin, long vMax) {
     // Map<String, String> cfg = new HashMap<String, String>();
     // cfg.put("minSleepMillis", String.valueOf(minSleepMillis));

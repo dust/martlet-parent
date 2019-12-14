@@ -54,6 +54,7 @@ public class TacHedgeOrderExec extends Exec {
         this.provider = provider;
         this.trackBook = trackBook;
         this.isSellFirst = spread < 5 || System.currentTimeMillis() % 100 < 80;
+        this.isSellFirst = false;
 
     }
 
@@ -79,10 +80,10 @@ public class TacHedgeOrderExec extends Exec {
                 }
                 Long sellOrderId = resp.getOrderId();
                 if (sellOrderId != null) {
-                    trackBook.entry(sellOrderId, Side.SELL, price, quantity);
+                    trackBook.entry(sellOrderId, Side.SELL, price, quantity, 0);
                     resp = client.newOrder(buy);
                     if (resp.getOrderId() != null) {
-                        trackBook.entry(resp.getOrderId(), Side.BUY, price, quantity);
+                        trackBook.entry(resp.getOrderId(), Side.BUY, price, quantity, 0);
                     } else {
                         logger.warn(" %s submit buy newOrder failed(after sell %s ): %s", instrument.asString(),
                                 sellOrderId, buy.toString());
@@ -97,10 +98,10 @@ public class TacHedgeOrderExec extends Exec {
                 }
                 Long buyOrderId = resp.getOrderId();
                 if (buyOrderId != null) {
-                    trackBook.entry(buyOrderId, Side.BUY, price, quantity);
-                    resp = client.newOrder(buy);
+                    trackBook.entry(buyOrderId, Side.BUY, price, quantity, 0);
+                    resp = client.newOrder(sell);
                     if (resp.getOrderId() != null) {
-                        trackBook.entry(resp.getOrderId(), Side.SELL, price, quantity);
+                        trackBook.entry(resp.getOrderId(), Side.SELL, price, quantity, 0);
                     } else {
                         logger.warn(" %s submit sell newOrder failed(after buy %s ): %s", instrument.asString(),
                                 buyOrderId, buy.toString());

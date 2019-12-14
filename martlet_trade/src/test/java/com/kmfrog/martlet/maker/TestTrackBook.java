@@ -21,11 +21,11 @@ public class TestTrackBook {
         Instrument btcUsdt = new Instrument("BTCUSDT", 8, 8, 6);
         TrackBook book = new TrackBook(btcUsdt);
         for (int i = 0; i < 10; i++) {
-            book.entry(i, Side.BUY, (9351 + i) * POWERS_OF_TEN[8], 30 + i * POWERS_OF_TEN[4]);
+            book.entry(i, Side.BUY, (9351 + i) * POWERS_OF_TEN[8], 30 + i * POWERS_OF_TEN[4], 0);
         }
 
         for (int i = 0; i < 10; i++) {
-            book.entry(i + 10, Side.SELL, (9371 + i) * POWERS_OF_TEN[8], 30 + i * POWERS_OF_TEN[4]);
+            book.entry(i + 10, Side.SELL, (9371 + i) * POWERS_OF_TEN[8], 30 + i * POWERS_OF_TEN[4], 0);
         }
 
         Set<Long> ids = book.getOrdersBetween(Side.BUY, 936900000000L, 934400000000L);
@@ -37,7 +37,7 @@ public class TestTrackBook {
         Instrument btcUsdt = new Instrument("BTCUSDT", 8, 8, 6);
         TrackBook book = new TrackBook(btcUsdt);
         for (int i = 0; i < 20; i++) {
-            book.entry(i, Side.BUY, (9351 + i) * POWERS_OF_TEN[8], 30 + i * POWERS_OF_TEN[4]);
+            book.entry(i, Side.BUY, (9351 + i) * POWERS_OF_TEN[8], 30 + i * POWERS_OF_TEN[4], 0);
         }
 
         Set<Long> ids = book.getOrdersBetween(Side.BUY, 936900000000L, 934400000000L);

@@ -70,10 +70,10 @@ public class BikunHedgeOrderExec extends Exec{
                     if (logger.isInfoEnabled()) {
                         logger.info("resp: limitSell {} {} {}", quantityStr, priceStr, sellOrderId.toString());
                     }
-                    trackBook.entry(sellOrderId, Side.SELL, price, quantity);
+                    trackBook.entry(sellOrderId, Side.SELL, price, quantity, 0);
                     Long buyOrderId = client.limitBuy(instrument, quantityStr, priceStr);
                     if (buyOrderId != null) {
-                        trackBook.entry(buyOrderId, Side.BUY, price, quantity);
+                        trackBook.entry(buyOrderId, Side.BUY, price, quantity, 0);
                     } else {
                         logger.warn(" {} submit buy newOrder failed(after sell {} ): {} {}", instrument.asString(),
                                 sellOrderId.toString(), quantityStr, priceStr);
@@ -87,10 +87,10 @@ public class BikunHedgeOrderExec extends Exec{
                     if (logger.isInfoEnabled()) {
                         logger.info("resp: limitBuy {} {} {}", quantityStr, priceStr, buyOrderId.toString());
                     }
-                    trackBook.entry(buyOrderId, Side.BUY, price, quantity);                    
+                    trackBook.entry(buyOrderId, Side.BUY, price, quantity, 0);                    
                     Long sellOrderId = client.limitSell(instrument, quantityStr, priceStr);
                     if (sellOrderId != null) {
-                        trackBook.entry(sellOrderId, Side.SELL, price, quantity);
+                        trackBook.entry(sellOrderId, Side.SELL, price, quantity, 0);
                     } else {
                         logger.warn(" {} submit sell newOrder failed(after buy {} ): {} {}", instrument.asString(),
                                 buyOrderId.toString(), quantityStr, priceStr);

@@ -90,7 +90,7 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
                 if (lastBook == null) {
                     continue;
                 }
-                System.out.println(lastBook.getOriginText(src, C.MAX_LEVEL));
+                System.out.println(lastBook.getOriginText(src, provider.getMaxLevel()));
 
                 boolean placed = false;
                 PriceLevel openAskLevel = caTracker.getBestLevel(Side.SELL);

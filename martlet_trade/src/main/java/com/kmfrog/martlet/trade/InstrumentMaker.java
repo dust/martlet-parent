@@ -72,7 +72,7 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
 //                        old.destroy();
 //                        old = null;
 //                    }
-                    System.out.println(book.getOriginText(src, C.MAX_LEVEL));
+                    System.out.println(book.getOriginText(src, provider.getMaxLevel()));
                     provider.setOrderBook(src, instrument, book);
                     
                 }
@@ -119,8 +119,8 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
      * @return [${bid}, ${offer}]
      */
     public long[] getBBO() {
-        long floatDownward = 1000 - C.SPREAD_LOWLIMIT_MILLESIMAL / 2;
-        long floatUpward = 1000 + C.SPREAD_LOWLIMIT_MILLESIMAL / 2;
+        long floatDownward = 1000 - provider.getSpreadLowLimitMillesimal() / 2;
+        long floatUpward = 1000 + provider.getSpreadLowLimitMillesimal() / 2;
         if (C.PREFER_SOURCE_NAME != null) {
             IOrderBook book = multiSrcBooks.get(Source.valueOf(C.PREFER_SOURCE_NAME));
             if (book == null) {

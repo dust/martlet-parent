@@ -125,6 +125,7 @@ class SpringContext implements CommandLineRunner {
                 .collect(Collectors.toMap(Param::getName, v -> v));
         app.start(Source.Bhex, hedgeEntrys, instrumentMap, instrumentArgsMap, client);
         app.startBikun(Source.Bikun, bikunHedgeEntrys, instrumentMap, instrumentArgsMap, bikunClient);
+        //loex要求停掉,开放时间不确定
 //        app.startLoex(Source.Loex, loexHedgeEntrys, instrumentMap, instrumentArgsMap, loexClient);
         app.startOpenOrderTracker(Source.Bhex, instrumentMap.values().toArray(new Instrument[instrumentMap.size()]), client);
 

@@ -31,7 +31,6 @@ public class TacInstrumentSoloDunk extends InstrumentSoloDunk {
         if (now - ts > C.SYMBOL_DELAY_MILLIS) {
             return;
         }
-
         int avgSleepMillis = (minSleepMillis + maxSleepMillis) / 2;
         provider.submitExec(new TacHedgeOrderExec(source, instrument, price, spreadSize, vMin, vMax, avgSleepMillis,
                 client, trackBook, provider));

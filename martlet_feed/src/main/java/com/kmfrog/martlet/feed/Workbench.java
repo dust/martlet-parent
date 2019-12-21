@@ -240,7 +240,8 @@ public class Workbench implements Controller {
             if (book != null) {
                 multiSrcBooks.get(mkt).put(instrument.asLong(), book);
                 String originText = book.getOriginText(mkt, ctx.getMaxLevel());
-                // System.out.println(originText);
+                System.out.println(instrument.asString());
+                System.out.println(originText);
                 depthPusher.put(originText);
             }
         } catch (InterruptedException e) {
@@ -279,6 +280,22 @@ public class Workbench implements Controller {
         Set<String> bnAddSymbols = Sets.difference(binanceSymbols, bnExistSymbols);
         Set<String> bnRmSymbols = Sets.difference(bnExistSymbols, binanceSymbols);
         setupBinance(all, binanceSymbols, bnAddSymbols, bnRmSymbols);
+    }
+    
+    public void startBhex(Map<String, Instrument> all, Set<String> bhexSymbols) {
+    	Set<String> bhexExistSymbols = depthWsDaemons.get(Source.Bhex) == null ? new HashSet<>()
+                : depthWsDaemons.get(Source.Bhex).getSymbolNames();
+    	Set<String> bhexAddSymbols = Sets.difference(bhexSymbols,  bhexExistSymbols);
+    	Set<String> bhexRmSymbols= Sets.difference(bhexExistSymbols, bhexSymbols);
+    	this.setupBhex(all, bhexSymbols, bhexAddSymbols, bhexRmSymbols);
+    }
+    
+    public void startBikun(Map<String, Instrument> all, Set<String> bikunSymbols) {
+    	Set<String> bikunExistSymbols = depthWsDaemons.get(Source.Bikun) == null ? new HashSet<>()
+                : depthWsDaemons.get(Source.Bikun).getSymbolNames();
+    	Set<String> bikunAddSymbols = Sets.difference(bikunSymbols,  bikunExistSymbols);
+    	Set<String> bikunRmSymbols= Sets.difference(bikunExistSymbols, bikunSymbols);
+    	setupBikun(all, bikunSymbols, bikunAddSymbols, bikunRmSymbols);
     }
 
     // void setupLoex(List<Instrument> instruments) {
@@ -320,6 +337,25 @@ public class Workbench implements Controller {
         LoexDepthHandler handler = new LoexDepthHandler(depthUrl, instrumentArr, listeners);
         startRestDepth(restDaemons, Source.Loex, handler, this);
     }
+    
+    void setupBikun(Map<String, Instrument> instruments, Set<String> symbols, Set<String> bikunAddSymbols, Set<String> bikunRmSymbols) {
+        String wsUrl = ctx.getBikunWsUrl();
+        String depthFmt = ctx.getBikunDepthFmt();
+        int size = symbols.size();
+        WsDataListener[] listeners = new BikunInstrumentDepth[size];
+        String[] instrumentArr = new String[size];
+        symbols.toArray(instrumentArr);
+        for (int i = 0; i < size; i++) {
+        	String symbol = instrumentArr[i];
+            Instrument instrument = instruments.get(symbol);
+            logger.info("{}:{}:{}", Source.Bikun.name(), instrument.asString(), instrument.asLong());
+            instrumentArr[i] = instrument.asString();
+            IOrderBook book = makesureOrderBook(Source.Bikun, instrument.asLong());
+            listeners[i] = new BikunInstrumentDepth(instrument, book, Source.Bikun, this);
+        }
+        BikunDepthHandler handler = new BikunDepthHandler(wsUrl, depthFmt, instrumentArr, listeners);
+        startWebSocket(depthWsDaemons, Source.Bikun, handler);
+    }
 
     void setupBikun(List<Instrument> instruments) {
         String wsUrl = ctx.getBikunWsUrl();
@@ -340,6 +376,27 @@ public class Workbench implements Controller {
         BikunDepthHandler handler = new BikunDepthHandler(wsUrl, depthFmt, instrumentArr, listeners);
         startWebSocket(depthWsDaemons, Source.Bikun, handler);
 
+    }
+    
+    void setupBhex(Map<String, Instrument> instruments, Set<String> symbols, Set<String> bnAddSymbols,
+            Set<String> bnRmSymbols) {
+    	String wsUrl = ctx.getTacWsUrl();
+        String depthFmt = ctx.getTacDepthFmt();
+        int size = symbols.size();
+        WsDataListener[] listeners = new BhexInstrumentDepth[size];
+        String[] instrumentArr = new String[size];
+        symbols.toArray(instrumentArr);
+        for (int i = 0; i < size; i++) {
+        	String symbol = instrumentArr[i];
+            Instrument instrument = instruments.get(symbol);
+            logger.info("{}:{}", instrument.asString(), instrument.asLong());
+            instrumentArr[i] = instrument.asString();
+            IOrderBook book = makesureOrderBook(Source.Bhex, instrument.asLong());
+            listeners[i] = new BhexInstrumentDepth(instrument, book, this);
+        }
+
+        BhexDepthHandler handler = new BhexDepthHandler(wsUrl, depthFmt, instrumentArr, listeners);
+        startWebSocket(depthWsDaemons, Source.Bhex, handler);
     }
 
     void setupBhex(List<Instrument> instruments) {

@@ -60,6 +60,9 @@ public class BikunDepthHandler extends BaseWebSocketHandler{
 	@Override
 	protected void onMessage(Session session, String msg) {
 //		System.out.println(String.format("####### Bikun ws message: %s", msg));
+//        System.out.println("\n################\n");
+//        System.out.println(msg);
+//        System.out.println("\n################\n");
 		DefaultJSONParser parser = new DefaultJSONParser(msg);
 		try {
 			JSONObject root = parser.parseObject();

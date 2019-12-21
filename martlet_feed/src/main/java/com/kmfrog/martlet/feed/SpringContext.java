@@ -120,6 +120,9 @@ public class SpringContext implements CommandLineRunner {
                         v -> new Instrument(v.getName().toUpperCase(), v.getP(), v.getV(), v.getShowPrice())));
         Set<String> allSymbol = allInstrumentMap.keySet();
         Set<String> binanceSymbols = Sets.intersection(allSymbol, binanceSupportedSymbols);
+        Set<String> bhexSymbols = Sets.intersection(allSymbol, tacSupportedSymbols);
+        Set<String> bikunSymbols = Sets.intersection(allSymbol, bikunSupportedSymbols);
+        
 //        Set<String> bikunSymbols = Sets.intersection(allSymbol, bikunSupportedSymbols);
 //        Set<String> tacSymbols = Sets.intersection(allSymbol,  tacSupportedSymbols);
 //        Set<String> huobiSymbols = Sets.intersection(allSymbol, huobiSupportedSymbols);
@@ -140,7 +143,9 @@ public class SpringContext implements CommandLineRunner {
 //        all.put(Source.Loex.name(), loexInstruments);
 
         workbench = new Workbench(this);
-        workbench.start(allInstrumentMap, binanceSymbols);
+//        workbench.start(allInstrumentMap, binanceSymbols);
+        workbench.startBhex(allInstrumentMap, bhexSymbols);
+        workbench.startBikun(allInstrumentMap, bikunSymbols);
 
         // Map<String, Instrument> instrumentMap = instruments.stream().collect(Collectors.toMap(Instrument::asString,
         // v->v));

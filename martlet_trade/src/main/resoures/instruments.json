@@ -35,6 +35,12 @@
 			"p": 5,
 			"v": 2,
 			"showPrice": 5
+		},
+		{
+			"name": "FMHMUSDT",
+			"p": 3,
+			"v": 4,
+			"showPrice": 3
 		}
 	],
 	"args": [
@@ -90,6 +96,15 @@
 			"minVolume": 200000,
 			"maxVolume": 718600,
 			"originBaseVolume":"1000000",
+			"originQuoteVolume":"143"
+		},
+		{
+			"name": "FMHMUSDT",
+			"minSleepMillis": 3000,
+			"maxSleepMillis": 17000,
+			"minVolume": 510000,
+			"maxVolume": 1260000,
+			"originBaseVolume":"10000",
 			"originQuoteVolume":"143"
 		}
 	]

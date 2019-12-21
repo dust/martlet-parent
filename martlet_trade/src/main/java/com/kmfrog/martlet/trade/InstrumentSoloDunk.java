@@ -74,7 +74,11 @@ public abstract class InstrumentSoloDunk extends Thread implements DataChangeLis
 
                 long bid1 = lastBook.getBestBidPrice();
                 long ask1 = lastBook.getBestAskPrice();
-                long price = FeedUtils.between(bid1, ask1, 0.5);
+                long price = FeedUtils.between(bid1, ask1);
+                if(instrument.asString().equals("HNTCUSDT")) {
+                	price = FeedUtils.between(bid1, ask1, 0.5);
+                }
+                
                 System.out.println(getClass().toString() + bid1 + "|" + ask1 + "|" + price);
                 String bidStr = Fmt.fmtNum(bid1, instrument.getPriceFractionDigits(), instrument.getShowPriceFractionDigits());
                 String askStr = Fmt.fmtNum(ask1, instrument.getPriceFractionDigits(), instrument.getShowPriceFractionDigits());

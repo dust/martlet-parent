@@ -53,8 +53,11 @@ public class TacHedgeOrderExec extends Exec {
         this.client = client;
         this.provider = provider;
         this.trackBook = trackBook;
-        this.isSellFirst = spread < 5 || System.currentTimeMillis() % 100 < 80;
-        this.isSellFirst = false;
+        if(instrument.asString().equals("HNTCUSDT")) {
+        	this.isSellFirst = false;
+        }else {
+        	this.isSellFirst = spread < 5 || System.currentTimeMillis() % 100 < 80;
+        }
 
     }
 

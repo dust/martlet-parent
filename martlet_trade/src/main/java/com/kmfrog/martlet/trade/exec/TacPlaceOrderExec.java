@@ -61,8 +61,9 @@ public class TacPlaceOrderExec extends Exec {
             NewOrderResponse resp = client.newOrder(order);
             logger.info("resp:{}", order.toString(), resp.toString());
             Long orderId = resp.getOrderId();
+            String clientOrderId = resp.getClientOrderId();
             if (orderId != null && orderId.longValue() > 0) {
-                trackBook.entry(orderId, side, price, volume, 0);
+                trackBook.entry(orderId, side, price, volume, 0, clientOrderId);
             }
         } catch (Exception ex) {
             logger.warn("{}-{}@{}:{}", instrument.asString(), volume, price, ex.getMessage());

@@ -28,6 +28,7 @@ import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
 import com.kmfrog.martlet.trade.exec.Exec;
 import com.kmfrog.martlet.trade.loex.LoexInstrumentSoloDunk;
 import com.kmfrog.martlet.trade.tac.TacBalanceSoloDunk;
+import com.kmfrog.martlet.trade.tac.TacInstrumentChaser;
 import com.kmfrog.martlet.trade.tac.TacInstrumentSoloDunk;
 import com.kmfrog.martlet.util.FeedUtils;
 import com.typesafe.config.Config;
@@ -168,6 +169,15 @@ public class Workbench implements Provider {
         openOrderTracker = new OpenOrderTracker(src, instruments, client, this);
         openOrderTracker.start();
     }
+    
+    public void startChaserInstrument(Source src, Instrument instrument, Param param, BrokerApiRestClient client) {
+    	if(instrument.asString().equals("HNTCUSDT")) {
+	    	TrackBook trackBook = makesureTrackBook(instrument);
+	    	InstrumentChaser chaser = new TacInstrumentChaser(instrument, src, trackBook, this, param, client);
+	    	chaser.start();
+	    	depthFeed.registerChaser(instrument, chaser);
+    	}
+    }
 
     public void startHedgeInstrument(Source src, Instrument instrument, Param param, BrokerApiRestClient client) {
         TrackBook trackBook = makesureTrackBook(instrument);
@@ -201,7 +211,7 @@ public class Workbench implements Provider {
     }
 
     public void startOccupyInstrument(Source src, Instrument ca, Instrument ab, Instrument cb,
-            BrokerApiRestClient client, Map<String, String> caArgs, Map<String, String> cbArgs) {
+            BrokerApiRestClient client, Param caArgs, Param cbArgs) {
         TrackBook caTracker = makesureTrackBook(ca);
         TrackBook cbTracker = makesureTrackBook(cb);
 
@@ -231,6 +241,7 @@ public class Workbench implements Provider {
         // }
         for (String instrumentName : instrumentNames) {
             startHedgeInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);
+//            startChaserInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);
         }
     }
     

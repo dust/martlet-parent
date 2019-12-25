@@ -1,6 +1,7 @@
 package com.kmfrog.martlet.trade;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +19,8 @@ import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.domain.TradeLog;
+import com.kmfrog.martlet.trade.exec.TacCancelExec;
+import com.kmfrog.martlet.trade.utils.OrderUtil;
 
 import io.broker.api.client.BrokerApiRestClient;
 import io.broker.api.client.domain.account.Order;
@@ -61,6 +64,8 @@ public class OpenOrderTracker extends Thread {
                     trackOpenOrders(instrument, trackBook, openOrders);
                     System.out.println(instrument.asString() + ".openAsks: " + trackBook.getOrders(Side.SELL)
                             + " .openBid" + trackBook.getOrders(Side.BUY));
+//                    handleHedgeOrders(trackBook, openOrders);
+                    
                 }
                 handleImbalance();
 
@@ -73,6 +78,25 @@ public class OpenOrderTracker extends Thread {
 
     private void handleImbalance() {
 
+    }
+    
+    /**
+     * 清理过期且未对敲成功的对敲单
+     * @param openOrders
+     */
+    private void handleHedgeOrders(TrackBook book, List<Order> openOrders) {
+    	long currentTime = System.currentTimeMillis();
+    	Set<Long> cancelIds = new HashSet<Long>();
+    	for(Order order: openOrders) {
+    		long createdTime = order.getTime();
+    		if(OrderUtil.isHedgeOrder(order.getClientOrderId()) && currentTime - createdTime > 5000) {
+    			cancelIds.add(order.getOrderId());
+    		}
+    	}
+    	if(cancelIds.size() > 0) {
+    		TacCancelExec cancelExec = new TacCancelExec(cancelIds, client, provider, book);
+    		provider.submitExec(cancelExec);
+    	}
     }
 
     private void trackOpenOrders(Instrument instrument, TrackBook book, List<Order> openOrders) {
@@ -122,10 +146,13 @@ public class OpenOrderTracker extends Thread {
         appendBidSet.forEach(orderId -> {
             Order order = orders.get(orderId);
             BigDecimal decPrice = new BigDecimal(order.getPrice());
-            BigDecimal decSize = new BigDecimal(order.getOrigQty());
+            BigDecimal origQty = new BigDecimal(order.getOrigQty());
+            BigDecimal executedQty = new BigDecimal(order.getExecutedQty());
+            BigDecimal decSize = origQty.subtract(executedQty);
+            
             long price = decPrice.multiply(BigDecimal.valueOf(instrument.getPriceFactor())).longValue();
             long size = decSize.multiply(BigDecimal.valueOf(instrument.getSizeFactor())).longValue();
-            book.entry(orderId, order.getSide() == OrderSide.BUY ? Side.BUY : Side.SELL, price, size, 0);
+            book.entry(orderId, order.getSide() == OrderSide.BUY ? Side.BUY : Side.SELL, price, size, 0, order.getClientOrderId());
         });
     }
 
@@ -136,5 +163,4 @@ public class OpenOrderTracker extends Thread {
 
     public void destroy() {
     }
-
 }

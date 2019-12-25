@@ -28,10 +28,12 @@ public class DepthFeed extends Thread {
     ZMQ.Socket subscriber;
     AtomicBoolean isQuit;
     Map<Long, DataChangeListener> listeners;
+    Map<Long, DataChangeListener> chaserListeners;
 
     public DepthFeed(String host, int port, int threads) {
         isQuit = new AtomicBoolean(false);
         listeners = new ConcurrentHashMap<>();
+        chaserListeners = new ConcurrentHashMap<>();
         ctx = ZMQ.context(threads);
         address = String.format("tcp://%s:%d", host, port);
 
@@ -52,6 +54,9 @@ public class DepthFeed extends Thread {
                         if (listeners.containsKey(instrument)) {
                             listeners.get(instrument).onDepth(instrument, book);
                         }
+                        if(chaserListeners.containsKey(instrument)) {
+                        	chaserListeners.get(instrument).onDepth(instrument, book);
+                        }
 //                        System.out.println(book.getOriginText(Source.Bhex, 5));
                     }
 
@@ -67,6 +72,10 @@ public class DepthFeed extends Thread {
 
     public void register(Instrument btcusdt, DataChangeListener im) {
         listeners.put(btcusdt.asLong(), im);
+    }
+    
+    public void registerChaser(Instrument instrument, DataChangeListener im) {
+    	chaserListeners.put(instrument.asLong(), im);
     }
 
     public void quit() {

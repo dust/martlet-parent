@@ -272,11 +272,14 @@ public class BikunApiRestClient {
     public static void main(String[] args) {
 //    	String baseUrl = "https://www.bikun.io/exchange-open-api";
     	String baseUrl = "https://openapi.bikun.io";
-//    	BikunApiRestClient client = new BikunApiRestClient(baseUrl, apiKey, secret);
+        String apiKey = "c31b2d41d6e70f4f8103767b284071fb";
+        String secret = "3f2d5692476c0c7e9541e50172eeebb8";
+    	BikunApiRestClient client = new BikunApiRestClient(baseUrl, apiKey, secret);
 //    	client.getOpenOrder("aic1usdt", "1", "100");
-//    	client.cancelOrder("102776", "aic1usdt");
-//    	client.cancelOrder("99789", "aic1usdt");
-//    	client.cancelOrder("99789", "aic1usdt");
+    	client.cancelOrder("115882", "aic1usdt");
+    	client.cancelOrder("115878", "aic1usdt");
+    	client.cancelOrder("115861", "aic1usdt");
+    	client.cancelOrder("115857", "aic1usdt");
     }
 
 }

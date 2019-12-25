@@ -351,13 +351,14 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 		long bestAskPrice = lastBook.getBestAskPrice();
 		PriceLevel openAskLevel = caTracker.getBestLevel(Side.SELL);
 		
+		//因为涉及到精度问题,这里计算最小单位的价格
 		long unitPrice = 1 * C.POWERS_OF_TEN[ca.getPriceFractionDigits() - ca.getShowPriceFractionDigits()];
 		long bestAskSize = lastBook.getAskSize(bestAskPrice);
 		long secondAskSize = lastBook.getAskSize(bestAskPrice + unitPrice); // 卖一价格增加一个单位价格的订单数量,如果为0说明卖一 卖二间隔大于一个价位
 		long chasePrice = bestAskPrice - unitPrice; // 价格比卖一少一个价位
 		long followChaseSize = (long) Math.ceil(bestAskSize/(1-chasePct)); // 跟随下单数量
 		followChaseSize = followChaseSize < vMin ? vMin : followChaseSize;
-		long chaseMax = vMax * 10; // 最大跟随数量
+		long chaseMax = vMax * 100; // 最大跟随数量
 		followChaseSize = followChaseSize > chaseMax ? chaseMax : followChaseSize;
 		long chaseSize = FeedUtils.between(vMin, vMax); // 绝对占领下单数量
 		
@@ -408,7 +409,7 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 //                        provider.submitExec(cancelExec);
                         return false;	
 					}else {
-					// 绝对占领卖一,且卖一卖二间隔一个价位
+					// 绝对占领卖一,且卖一卖二间隔一个价位,占领成功
 						System.out.println("## 绝对占领卖一,且卖一卖二间隔一个价位");
 						return true;
 					}
@@ -436,7 +437,7 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 						return false;
 					}
 				}else {
-				// 买一没有绝对占领,满足占比,认为占领成功
+				// 买一没有绝对占领,但是满足占比,认为占领成功
 					System.out.println("## 买一没有绝对占领,满足占比,认为占领成功");
 					return true;
 				}
@@ -470,7 +471,7 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 		long chasePrice = bestBidPrice + unitPrice; // 价格比买一多一个价位
 		long followChaseSize = (long) Math.ceil(bestBidSize/(1-chasePct)); // 跟随下单数量
 		followChaseSize = followChaseSize < vMin ? vMin : followChaseSize;
-		long chaseMax = vMax * 10; // 最大跟随数量
+		long chaseMax = vMax * 100; // 最大跟随数量
 		followChaseSize = followChaseSize > chaseMax ? chaseMax : followChaseSize;
 		long chaseSize = FeedUtils.between(vMin, vMax); // 绝对占领下单数量
 		

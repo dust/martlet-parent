@@ -11,6 +11,7 @@ import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.trade.Provider;
+import com.kmfrog.martlet.trade.utils.OrderUtil;
 import com.kmfrog.martlet.util.FeedUtils;
 import com.kmfrog.martlet.util.Fmt;
 
@@ -71,8 +72,12 @@ public class TacHedgeOrderExec extends Exec {
             }
             String priceStr = Fmt.fmtNum(price, instrument.getPriceFractionDigits(), instrument.getShowPriceFractionDigits());
             String quantityStr = Fmt.fmtNum(quantity, instrument.getSizeFractionDigits());
-            NewOrder buy = NewOrder.limitBuy(instrument.asString(), TimeInForce.GTC, quantityStr, priceStr);
-            NewOrder sell = NewOrder.limitSell(instrument.asString(), TimeInForce.GTC, quantityStr, priceStr);
+            if(true) {
+            	System.out.println(String.format("====== place hedge order %s|%s|%s|%s", instrument.asString(), priceStr, quantityStr, OrderUtil.generateHedgeClientOrderId()));
+//            	return;
+            }
+            NewOrder buy = NewOrder.limitBuy(instrument.asString(), TimeInForce.GTC, quantityStr, priceStr).newClientOrderId(OrderUtil.generateHedgeClientOrderId());
+            NewOrder sell = NewOrder.limitSell(instrument.asString(), TimeInForce.GTC, quantityStr, priceStr).newClientOrderId(OrderUtil.generateHedgeClientOrderId());
             if (logger.isInfoEnabled()) {
                 logger.info("buy:{}, sell: {}", buy.toString(), sell.toString());
             }

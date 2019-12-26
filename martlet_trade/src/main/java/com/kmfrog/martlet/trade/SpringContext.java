@@ -133,7 +133,7 @@ class SpringContext implements CommandLineRunner {
 //        app.startBikun(Source.Bikun, bikunHedgeEntrys, instrumentMap, instrumentArgsMap, bikunClient);
         //loex要求停掉,开放时间不确定
 //        app.startLoex(Source.Loex, loexHedgeEntrys, instrumentMap, instrumentArgsMap, loexClient);
-//        app.startOpenOrderTracker(Source.Bhex, instrumentMap.values().toArray(new Instrument[instrumentMap.size()]), client);
+        app.startOpenOrderTracker(Source.Bhex, instrumentMap.values().toArray(new Instrument[instrumentMap.size()]), client);
         
         Instrument ca = new Instrument(tringleInstruments.get(0).getName(), tringleInstruments.get(0).getP(), tringleInstruments.get(0).getV(), tringleInstruments.get(0).getShowPrice()); 
         Instrument ab = new Instrument(tringleInstruments.get(1).getName(), tringleInstruments.get(1).getP(), tringleInstruments.get(1).getV(), tringleInstruments.get(1).getShowPrice());

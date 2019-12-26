@@ -22,6 +22,7 @@ import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
 import com.kmfrog.martlet.trade.exec.TacCancelExec;
+import com.kmfrog.martlet.trade.exec.TacHedgeOrderExec;
 import com.kmfrog.martlet.trade.exec.TacPlaceOrderExec;
 import com.kmfrog.martlet.trade.utils.OrderUtil;
 import com.kmfrog.martlet.util.FeedUtils;
@@ -105,26 +106,41 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
                 
                 boolean chasingAskSuccess = false;
                 boolean chasingBidSuccess = false;
+                long caAsk1 = lastBook.getBestAskPrice();
+                long caBid1 = lastBook.getBestBidPrice();
                 long abAsk1 = abBook.getBestAskPrice();
                 long cbBid1 = cbBook.getBestBidPrice();
                 long abBid1 = abBook.getBestBidPrice();
                 long cbAsk1 = cbBook.getBestAskPrice();
+                long caAskLimit = 0;
+                long caBidLimit = 0;
+                
                 if (abAsk1 > 0 && cbBid1 > 0) {
-                    long caAskLimit = reverseAb ?  abAsk1 * cbBid1 / ca.getPriceFactor() : cbBid1 * ca.getPriceFactor() / abAsk1;
-                    System.out.println("++++"+cbBid1+"|"+abAsk1+"|"+caAskLimit+"|"+reverseAb);
-                    chasingAskSuccess = this.chasingAsk(lastBook, caAskLimit);
+                    caAskLimit = reverseAb ?  abAsk1 * cbBid1 / ca.getPriceFactor() : cbBid1 * ca.getPriceFactor() / abAsk1;
+                    System.out.println("++++"+ca.asString()+"|"+cbBid1+"|"+abAsk1+"|"+caAskLimit+"|"+reverseAb);
+                    chasingAskSuccess = chasingAsk(lastBook, caAskLimit);
                 }
                 if (abBid1 > 0 && cbAsk1 > 0) {
-                	long caBidLimit = reverseAb ?  abBid1 * cbAsk1 / ca.getPriceFactor() : cbAsk1 * ca.getPriceFactor() / abBid1;
-                	System.out.println("----"+abBid1+"|"+cbAsk1+"|"+caBidLimit+"|"+reverseAb);
+                	caBidLimit = reverseAb ?  abBid1 * cbAsk1 / ca.getPriceFactor() : cbAsk1 * ca.getPriceFactor() / abBid1;
+                	System.out.println("----"+ca.asString()+"|"+abBid1+"|"+cbAsk1+"|"+caBidLimit+"|"+reverseAb);
                 	chasingBidSuccess = chasingBid(lastBook, caBidLimit);
                 }
                 
                 if(chasingAskSuccess && chasingBidSuccess) {
                 	// 下对敲单
+                	if(caAskLimit > 0 && caBidLimit > 0 && caAskLimit >= caBidLimit) {
+                		long hedgePrice = FeedUtils.between(caBidLimit, caAskLimit);
+                    	System.out.println(String.format("对敲 %d|%d|%d", caAskLimit, caBidLimit, hedgePrice));
+                		int avgSleepMillis = (minSleepMillis + maxSleepMillis) / 2;
+                		long spreadSize = (caAsk1 - caBid1) / ca.getPriceFactor();
+                        provider.submitExec(new TacHedgeOrderExec(Source.Bhex, ca, hedgePrice, spreadSize, vMin, vMax, avgSleepMillis,
+                                client, caTracker, provider));
+                	}
                 }
                 
                 // 清理买一卖一以外的订单
+                cancelAfterTrackLevel1Ask(caTracker);
+                cancelAfterTrackLevel1Bid(caTracker);
     		}catch(Exception ex) {
     			logger.warn(ex.getMessage(), ex);
     		}
@@ -261,6 +277,42 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 //            }
 //        }
 //    }
+    
+    private void cancelAfterTrackLevel1Ask(TrackBook caTracker) {
+    	PriceLevel askLevel = caTracker.getBestLevel(Side.SELL);
+    	if(askLevel != null) {
+    		Set<String> clientOrderIds = askLevel.getClientOrderIds();
+    		for(String clientOrderId: clientOrderIds) {
+    			if(OrderUtil.isHedgeOrder(clientOrderId)) {
+    			// 如果卖一为对敲单,不处理,等待对敲成功或超时
+    				return;
+    			}
+    		}
+    		Set<Long> afterLevel = caTracker.getOrdersBetter(Side.SELL, askLevel.getPrice());
+    		if(afterLevel.size() > 0) {
+    			TacCancelExec cancelExec = new TacCancelExec(afterLevel, client, provider, caTracker);
+                provider.submitExec(cancelExec);
+    		}
+    	}
+    }
+    
+    private void cancelAfterTrackLevel1Bid(TrackBook caTracker) {
+    	PriceLevel bidLevel = caTracker.getBestLevel(Side.BUY);
+    	if(bidLevel != null) {
+    		Set<String> clientOrderIds = bidLevel.getClientOrderIds();
+    		for(String clientOrderId: clientOrderIds) {
+    			if(OrderUtil.isHedgeOrder(clientOrderId)) {
+    				return;
+    			}
+    		}
+    		Set<Long> afterLevel = caTracker.getOrdersBetter(Side.BUY, bidLevel.getPrice());
+    		if(afterLevel.size() > 0) {
+    			TacCancelExec cancelExec = new TacCancelExec(afterLevel, client, provider, caTracker);
+                provider.submitExec(cancelExec);
+    		}
+    	}
+    }
+
 
     private void cancelAfterLevel3Ask(IOrderBook caBook) {
         LongSortedSet prices = caBook.getAskPrices();
@@ -376,14 +428,14 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 			if(chasePrice <= bestBidPrice) { 
 			// 盘口没有空间了,只能按照百分比跟随卖一
 				System.out.println(String.format("# 盘口没有空间+跟随卖一 %d|%d", bestAskPrice, followChaseSize));
-//				TacPlaceOrderExec placeAsk = new TacPlaceOrderExec(instrument, bestAskPrice, followChaseSize, Side.SELL, client, trackBook);
-//				provider.submitExec(placeAsk);
+				TacPlaceOrderExec placeAsk = new TacPlaceOrderExec(ca, bestAskPrice, followChaseSize, Side.SELL, client, caTracker);
+				provider.submitExec(placeAsk);
 				return false;
 			} else { 
 			// 盘口还有空间,绝对占领卖一
 				System.out.println(String.format("# 盘口还有空间+占领卖一 %d|%d", chasePrice, chaseSize));
-//				TacPlaceOrderExec placeAsk = new TacPlaceOrderExec(instrument, chasePrice, chaseSize, Side.SELL, client, trackBook);
-//	            provider.submitExec(placeAsk);
+				TacPlaceOrderExec placeAsk = new TacPlaceOrderExec(ca, chasePrice, chaseSize, Side.SELL, client, caTracker);
+	            provider.submitExec(placeAsk);
 				return false;
 			}
 		}else{
@@ -405,8 +457,8 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 					// 卖一与卖二间隔大于一个价位,取消绝对占领的卖一
 						Set<Long> cancelIds = openAskLevel.getOrderIds();
 						System.out.println("## 卖一卖二间隔大于一个价位,取消占领");
-//                        TacCancelExec cancelExec = new TacCancelExec(cancelIds, client, provider, trackBook);
-//                        provider.submitExec(cancelExec);
+                        TacCancelExec cancelExec = new TacCancelExec(cancelIds, client, provider, caTracker);
+                        provider.submitExec(cancelExec);
                         return false;	
 					}else {
 					// 绝对占领卖一,且卖一卖二间隔一个价位,占领成功
@@ -424,16 +476,16 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 						}else {
 						// 调整跟随占比(取消订单,交给下一个event重新下单)
 							System.out.println("## 调整跟随占比(取消订单,交给下一个event重新下单)");
-//							Set<Long> cancelIds = openAskLevel.getOrderIds();
-//	                        TacCancelExec cancelExec = new TacCancelExec(cancelIds, client, provider, trackBook);
-//	                        provider.submitExec(cancelExec);
+							Set<Long> cancelIds = openAskLevel.getOrderIds();
+	                        TacCancelExec cancelExec = new TacCancelExec(cancelIds, client, provider, caTracker);
+	                        provider.submitExec(cancelExec);
 	                        return false;	
 						}
 					}else { 
 					// 盘口还有空间,对卖一进行绝对占领
 						System.out.println(String.format("## 盘口还有空间+占领卖一 %d|%d", chasePrice, chaseSize));
-//						TacPlaceOrderExec placeAsk = new TacPlaceOrderExec(instrument, chasePrice, chaseSize, Side.SELL, client, trackBook);
-//			            provider.submitExec(placeAsk);
+						TacPlaceOrderExec placeAsk = new TacPlaceOrderExec(ca, chasePrice, chaseSize, Side.SELL, client, caTracker);
+			            provider.submitExec(placeAsk);
 						return false;
 					}
 				}else {
@@ -446,14 +498,14 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 				if(chasePrice <= bestBidPrice) { 
 				// 盘口没有空间了,跟随卖一
 					System.out.println(String.format("### 盘口没有空间了,跟随卖一 %d|%d", bestBidPrice, followChaseSize));
-//					TacPlaceOrderExec placeAsk = new TacPlaceOrderExec(instrument, bestBidPrice, followChaseSize, Side.SELL, client, trackBook);
-//		            provider.submitExec(placeAsk);
+					TacPlaceOrderExec placeAsk = new TacPlaceOrderExec(ca, bestBidPrice, followChaseSize, Side.SELL, client, caTracker);
+		            provider.submitExec(placeAsk);
 					return false;
 				}else {
 				// 盘口还有空间,绝对占领买一
 					System.out.println(String.format("### 盘口还有空间,绝对占领卖一 %d|%d", chasePrice, chaseSize));
-//					TacPlaceOrderExec placeAsk = new TacPlaceOrderExec(instrument, chasePrice, chaseSize, Side.SELL, client, trackBook);
-//		            provider.submitExec(placeAsk);
+					TacPlaceOrderExec placeAsk = new TacPlaceOrderExec(ca, chasePrice, chaseSize, Side.SELL, client, caTracker);
+		            provider.submitExec(placeAsk);
 					return false;
 				}
 			}
@@ -489,14 +541,14 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 			if(chasePrice >= bestAskPrice) { 
 			// 盘口没有空间了,只能按照百分比跟随买一
 				System.out.println(String.format("# 盘口没有空间了,只能按照百分比跟随买一 %d|%d", bestBidPrice, followChaseSize));
-//				TacPlaceOrderExec placeBid = new TacPlaceOrderExec(instrument, bestBidPrice, followChaseSize, Side.BUY, client, trackBook);
-//	            provider.submitExec(placeBid);
+				TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, bestBidPrice, followChaseSize, Side.BUY, client, caTracker);
+	            provider.submitExec(placeBid);
 				return false;
 			} else { 
 			// 盘口还有空间,绝对占领买一
 				System.out.println(String.format("# 盘口还有空间,绝对占领买一 %d|%d", chasePrice, chaseSize));
-//				TacPlaceOrderExec placeBid = new TacPlaceOrderExec(instrument, chasePrice, chaseSize, Side.BUY, client, trackBook);
-//	            provider.submitExec(placeBid);
+				TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, chasePrice, chaseSize, Side.BUY, client, caTracker);
+	            provider.submitExec(placeBid);
 				return false;
 			}
 		}else{
@@ -517,9 +569,9 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 					if(secondBidSize == 0) {
 					// 买一与买二间隔大于一个价位,取消绝对占领的买一
 						System.out.println("## 买一与买二间隔大于一个价位,取消绝对占领的买一"+bestBidPrice+"|"+chasePrice);
-//						Set<Long> cancelIds = openBidLevel.getOrderIds();
-//                        TacCancelExec cancelExec = new TacCancelExec(cancelIds, client, provider, trackBook);
-//                        provider.submitExec(cancelExec);
+						Set<Long> cancelIds = openBidLevel.getOrderIds();
+						TacCancelExec cancelExec = new TacCancelExec(cancelIds, client, provider, caTracker);
+						provider.submitExec(cancelExec);
                         return false;	
 					}else {
 					// 绝对占领买一,且买一买二间隔一个价位
@@ -537,16 +589,16 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 						}else {
 						// 调整跟随占比(取消订单,交给下一个event重新下单)
 							System.out.println("## 取消订单,交给下一个event重新下单");
-//							Set<Long> cancelIds = openBidLevel.getOrderIds();
-//	                        TacCancelExec cancelExec = new TacCancelExec(cancelIds, client, provider, trackBook);
-//	                        provider.submitExec(cancelExec);
+							Set<Long> cancelIds = openBidLevel.getOrderIds();
+	                        TacCancelExec cancelExec = new TacCancelExec(cancelIds, client, provider, caTracker);
+	                        provider.submitExec(cancelExec);
 	                        return false;	
 						}
 					}else { 
 					// 盘口还有空间,对买一进行绝对占领
 						System.out.println(String.format("## 盘口还有空间,对买一进行绝对占领 %d|%d", chasePrice, chaseSize));
-//						TacPlaceOrderExec placeBid = new TacPlaceOrderExec(instrument, chasePrice, chaseSize, Side.BUY, client, trackBook);
-//			            provider.submitExec(placeBid);
+						TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, chasePrice, chaseSize, Side.BUY, client, caTracker);
+			            provider.submitExec(placeBid);
 						return false;
 					}
 				}else {
@@ -559,14 +611,14 @@ public class TriangleOccupyInstrument extends Thread implements DataChangeListen
 				if(chasePrice >= bestAskPrice) { 
 				// 盘口没有空间了,跟随买一
 					System.out.println(String.format("### 盘口没有空间了,跟随买一 %d|%d", bestBidPrice, followChaseSize));
-//					TacPlaceOrderExec placeBid = new TacPlaceOrderExec(instrument, bestBidPrice, followChaseSize, Side.BUY, client, trackBook);
-//		            provider.submitExec(placeBid);
+					TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, bestBidPrice, followChaseSize, Side.BUY, client, caTracker);
+		            provider.submitExec(placeBid);
 					return false;
 				}else {
 				// 盘口还有空间,绝对占领买一
 					System.out.println(String.format("### 盘口还有空间,对买一进行绝对占领 %d|%d", chasePrice, chaseSize));
-//					TacPlaceOrderExec placeBid = new TacPlaceOrderExec(instrument, chasePrice, chaseSize, Side.BUY, client, trackBook);
-//		            provider.submitExec(placeBid);
+					TacPlaceOrderExec placeBid = new TacPlaceOrderExec(ca, chasePrice, chaseSize, Side.BUY, client, caTracker);
+		            provider.submitExec(placeBid);
 					return false;
 				}
 			}

@@ -67,7 +67,7 @@
 			"minSleepMillis": 4000,
 			"maxSleepMillis": 19000,
 			"minVolume": 50000,
-			"maxVolume": 539000,
+			"maxVolume": 89000,
 			"originBaseVolume":"200000",
 			"originQuoteVolume":"0.9122"
 		},

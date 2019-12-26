@@ -216,7 +216,7 @@ public class Workbench implements Provider {
         TrackBook cbTracker = makesureTrackBook(cb);
 
         makesureMaker(ab);
-        // makesureMaker(cb);
+        makesureMaker(cb);
         makesureOrderBook(src, ca.asLong());
         makesureOrderBook(src, ab.asLong());
         makesureOrderBook(src, cb.asLong());
@@ -225,12 +225,12 @@ public class Workbench implements Provider {
 
         TriangleOccupyInstrument caOccupy = new TriangleOccupyInstrument(ca, ab, cb, false, src, caTracker, this,
                 client, caArgs);
-        TriangleOccupyInstrument cbOccupy = new TriangleOccupyInstrument(cb, ab, ca, true, src, cbTracker, this, client,
-                cbArgs);
+//        TriangleOccupyInstrument cbOccupy = new TriangleOccupyInstrument(cb, ab, ca, true, src, cbTracker, this, client,
+//                cbArgs);
 
         caOccupy.start();
-        cbOccupy.start();
-        depthFeed.register(cb, cbOccupy);
+//        cbOccupy.start();
+//        depthFeed.register(cb, cbOccupy);
         depthFeed.register(ca, caOccupy);
     }
 

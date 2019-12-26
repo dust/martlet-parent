@@ -23,7 +23,7 @@ import java.time.format.DateTimeFormatter;
  */
 public class OrderIDGenerator {
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH-mm-ss");
 
     private final String prefix;
 

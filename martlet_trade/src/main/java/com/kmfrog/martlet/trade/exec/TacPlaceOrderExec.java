@@ -50,6 +50,9 @@ public class TacPlaceOrderExec extends Exec {
             String priceStr = Fmt.fmtNum(price, instrument.getPriceFractionDigits(), instrument.getShowPriceFractionDigits());
             String quantityStr = Fmt.fmtNum(volume, instrument.getSizeFractionDigits());
             NewOrder order;
+            if(true) {
+            	System.out.println(String.format("++++++ place order %s|%s|%s|%s", instrument.asString(), side, priceStr, quantityStr));
+            }
             if (side == Side.BUY) {
                 order = NewOrder.limitBuy(instrument.asString(), TimeInForce.GTC, quantityStr, priceStr);
             } else {
@@ -61,8 +64,9 @@ public class TacPlaceOrderExec extends Exec {
             NewOrderResponse resp = client.newOrder(order);
             logger.info("resp:{}", order.toString(), resp.toString());
             Long orderId = resp.getOrderId();
+            String clientOrderId = resp.getClientOrderId();
             if (orderId != null && orderId.longValue() > 0) {
-                trackBook.entry(orderId, side, price, volume, 0);
+                trackBook.entry(orderId, side, price, volume, 0, clientOrderId);
             }
         } catch (Exception ex) {
             logger.warn("{}-{}@{}:{}", instrument.asString(), volume, price, ex.getMessage());

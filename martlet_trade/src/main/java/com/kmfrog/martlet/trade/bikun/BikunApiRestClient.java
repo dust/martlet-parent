@@ -274,9 +274,10 @@ public class BikunApiRestClient {
     	String baseUrl = "https://openapi.bikun.io";
 //    	BikunApiRestClient client = new BikunApiRestClient(baseUrl, apiKey, secret);
 //    	client.getOpenOrder("aic1usdt", "1", "100");
-//    	client.cancelOrder("102776", "aic1usdt");
-//    	client.cancelOrder("99789", "aic1usdt");
-//    	client.cancelOrder("99789", "aic1usdt");
+    	client.cancelOrder("115882", "aic1usdt");
+    	client.cancelOrder("115878", "aic1usdt");
+    	client.cancelOrder("115861", "aic1usdt");
+    	client.cancelOrder("115857", "aic1usdt");
     }
 
 }

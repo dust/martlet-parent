@@ -6,12 +6,14 @@ public class OrderEntry {
     private final long id;
     private long remainingQuantity;
     private int status;
+    private String clientOrderId;
 
-    OrderEntry(PriceLevel level, long id, long size, int status) {
+    OrderEntry(PriceLevel level, long id, long size, int status, String clientOrderId) {
         this.level = level;
         this.id = id;
         this.remainingQuantity = size;
         this.status = status;
+        this.clientOrderId = clientOrderId;
     }
 
     public PriceLevel getLevel() {
@@ -30,6 +32,14 @@ public class OrderEntry {
         this.status = status;
     }
 
+    public String getClientOrderId() {
+    	return clientOrderId;
+    }
+    
+    public void setClientOrderId(String clientOrderId) {
+    	this.clientOrderId = clientOrderId;
+    }
+    
     public long getRemainingQuantity() {
         return remainingQuantity;
     }

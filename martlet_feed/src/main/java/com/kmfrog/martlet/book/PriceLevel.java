@@ -64,8 +64,8 @@ public class PriceLevel {
         return orders.isEmpty();
     }
 
-    public OrderEntry add(long orderId, long size, int status) {
-        OrderEntry order = new OrderEntry(this, orderId, size, status);
+    public OrderEntry add(long orderId, long size, int status, String clientOrderId) {
+        OrderEntry order = new OrderEntry(this, orderId, size, status, clientOrderId);
 
         orders.add(order);
 
@@ -84,6 +84,14 @@ public class PriceLevel {
         return orders.stream().filter(ord -> ord.getStatus() != excludeStatus).map(ord->ord.getId()).collect(Collectors.toSet());
     }
 
+    public Set<String> getClientOrderIds(){
+    	return orders.stream().map(ord -> ord.getClientOrderId()).collect(Collectors.toSet());
+    }
+    
+    public Set<String> getClientOrderIds(int excludeStatus){
+    	return orders.stream().filter(ord -> ord.getStatus() != excludeStatus).map(ord->ord.getClientOrderId()).collect(Collectors.toSet());
+    }
+    
     @Override
     public String toString() {
         return String.format("{%d: %s}", getSize(), orders.stream()

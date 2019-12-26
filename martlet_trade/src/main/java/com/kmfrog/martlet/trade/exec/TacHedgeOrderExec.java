@@ -87,11 +87,12 @@ public class TacHedgeOrderExec extends Exec {
                     logger.info("resp:{}", resp.toString());
                 }
                 Long sellOrderId = resp.getOrderId();
+                String sellClientOrderId = resp.getClientOrderId();
                 if (sellOrderId != null) {
-                    trackBook.entry(sellOrderId, Side.SELL, price, quantity, 0);
+                    trackBook.entry(sellOrderId, Side.SELL, price, quantity, 0, sellClientOrderId);
                     resp = client.newOrder(buy);
                     if (resp.getOrderId() != null) {
-                        trackBook.entry(resp.getOrderId(), Side.BUY, price, quantity, 0);
+                        trackBook.entry(resp.getOrderId(), Side.BUY, price, quantity, 0, resp.getClientOrderId());
                     } else {
                         logger.warn(" %s submit buy newOrder failed(after sell %s ): %s", instrument.asString(),
                                 sellOrderId, buy.toString());

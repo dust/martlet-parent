@@ -48,7 +48,7 @@
 			"name": "XIEPTCN",
 			"minSleepMillis": 2000,
 			"maxSleepMillis": 19000,
-			"minVolume": 500000,
+			"minVolume": 506000,
 			"maxVolume": 379000,
 			"originBaseVolume": "20000",
 			"originQuoteVolume": "10000"
@@ -75,8 +75,8 @@
 			"name": "HNTCUSDT",
 			"minSleepMillis": 3000,
 			"maxSleepMillis": 17000,
-			"minVolume": 10000,
-			"maxVolume": 20000,
+			"minVolume": 10200,
+			"maxVolume": 20900,
 			"originBaseVolume":"200000",
 			"originQuoteVolume":"392.17"
 		},

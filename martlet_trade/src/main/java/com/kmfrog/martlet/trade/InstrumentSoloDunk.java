@@ -79,11 +79,11 @@ public abstract class InstrumentSoloDunk extends Thread implements DataChangeLis
                 	price = FeedUtils.between(bid1, ask1, 0.5);
                 }
                 
-                System.out.println(getClass().toString() + bid1 + "|" + ask1 + "|" + price);
+//                System.out.println(getClass().toString() + bid1 + "|" + ask1 + "|" + price);
                 String bidStr = Fmt.fmtNum(bid1, instrument.getPriceFractionDigits(), instrument.getShowPriceFractionDigits());
                 String askStr = Fmt.fmtNum(ask1, instrument.getPriceFractionDigits(), instrument.getShowPriceFractionDigits());
                 String priceStr = Fmt.fmtNum(price, instrument.getPriceFractionDigits(), instrument.getShowPriceFractionDigits());
-                System.out.println(getClass().toString() + bidStr + "|" + askStr + "|" + priceStr);
+//                System.out.println(">>>>>>"+instrument.asString() +"<<<<<<"+ "@@@@@@@@" + bidStr + "|" + askStr + "|" + priceStr);
                 if(!priceStr.equals(bidStr) && !priceStr.equals(askStr)) {
                 	placeHedgeOrder(price, (ask1 - bid1) / instrument.getPriceFactor(), lastBook);
                 }

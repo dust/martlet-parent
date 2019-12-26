@@ -181,12 +181,7 @@ public class Workbench implements Provider {
 
     public void startHedgeInstrument(Source src, Instrument instrument, Param param, BrokerApiRestClient client) {
         TrackBook trackBook = makesureTrackBook(instrument);
-        // RollingTimeSpan<TradeLog> lastTradeLogs = makesureTradeLog(src, instrument.asLong());
         makesureTradeLog(src, instrument.asLong());
-        // TacInstrumentSoloDunk solodunk = new TacInstrumentSoloDunk(instrument, Source.Bhex, trackBook, this, client,
-        // param);
-        // Instrument instrument, Source src, TrackBook trackBook, Provider provider, Param args,
-        // BrokerApiRestClient client, BigDecimal originBaseVolume, BigDecimal originQuoteVolume
         
 //        TacBalanceSoloDunk solodunk = new TacBalanceSoloDunk(instrument, src, trackBook, this, param, client);
         TacInstrumentSoloDunk solodunk = new TacInstrumentSoloDunk(instrument, src, trackBook, this, client, param);
@@ -236,9 +231,6 @@ public class Workbench implements Provider {
 
     public void start(Source src, String[] instrumentNames, Map<String, Instrument> instruments,
             Map<String, Param> cfgArgs, BrokerApiRestClient client) {
-        // for (Instrument instr : hedgeInstruments) {
-        // startHedgeInstrument(src, instr, (Map<String, String>) cfgArgs.get(instr.asString()), client);
-        // }
         for (String instrumentName : instrumentNames) {
             startHedgeInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);
 //            startChaserInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);

@@ -129,8 +129,8 @@ class SpringContext implements CommandLineRunner {
                 JsonInstrument::getName, v -> new Instrument(v.getName(), v.getP(), v.getV(), v.getShowPrice())));
         Map<String, Param> instrumentArgsMap = params.stream()
                 .collect(Collectors.toMap(Param::getName, v -> v));
-//        app.start(Source.Bhex, hedgeEntrys, instrumentMap, instrumentArgsMap, client);
-//        app.startBikun(Source.Bikun, bikunHedgeEntrys, instrumentMap, instrumentArgsMap, bikunClient);
+        app.start(Source.Bhex, hedgeEntrys, instrumentMap, instrumentArgsMap, client);
+        app.startBikun(Source.Bikun, bikunHedgeEntrys, instrumentMap, instrumentArgsMap, bikunClient);
         //loex要求停掉,开放时间不确定
 //        app.startLoex(Source.Loex, loexHedgeEntrys, instrumentMap, instrumentArgsMap, loexClient);
         app.startOpenOrderTracker(Source.Bhex, instrumentMap.values().toArray(new Instrument[instrumentMap.size()]), client);
@@ -138,7 +138,7 @@ class SpringContext implements CommandLineRunner {
         Instrument ca = new Instrument(tringleInstruments.get(0).getName(), tringleInstruments.get(0).getP(), tringleInstruments.get(0).getV(), tringleInstruments.get(0).getShowPrice()); 
         Instrument ab = new Instrument(tringleInstruments.get(1).getName(), tringleInstruments.get(1).getP(), tringleInstruments.get(1).getV(), tringleInstruments.get(1).getShowPrice());
         Instrument cb = new Instrument(tringleInstruments.get(2).getName(), tringleInstruments.get(2).getP(), tringleInstruments.get(2).getV(), tringleInstruments.get(2).getShowPrice());
-        app.startOccupyInstrument(Source.Bhex, ca, ab, cb, client, instrumentArgsMap.get(ca.asString()), instrumentArgsMap.get(cb.asString()));
+//        app.startOccupyInstrument(Source.Bhex, ca, ab, cb, client, instrumentArgsMap.get(ca.asString()), instrumentArgsMap.get(cb.asString()));
 
         // app.startHedgeInstrument(Source.Bhex, hntcbtc, buildConfigArgs(4000, 19000, 50000, 13390000), client);
         // InstrumentArg[] items = instrumentJson.get

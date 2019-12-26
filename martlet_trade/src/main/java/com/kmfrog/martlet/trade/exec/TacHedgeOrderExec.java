@@ -72,10 +72,10 @@ public class TacHedgeOrderExec extends Exec {
             }
             String priceStr = Fmt.fmtNum(price, instrument.getPriceFractionDigits(), instrument.getShowPriceFractionDigits());
             String quantityStr = Fmt.fmtNum(quantity, instrument.getSizeFractionDigits());
-            if(true) {
-            	System.out.println(String.format("====== place hedge order %s|%s|%s|%s", instrument.asString(), priceStr, quantityStr, OrderUtil.generateHedgeClientOrderId()));
+//            if(true) {
+//            	System.out.println(String.format("====== place hedge order %s|%s|%s|%s", instrument.asString(), priceStr, quantityStr, OrderUtil.generateHedgeClientOrderId()));
 //            	return;
-            }
+//            }
             NewOrder buy = NewOrder.limitBuy(instrument.asString(), TimeInForce.GTC, quantityStr, priceStr).newClientOrderId(OrderUtil.generateHedgeClientOrderId());
             NewOrder sell = NewOrder.limitSell(instrument.asString(), TimeInForce.GTC, quantityStr, priceStr).newClientOrderId(OrderUtil.generateHedgeClientOrderId());
             if (logger.isInfoEnabled()) {

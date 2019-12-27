@@ -1,5 +1,7 @@
 package com.kmfrog.martlet.trade.tac;
 
+import java.util.Set;
+
 import com.kmfrog.martlet.C;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
@@ -61,13 +63,13 @@ public class TacInstrumentSoloDunk extends InstrumentSoloDunk {
     	long unitPrice = 1 * C.POWERS_OF_TEN[instrument.getPriceFractionDigits() - instrument.getShowPriceFractionDigits()];
     	//买一不是自己的订单,并且数量少于最小下单量
     	if(askLevel == null && ask1Size <= vMin) {
-    		if(!isLevelSpaceNormal(Side.SELL) || (ask1Size - bid1Size) < unitPrice * 3) {
+    		if(!isLevelSpaceNormal(Side.SELL) || (ask1 - bid1) < unitPrice * 4) {
     			return true;
     		}
     	}
     	//卖一不是自己的订单,并且数量少于最小下单量
     	if(bidLevel == null && bid1Size <= vMin) {
-    		if(!isLevelSpaceNormal(Side.BUY) || (ask1Size - bid1Size) < unitPrice * 3) {
+    		if(!isLevelSpaceNormal(Side.BUY) || (ask1 - bid1) < unitPrice * 4) {
     			return true;
     		}
     	}
@@ -85,7 +87,7 @@ public class TacInstrumentSoloDunk extends InstrumentSoloDunk {
     	long level2 = pricesArray[1];
     	long level3 = side == Side.SELL ? pricesArray[2] : pricesArray[0];
 //    	System.out.println(String.format("###### %s %s %s %s %s", String.valueOf(level1), String.valueOf(level2), String.valueOf(level3), String.valueOf((level2 * 1.0) / (level1 * 1.0)), String.valueOf((level3 * 1.0) / (level2 * 1.0))));
-    	if((level2 * 1.0) / (level1 * 1.0) > 1.15 /* || (level3 * 1.0) / (level2 * 1.0) > 1.2 */) {
+    	if((level2 * 1.0) / (level1 * 1.0) > 1.10 /* || (level3 * 1.0) / (level2 * 1.0) > 1.2 */) {
     		return false;
     	}
     	return true;

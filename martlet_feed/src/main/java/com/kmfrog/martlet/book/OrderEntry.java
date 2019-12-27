@@ -7,13 +7,15 @@ public class OrderEntry {
     private long remainingQuantity;
     private int status;
     private String clientOrderId;
+    private long createTime;
 
-    OrderEntry(PriceLevel level, long id, long size, int status, String clientOrderId) {
+    OrderEntry(PriceLevel level, long id, long size, int status, String clientOrderId, long createTime) {
         this.level = level;
         this.id = id;
         this.remainingQuantity = size;
         this.status = status;
         this.clientOrderId = clientOrderId;
+        this.createTime = createTime;
     }
 
     public PriceLevel getLevel() {
@@ -38,6 +40,14 @@ public class OrderEntry {
     
     public void setClientOrderId(String clientOrderId) {
     	this.clientOrderId = clientOrderId;
+    }
+    
+    public long getCreateTime() {
+    	return createTime;
+    }
+    
+    public void setCreateTime(long createTime) {
+    	this.createTime = createTime;
     }
     
     public long getRemainingQuantity() {

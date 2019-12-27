@@ -56,7 +56,7 @@ public class TrackBook {
 //        }
 //    }
     
-    public void entry(long orderId, Side side, long price, long size, int status, String clientOrderId) {
+    public void entry(long orderId, Side side, long price, long size, int status, String clientOrderId, long createTime) {
         lock.writeLock().lock();
         try {
             if (orders.containsKey(orderId)) {
@@ -64,9 +64,9 @@ public class TrackBook {
             }
 
             if (side == Side.BUY) {
-                orders.put(orderId, add(bids, orderId, side, price, size, status, clientOrderId));
+                orders.put(orderId, add(bids, orderId, side, price, size, status, clientOrderId, createTime));
             } else {
-                orders.put(orderId, add(asks, orderId, side, price, size, status, clientOrderId));
+                orders.put(orderId, add(asks, orderId, side, price, size, status, clientOrderId, createTime));
             }
         } finally {
             lock.writeLock().unlock();
@@ -74,7 +74,7 @@ public class TrackBook {
     }
     
     public void entry(long orderId, Side side, long price, long size, int status) {
-    	entry(orderId, side, price, size, status, "");
+    	entry(orderId, side, price, size, status, "", 0);
     }
 
     public void newSize(long orderId, Side side, long price, long remainingQuantity) {
@@ -341,14 +341,14 @@ public class TrackBook {
     }
 
     private static OrderEntry add(Long2ObjectRBTreeMap<PriceLevel> levels, long orderId, Side side, long price,
-            long size, int status, String clientOrderId) {
+            long size, int status, String clientOrderId, long createTime) {
         PriceLevel level = levels.get(price);
         if (level == null) {
             level = new PriceLevel(side, price);
             levels.put(price, level);
         }
 
-        return level.add(orderId, size, status, clientOrderId);
+        return level.add(orderId, size, status, clientOrderId, createTime);
     }
 
     /**

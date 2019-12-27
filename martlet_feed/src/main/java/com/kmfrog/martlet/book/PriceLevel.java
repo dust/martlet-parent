@@ -64,8 +64,8 @@ public class PriceLevel {
         return orders.isEmpty();
     }
 
-    public OrderEntry add(long orderId, long size, int status, String clientOrderId) {
-        OrderEntry order = new OrderEntry(this, orderId, size, status, clientOrderId);
+    public OrderEntry add(long orderId, long size, int status, String clientOrderId, long createdTime) {
+        OrderEntry order = new OrderEntry(this, orderId, size, status, clientOrderId, createdTime);
 
         orders.add(order);
 

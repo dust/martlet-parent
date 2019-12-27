@@ -21,6 +21,7 @@ import com.kmfrog.martlet.feed.Source;
 import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.trade.exec.TacCancelExec;
 import com.kmfrog.martlet.trade.utils.OrderUtil;
+import com.kmfrog.martlet.util.FeedUtils;
 
 import io.broker.api.client.BrokerApiRestClient;
 import io.broker.api.client.domain.account.Order;
@@ -41,6 +42,7 @@ public class OpenOrderTracker extends Thread {
     Source src;
     Provider provider;
     private AtomicBoolean isQuit = new AtomicBoolean(false);
+    private final long hedgeExpiredTime = 6 * 60 * 1000;
 
     public OpenOrderTracker(Source src, Instrument[] instruments, BrokerApiRestClient client, Provider provider) {
         super(String.format("%s Open Order Tracker", src.name()));
@@ -64,7 +66,7 @@ public class OpenOrderTracker extends Thread {
                     trackOpenOrders(instrument, trackBook, openOrders);
                     System.out.println(instrument.asString() + ".openAsks: " + trackBook.getOrders(Side.SELL)
                             + " .openBid" + trackBook.getOrders(Side.BUY));
-//                    handleHedgeOrders(trackBook, openOrders);
+                    handleHedgeOrders(trackBook, openOrders);
                     
                 }
                 handleImbalance();
@@ -86,10 +88,11 @@ public class OpenOrderTracker extends Thread {
      */
     private void handleHedgeOrders(TrackBook book, List<Order> openOrders) {
     	long currentTime = System.currentTimeMillis();
+    	long hedgeExpiredTime = FeedUtils.between(5, 10) * 60 * 1000;
     	Set<Long> cancelIds = new HashSet<Long>();
     	for(Order order: openOrders) {
     		long createdTime = order.getTime();
-    		if(OrderUtil.isHedgeOrder(order.getClientOrderId()) && currentTime - createdTime > 5000) {
+    		if(OrderUtil.isHedgeOrder(order.getClientOrderId()) && currentTime - createdTime > hedgeExpiredTime) {
     			cancelIds.add(order.getOrderId());
     		}
     	}
@@ -149,10 +152,11 @@ public class OpenOrderTracker extends Thread {
             BigDecimal origQty = new BigDecimal(order.getOrigQty());
             BigDecimal executedQty = new BigDecimal(order.getExecutedQty());
             BigDecimal decSize = origQty.subtract(executedQty);
+            long createTime = order.getTime();
             
             long price = decPrice.multiply(BigDecimal.valueOf(instrument.getPriceFactor())).longValue();
             long size = decSize.multiply(BigDecimal.valueOf(instrument.getSizeFactor())).longValue();
-            book.entry(orderId, order.getSide() == OrderSide.BUY ? Side.BUY : Side.SELL, price, size, 0, order.getClientOrderId());
+            book.entry(orderId, order.getSide() == OrderSide.BUY ? Side.BUY : Side.SELL, price, size, 0, order.getClientOrderId(), createTime);
         });
     }
 

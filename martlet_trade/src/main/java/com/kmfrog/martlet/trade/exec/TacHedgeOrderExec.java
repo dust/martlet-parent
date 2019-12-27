@@ -66,6 +66,7 @@ public class TacHedgeOrderExec extends Exec {
     public void run() {
         try {
             long quantity = getQuantity();
+            long createTime = System.currentTimeMillis();
             if (quantity <= 0) {
                 logger.info(instrument.asString()+ price + "|"+ vMin+"|"+vMax + " quantity=" + quantity);
                 return;
@@ -89,10 +90,10 @@ public class TacHedgeOrderExec extends Exec {
                 Long sellOrderId = resp.getOrderId();
                 String sellClientOrderId = resp.getClientOrderId();
                 if (sellOrderId != null) {
-                    trackBook.entry(sellOrderId, Side.SELL, price, quantity, 0, sellClientOrderId);
+                    trackBook.entry(sellOrderId, Side.SELL, price, quantity, 0, sellClientOrderId, createTime);
                     resp = client.newOrder(buy);
                     if (resp.getOrderId() != null) {
-                        trackBook.entry(resp.getOrderId(), Side.BUY, price, quantity, 0, resp.getClientOrderId());
+                        trackBook.entry(resp.getOrderId(), Side.BUY, price, quantity, 0, resp.getClientOrderId(), createTime);
                     } else {
                         logger.warn(" %s submit buy newOrder failed(after sell %s ): %s", instrument.asString(),
                                 sellOrderId, buy.toString());

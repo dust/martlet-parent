@@ -5,6 +5,7 @@ import java.util.Set;
 import com.kmfrog.martlet.C;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
+import com.kmfrog.martlet.book.OrderEntry;
 import com.kmfrog.martlet.book.PriceLevel;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.book.TrackBook;
@@ -13,6 +14,7 @@ import com.kmfrog.martlet.trade.InstrumentSoloDunk;
 import com.kmfrog.martlet.trade.Provider;
 import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
 import com.kmfrog.martlet.trade.exec.TacHedgeOrderExec;
+import com.kmfrog.martlet.trade.utils.OrderUtil;
 
 import io.broker.api.client.BrokerApiRestClient;
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
@@ -20,6 +22,7 @@ import it.unimi.dsi.fastutil.longs.LongSortedSet;
 public class TacInstrumentSoloDunk extends InstrumentSoloDunk {
 
     BrokerApiRestClient client;
+    private final long hedgeExistTime = 5000;
 
     public TacInstrumentSoloDunk(Instrument instrument, Source src, TrackBook trackBook, Provider provider,
             BrokerApiRestClient client, Param param) {
@@ -36,14 +39,13 @@ public class TacInstrumentSoloDunk extends InstrumentSoloDunk {
         if (now - ts > C.SYMBOL_DELAY_MILLIS) {
             return;
         }
-        if(isDepthUnNormal(book)) {
+        if(hasUnfilledHedge() || isDepthUnNormal(book)) {
         	return;
         }
         int avgSleepMillis = (minSleepMillis + maxSleepMillis) / 2;
         provider.submitExec(new TacHedgeOrderExec(source, instrument, price, spreadSize, vMin, vMax, avgSleepMillis,
                 client, trackBook, provider));
     }
-    
     
     /**
      * 买一或者卖一不是对敲
@@ -77,6 +79,11 @@ public class TacInstrumentSoloDunk extends InstrumentSoloDunk {
     	return false;
     }
     
+    /**
+     * 盘口买一买二 或者 卖一卖二 间隔是否正常
+     * @param side
+     * @return
+     */
     private boolean isLevelSpaceNormal(Side side) {
     	LongSortedSet prices = side == Side.SELL ? lastBook.getAskPrices() : lastBook.getBidPrices();
     	if(prices.size() < 3) {
@@ -93,4 +100,38 @@ public class TacInstrumentSoloDunk extends InstrumentSoloDunk {
     	return true;
     }
 
+    /**
+     * 存在限定时间内未对敲成功的订单
+     * @return
+     */
+    private boolean hasUnfilledHedge() {
+    	long concurrentTime = System.currentTimeMillis();
+    	Set<Long> askIds = trackBook.getOrders(Side.SELL);
+    	Set<Long> bidIds = trackBook.getOrders(Side.BUY);
+    	if(askIds.size() > 0) {
+    		Long[] askOrderIds = new Long[askIds.size()];
+    		askIds.toArray(askOrderIds);
+    		for(int i=0;i<askOrderIds.length;i++) {
+    			OrderEntry order = trackBook.getOrder(askOrderIds[i]);
+        		long createTime = order.getCreateTime();
+        		if(OrderUtil.isHedgeOrder(order.getClientOrderId()) && createTime > 0 && concurrentTime - createTime > hedgeExistTime) {
+        			return true;
+        		}
+    		}
+    	}
+    	
+    	if(bidIds.size() > 0) {
+    		Long[] bidOrderIds = new Long[bidIds.size()];
+    		for(int i=0;i<bidOrderIds.length; i++) {
+    			bidIds.toArray(bidOrderIds);
+    			OrderEntry order = trackBook.getOrder(bidOrderIds[i]);
+    			long createTime = order.getCreateTime();
+    			if(OrderUtil.isHedgeOrder(order.getClientOrderId()) && createTime > 0 && concurrentTime - createTime > hedgeExistTime) {
+    				return true;
+    			}
+    		}
+    	}
+    	
+    	return false;
+    }
 }

@@ -38,9 +38,9 @@
 		},
 		{
 			"name": "FMHMUSDT",
-			"p": 3,
+			"p": 4,
 			"v": 4,
-			"showPrice": 3
+			"showPrice": 4
 		}
 	],
 	"args": [

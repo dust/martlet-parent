@@ -88,7 +88,6 @@ public class OpenOrderTracker extends Thread {
      */
     private void handleHedgeOrders(TrackBook book, List<Order> openOrders) {
     	long currentTime = System.currentTimeMillis();
-    	long hedgeExpiredTime = FeedUtils.between(5, 10) * 60 * 1000;
     	Set<Long> cancelIds = new HashSet<Long>();
     	for(Order order: openOrders) {
     		long createdTime = order.getTime();

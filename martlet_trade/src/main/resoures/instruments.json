@@ -102,8 +102,8 @@
 			"name": "FMHMUSDT",
 			"minSleepMillis": 3000,
 			"maxSleepMillis": 17000,
-			"minVolume": 510000,
-			"maxVolume": 1260000,
+			"minVolume": 910000,
+			"maxVolume": 1460000,
 			"originBaseVolume":"10000",
 			"originQuoteVolume":"143"
 		}

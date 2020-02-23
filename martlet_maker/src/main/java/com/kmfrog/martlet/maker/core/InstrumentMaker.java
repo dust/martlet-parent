@@ -50,6 +50,7 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
     private final TrackBook trackBook;
     private final Provider provider;
     private final AtomicLong lastAct = new AtomicLong(0L);
+    private final AtomicLong lastUpdate = new AtomicLong(0L);
 
     public InstrumentMaker(Instrument instrument, TrackBook trackBook, Provider provider) {
         super(String.format("%s-%s-%d", InstrumentMaker.class.getSimpleName(), instrument.asString(),
@@ -101,7 +102,13 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
                     // 比较危险的订单，状态为0的订单也须要撤掉。
                     provider.submit(new CancelExec(instrument, allCancelIds, false, trackBook, depthService, provider.getTatmasApiKey(), provider.getTatmasSecretKey(), logger));
                 }
-
+                
+                // 只响应大于200ms的order book
+                if(lastUpdate.get()>0 && System.currentTimeMillis() - book.getLastUpdateTs() < 200) {
+                    continue;
+                }
+                lastUpdate.set(System.currentTimeMillis());
+                
 //                IOrderBook srcBook = src == Source.Bitrue ? book : provider.getAggBook(instrument);
                 mirrorDepthFromSrcBook(src, bbo[0], bbo[1], book, depthService, symbolInfo);
 

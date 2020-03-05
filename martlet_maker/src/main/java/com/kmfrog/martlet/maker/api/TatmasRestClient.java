@@ -164,10 +164,12 @@ public class TatmasRestClient {
         Response res = null;
         try {
             res = doPost("http://tatmasglobal.net/exchange/order/open/personal/current", api, secret, params);
-            
+            String respText=null;
             if(res.isSuccessful()) {
-            	return res.body().string();
+                respText = res.body().string();
             }
+            logger.info(String.format("%s|%s", params, respText));
+            return respText;
         } catch (Exception ex) {
             logger.warn(" getOpenOrder exception {}: {} {} {} {}", ex.getMessage(), symbol, direction, pageNo,
                     pageSize);

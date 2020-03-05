@@ -322,8 +322,6 @@ public class TatmasRestClient {
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             long startTime = format.parse("2019-12-01 00:00:00").getTime();
             long endTime = format.parse("2019-12-30 00:00:00").getTime();
-          String apiKey = "34b0792b-e292-45fe-a9a3-6b3eb53d4912";
-          String secret = "e7fe3eff-8b64-4574-b476-af55314d95aa";
             
             TatmasRestClient client = new TatmasRestClient(/*apiKey, secret*/);
             

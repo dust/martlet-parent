@@ -334,7 +334,7 @@ public class TatmasRestClient {
 //             System.out.println(client.getOrderDetail(654695783345422336l, apiKey, secret));
 
 //             System.out.println(client.getHistoryOrder("ETHUSDT", startTime, endTime, Side.BUY, 2, 1, 10, apiKey, secret));
-             System.out.println(client.getOpenOrder("ETHUSDT", Side.BUY, 1, 10, apiKey, secret));
+//             System.out.println(client.getOpenOrder("ETHUSDT", Side.BUY, 1, 10, apiKey, secret));
         } catch (Exception ex) {
             ex.printStackTrace();
         }

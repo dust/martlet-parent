@@ -54,7 +54,7 @@ public class TatmasRestClient {
         params.put("orderId", String.valueOf(orderId));
         Response res = null;
         try {
-            res = doPost("http://tatmasglobal.net/exchange/order/open/detail", api, secret, params);
+            res = doPost("https://tatmasglobal.net/exchange/order/open/detail", api, secret, params);
             if (res.isSuccessful()) {
             	return res.body().string();
             }
@@ -96,7 +96,7 @@ public class TatmasRestClient {
         
         Response res = null;
         try {
-            res = doPost("http://tatmasglobal.net/exchange/order/open/personal/history", api, secret, params);
+            res = doPost("https://tatmasglobal.net/exchange/order/open/personal/history", api, secret, params);
             if (res.isSuccessful()) {
                 return res.body().string();
             }
@@ -118,7 +118,7 @@ public class TatmasRestClient {
         
         Response res = null;
         try {
-            res = doPost("http://tatmasglobal.net/exchange/order/open/cancel", api, secret, params);
+            res = doPost("https://tatmasglobal.net/exchange/order/open/cancel", api, secret, params);
             if (res.isSuccessful()) {
                 JSONObject data = JSONObject.parseObject(res.body().string());
                 if (data.containsKey("code") && data.getInteger("code") != 0) {
@@ -224,7 +224,7 @@ public class TatmasRestClient {
 
         Response res = null;
         try {
-            res = doPost("http://tatmasglobal.net/exchange/order/open/add", apiKey, secretKey, params);
+            res = doPost("https://tatmasglobal.net/exchange/order/open/add", apiKey, secretKey, params);
             if (res.isSuccessful()) {
                 String str = res.body().string();
                 JSONObject data = JSONObject.parseObject(str);
@@ -251,7 +251,7 @@ public class TatmasRestClient {
         params.put("symbol", getTatmasSymbol(symbol.toUpperCase()));
         Response res = null;
         try {
-            res = doPost("http://tatmasglobal.net/market/open/exchange-plate-full", apiKey, secretKey, params);
+            res = doPost("https://tatmasglobal.net/market/open/exchange-plate-full", apiKey, secretKey, params);
             if (res.isSuccessful()) {
                 return res.body().string();
             }
@@ -324,7 +324,6 @@ public class TatmasRestClient {
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             long startTime = format.parse("2019-12-01 00:00:00").getTime();
             long endTime = format.parse("2019-12-30 00:00:00").getTime();
-
             
             TatmasRestClient client = new TatmasRestClient(/*apiKey, secret*/);
             

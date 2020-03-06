@@ -264,8 +264,9 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
                 return null;
             }
 
-            return new long[] { book.getBestBidPrice() * floatDownward / 10000,
-                    book.getBestAskPrice() * floatUpward / 10000 };
+//            return new long[] { book.getBestBidPrice() * floatDownward / 10000,
+//                    book.getBestAskPrice() * floatUpward / 10000 };
+            return new long[] { book.getBestBidPrice(), book.getBestAskPrice()};
         }
 
         Long2LongMap bidMap = new Long2LongArrayMap();

@@ -104,13 +104,11 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
                 }
                 
                 // 只响应大于200ms的order book
-                if(lastUpdate.get()>0 && System.currentTimeMillis() - book.getLastUpdateTs() < 200) {
-                    continue;
+                if(book.getLastUpdateTs() - lastUpdate.get() > 200) {
+                    lastUpdate.set(System.currentTimeMillis());
+//                  IOrderBook srcBook = src == Source.Bitrue ? book : provider.getAggBook(instrument);
+                    mirrorDepthFromSrcBook(src, bbo[0], bbo[1], book, depthService, symbolInfo);
                 }
-                lastUpdate.set(System.currentTimeMillis());
-                
-//                IOrderBook srcBook = src == Source.Bitrue ? book : provider.getAggBook(instrument);
-                mirrorDepthFromSrcBook(src, bbo[0], bbo[1], book, depthService, symbolInfo);
 
             } catch (InterruptedException ex) {
                 logger.warn("{} Interrupted.{}", instrument.asString(), ex.getMessage());
@@ -154,6 +152,7 @@ public class InstrumentMaker extends Thread implements DataChangeListener {
         rmBids.forEach(k -> cancelBidOrders.addAll(trackBook.getPriceLevel(Side.BUY, k).getOrderIds(initStatus)));
         rmAsks.forEach(k -> cancelAskOrders.addAll(trackBook.getPriceLevel(Side.SELL, k).getOrderIds(initStatus)));
         SetView<Long> all = Sets.union(cancelBidOrders, cancelAskOrders);
+        
         if (all.size() > 0) {
             if (logger.isDebugEnabled()) {
                 logger.debug("{} {} cancel open orders : {}", src, instrument.asString(), all.toString());

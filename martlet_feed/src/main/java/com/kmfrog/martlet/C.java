@@ -45,6 +45,7 @@ public interface C {
     String BIKUN_SUPPORTED = "${bikun.supported:[]}";
     String LOEX_SUPPORTED = "${loex.supported:[]}";
     String TAC_SUPPORTED = "${tac.supported:[]}";
+    String BIONE_SUPPORTED = "${bione.supported:[]}";
     
     
     String BINANCE_WS_DEPTH = "${binance.ws.depth.url}";
@@ -68,6 +69,9 @@ public interface C {
     String BIKUN_DEPTH_FMT = "${bikun.depth.fmt}";
     
     String LOEX_REST_URL = "api.base.url.loex";
+    
+    String BIONE_REST_DEPTH_URL = "${bione.rest.depth.url}";
+    
 
     String PUB_DEPTH_HOST = "${pub.depth.host}";
     String PUB_DEPTH_PORT = "${pub.depth.port}";

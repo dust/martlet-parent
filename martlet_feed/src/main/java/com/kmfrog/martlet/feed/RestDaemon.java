@@ -1,5 +1,6 @@
 package com.kmfrog.martlet.feed;
 
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -11,12 +12,12 @@ import com.kmfrog.martlet.feed.impl.LoexDepthHandler;
 public class RestDaemon extends Thread {
     
     private final Source source;
-    private final LoexDepthHandler handler;
+    private final BaseRestHandler handler;
     private final Controller app;
     private final AtomicBoolean isQuit = new AtomicBoolean(false);
     private final Logger logger = LoggerFactory.getLogger(RestDaemon.class);
 
-    public RestDaemon(Source src, LoexDepthHandler handler,
+    public RestDaemon(Source src, BaseRestHandler handler,
             Controller app) {
        
         super(String.format("%s-%s", src, RestDaemon.class.getSimpleName()));
@@ -31,7 +32,7 @@ public class RestDaemon extends Thread {
             while (!isQuit.get()) {
                 try {
                     handler.reqDepth(app);
-                    Thread.sleep(800L);
+                    Thread.sleep(1000L);
                 } catch (InterruptedException ex) {
                     isQuit.compareAndSet(false, true);
                     logger.warn(ex.getMessage(), ex);
@@ -42,6 +43,10 @@ public class RestDaemon extends Thread {
         } catch (Exception ex) {
             logger.warn(ex.getMessage(), ex);
         }
+    }
+    
+    public Set<String> getSymbolNames() {
+        return handler.getSymbols();
     }
 
 }

@@ -31,6 +31,8 @@ import com.kmfrog.martlet.feed.impl.BinanceDepthHandler;
 import com.kmfrog.martlet.feed.impl.BinanceInstrumentDepth;
 import com.kmfrog.martlet.feed.impl.BinanceInstrumentTrade;
 import com.kmfrog.martlet.feed.impl.BinanceTradeHandler;
+import com.kmfrog.martlet.feed.impl.BioneDepthHandler;
+import com.kmfrog.martlet.feed.impl.BioneInstrumentDepth;
 import com.kmfrog.martlet.feed.impl.LoexDepthHandler;
 import com.kmfrog.martlet.feed.impl.LoexInstrumentDepth;
 import com.kmfrog.martlet.feed.net.FeedBroadcast;
@@ -195,8 +197,7 @@ public class Workbench implements Controller {
         wsDaemon.keepAlive();
     }
 
-    static void startRestDepth(Map<Source, RestDaemon> daemons, Source source, LoexDepthHandler handler,
-            Controller app) {
+    static void startRestDepth(Map<Source, RestDaemon> daemons, Source source, BaseRestHandler handler, Controller app) {
         RestDaemon restDaemon = new RestDaemon(source, handler, app);
         daemons.put(source, restDaemon);
         restDaemon.start();
@@ -240,8 +241,6 @@ public class Workbench implements Controller {
             if (book != null) {
                 multiSrcBooks.get(mkt).put(instrument.asLong(), book);
                 String originText = book.getOriginText(mkt, ctx.getMaxLevel());
-                System.out.println(instrument.asString());
-                System.out.println(originText);
                 depthPusher.put(originText);
             }
         } catch (InterruptedException e) {
@@ -267,7 +266,7 @@ public class Workbench implements Controller {
     public void start(Map<String, List<Instrument>> supportedInstruments) {
         setupBhex(supportedInstruments.get(Source.Bhex.name()));
         setupBikun(supportedInstruments.get(Source.Bikun.name()));
-        setupLoex(supportedInstruments.get(Source.Loex.name()));
+//        setupLoex(supportedInstruments.get(Source.Loex.name()));
     }
 
     public void start(Map<String, Instrument> all, Set<String> binanceSymbols) {
@@ -297,6 +296,14 @@ public class Workbench implements Controller {
     	Set<String> bikunRmSymbols= Sets.difference(bikunExistSymbols, bikunSymbols);
     	setupBikun(all, bikunSymbols, bikunAddSymbols, bikunRmSymbols);
     }
+    
+    public void startBione(Map<String, Instrument> all, Set<String> bioneSymbols) {
+    	Set<String> bioneExistSymbols = restDaemons.get(Source.Bione) == null ? new HashSet<>() : restDaemons.get(Source.Bione).getSymbolNames();
+    	Set<String> bioneAddSymbolSet = Sets.difference(bioneSymbols, bioneExistSymbols);
+    	Set<String> bioneRmSymbolSet = Sets.difference(bioneExistSymbols, bioneSymbols);
+    	
+    	setupBione(all, bioneSymbols, bioneAddSymbolSet, bioneRmSymbolSet);
+    }
 
     // void setupLoex(List<Instrument> instruments) {
     // String baseUrl = cfg.getString(C.LOEX_REST_URL);
@@ -321,21 +328,39 @@ public class Workbench implements Controller {
     // mktDepthTracker.start();
     // }
 
-    private void setupLoex(List<Instrument> list) {
-        String depthUrl = "https://openapi.loex.io//open/api/market_dept?symbol=%s&type=step0";
-        int size = list.size();
-        SnapshotDataListener[] listeners = new LoexInstrumentDepth[size];
-        String[] instrumentArr = new String[size];
-
-        for (int i = 0; i < size; i++) {
-            Instrument instrument = list.get(i);
-            instrumentArr[i] = instrument.asString().toLowerCase();
-            IOrderBook book = makesureOrderBook(Source.Loex, instrument.asLong());
-            listeners[i] = new LoexInstrumentDepth(instrument, book, Source.Loex, this);
-        }
-
-        LoexDepthHandler handler = new LoexDepthHandler(depthUrl, instrumentArr, listeners);
-        startRestDepth(restDaemons, Source.Loex, handler, this);
+//    private void setupLoex(List<Instrument> list) {
+//        String depthUrl = "https://openapi.loex.io//open/api/market_dept?symbol=%s&type=step0";
+//        int size = list.size();
+//        SnapshotDataListener[] listeners = new LoexInstrumentDepth[size];
+//        String[] instrumentArr = new String[size];
+//
+//        for (int i = 0; i < size; i++) {
+//            Instrument instrument = list.get(i);
+//            instrumentArr[i] = instrument.asString().toLowerCase();
+//            IOrderBook book = makesureOrderBook(Source.Loex, instrument.asLong());
+//            listeners[i] = new LoexInstrumentDepth(instrument, book, Source.Loex, this);
+//        }
+//
+//        LoexDepthHandler handler = new LoexDepthHandler(depthUrl, instrumentArr, listeners);
+//        startRestDepth(restDaemons, Source.Loex, handler, this);
+//    }
+    
+    private void setupBione(Map<String, Instrument> instruments, Set<String> symbols, Set<String> addSymbols, Set<String> rmSymbols) {
+    	String depthUrl = ctx.getBioneRestDepthUrl();
+    	int size = symbols.size();
+    	SnapshotDataListener[] listeners = new BioneInstrumentDepth[size];
+    	String[] symbolNames = new String[size];
+    	symbols.toArray(symbolNames);
+    	for(int i=0; i<size; i++) {
+    		String symbol = symbolNames[i];
+    		Instrument instrument = instruments.get(symbol);
+    		logger.info("{}:{}:{}", Source.Bione.name(), instrument.asString(), instrument.asLong());
+    		symbolNames[i] = instrument.asString();
+    		IOrderBook book = makesureOrderBook(Source.Bione, instrument.asLong());
+    		listeners[i] = new BioneInstrumentDepth(instrument, book, Source.Bione, this);
+    	}
+    	BioneDepthHandler handler = new BioneDepthHandler(depthUrl, symbolNames, listeners);
+    	startRestDepth(restDaemons, Source.Bione, handler, this);
     }
     
     void setupBikun(Map<String, Instrument> instruments, Set<String> symbols, Set<String> bikunAddSymbols, Set<String> bikunRmSymbols) {

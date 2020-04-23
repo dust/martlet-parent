@@ -73,6 +73,9 @@ public class SpringContext implements CommandLineRunner {
     @ApolloJsonValue(BIKUN_SUPPORTED)
     private Set<String> bikunSupportedSymbols;
     
+    @ApolloJsonValue(BIONE_SUPPORTED)
+    private Set<String> bioneSupportedSymbols;
+    
     @Value(BINANCE_REST_URL)
     private String binanceRestUrl;
     
@@ -94,6 +97,8 @@ public class SpringContext implements CommandLineRunner {
     @Value(BHEX_DEPTH_FMT)
     private String tacDepthFmt;
     
+    @Value(BIONE_REST_DEPTH_URL)
+    private String bioneRestDepthUrl;
     
     @ApolloJsonValue(TAC_SUPPORTED)
     private Set<String> tacSupportedSymbols;
@@ -119,9 +124,10 @@ public class SpringContext implements CommandLineRunner {
                 .collect(Collectors.toMap(JsonInstrument::getName,
                         v -> new Instrument(v.getName().toUpperCase(), v.getP(), v.getV(), v.getShowPrice())));
         Set<String> allSymbol = allInstrumentMap.keySet();
-        Set<String> binanceSymbols = Sets.intersection(allSymbol, binanceSupportedSymbols);
-        Set<String> bhexSymbols = Sets.intersection(allSymbol, tacSupportedSymbols);
-        Set<String> bikunSymbols = Sets.intersection(allSymbol, bikunSupportedSymbols);
+//        Set<String> binanceSymbols = Sets.intersection(allSymbol, binanceSupportedSymbols);
+//        Set<String> bhexSymbols = Sets.intersection(allSymbol, tacSupportedSymbols);
+//        Set<String> bikunSymbols = Sets.intersection(allSymbol, bikunSupportedSymbols);
+        Set<String> bioneSymbols = Sets.intersection(allSymbol, bioneSupportedSymbols);
         
 //        Set<String> bikunSymbols = Sets.intersection(allSymbol, bikunSupportedSymbols);
 //        Set<String> tacSymbols = Sets.intersection(allSymbol,  tacSupportedSymbols);
@@ -144,8 +150,9 @@ public class SpringContext implements CommandLineRunner {
 
         workbench = new Workbench(this);
 //        workbench.start(allInstrumentMap, binanceSymbols);
-        workbench.startBhex(allInstrumentMap, bhexSymbols);
-        workbench.startBikun(allInstrumentMap, bikunSymbols);
+//        workbench.startBhex(allInstrumentMap, bhexSymbols);
+//        workbench.startBikun(allInstrumentMap, bikunSymbols);
+        workbench.startBione(allInstrumentMap, bioneSymbols);
 
         // Map<String, Instrument> instrumentMap = instruments.stream().collect(Collectors.toMap(Instrument::asString,
         // v->v));
@@ -191,6 +198,10 @@ public class SpringContext implements CommandLineRunner {
     public Set<String> getTacSupportedSymbols() {
         return tacSupportedSymbols;
     }
+    
+    public Set<String> getBioneSupportedSymbols() {
+    	return bioneSupportedSymbols;
+    }
 
     public String getTacWsUrl() {
         return tacWsUrl;
@@ -218,6 +229,10 @@ public class SpringContext implements CommandLineRunner {
 
     public String getBinanceRestUrl() {
         return binanceRestUrl;
+    }
+    
+    public String getBioneRestDepthUrl() {
+    	return bioneRestDepthUrl;
     }
 
     public Workbench getWorkbench() {

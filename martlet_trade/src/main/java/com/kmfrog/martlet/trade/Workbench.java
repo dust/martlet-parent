@@ -9,6 +9,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.springframework.boot.configurationprocessor.metadata.ItemHint.ValueProvider;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.kmfrog.martlet.C;
 import com.kmfrog.martlet.book.AggregateOrderBook;
@@ -19,11 +21,13 @@ import com.kmfrog.martlet.book.RollingTimeSpan;
 import com.kmfrog.martlet.book.TrackBook;
 import com.kmfrog.martlet.feed.DepthFeed;
 import com.kmfrog.martlet.feed.Source;
+import com.kmfrog.martlet.feed.bione.BioneApiRestClient;
 import com.kmfrog.martlet.feed.domain.TradeLog;
 import com.kmfrog.martlet.feed.loex.LoexApiRestClient;
 import com.kmfrog.martlet.trade.SpringContext;
 import com.kmfrog.martlet.trade.bikun.BikunApiRestClient;
 import com.kmfrog.martlet.trade.bikun.BikunInstrumentSoloDunk;
+import com.kmfrog.martlet.trade.bione.BioneInstrumentSoloDunk;
 import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
 import com.kmfrog.martlet.trade.exec.Exec;
 import com.kmfrog.martlet.trade.loex.LoexInstrumentSoloDunk;
@@ -189,6 +193,14 @@ public class Workbench implements Provider {
         depthFeed.register(instrument, solodunk);
     }
     
+    public void startBioneHedgeInstrument(Source src, Instrument instrument, Param param, BioneApiRestClient client) {
+    	TrackBook trackBook = makesureTrackBook(instrument);
+    	makesureTradeLog(src, instrument.asLong());
+    	BioneInstrumentSoloDunk solodunk = new BioneInstrumentSoloDunk(instrument, src, trackBook, this, param, client);
+    	solodunk.start();
+    	depthFeed.register(instrument, solodunk);
+    }
+    
     public void startLoexHedgeInstrument(Source src, Instrument instrument, Param param, LoexApiRestClient client) {
     	TrackBook trackBook = makesureTrackBook(instrument);
     	makesureTradeLog(src, instrument.asLong());
@@ -248,6 +260,12 @@ public class Workbench implements Provider {
     	Map<String, Param> cfgArgs, LoexApiRestClient client) {
     	for(String instrumentName : instrumentNames) {
     		startLoexHedgeInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);
+    	}
+    }
+    
+    public void startBione(Source src, String[] instrumentNames, Map<String, Instrument> instruments, Map<String, Param> cfgArgs, BioneApiRestClient client) {
+    	for(String instrumentName: instrumentNames) {
+    		startBioneHedgeInstrument(src, instruments.get(instrumentName), cfgArgs.get(instrumentName), client);
     	}
     }
     

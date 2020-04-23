@@ -41,6 +41,12 @@
 			"p": 5,
 			"v": 4,
 			"showPrice": 5
+		},
+		{
+			"name": "LVCBUSDT",
+			"p": 8,
+			"v": 4,
+			"showPrice": 8
 		}
 	],
 	"args": [
@@ -104,6 +110,15 @@
 			"maxSleepMillis": 17000,
 			"minVolume": 910000,
 			"maxVolume": 1460000,
+			"originBaseVolume":"10000",
+			"originQuoteVolume":"143"
+		},
+		{
+			"name": "LVCBUSDT",
+			"minSleepMillis": 8000,
+			"maxSleepMillis": 17000,
+			"minVolume": 11000000,
+			"maxVolume": 24600000,
 			"originBaseVolume":"10000",
 			"originQuoteVolume":"143"
 		}

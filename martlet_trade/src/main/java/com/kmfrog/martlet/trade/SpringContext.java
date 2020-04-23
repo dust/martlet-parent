@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import com.ctrip.framework.apollo.spring.annotation.ApolloJsonValue;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.feed.Source;
+import com.kmfrog.martlet.feed.bione.BioneApiRestClient;
 import com.kmfrog.martlet.feed.loex.LoexApiRestClient;
 import com.kmfrog.martlet.trade.bikun.BikunApiRestClient;
 import com.kmfrog.martlet.trade.config.InstrumentsJson;
@@ -71,6 +72,9 @@ class SpringContext implements CommandLineRunner {
     @Value("${loex.hedge.items}")
     private String[] loexHedgeEntrys;
     
+    @Value("${bione.hedge.items}")
+    private String[] bioneHedgeEntrys;
+    
     @Value("${api.base.url.bikun}")
     private String bikunBaseUrl;
     
@@ -88,6 +92,15 @@ class SpringContext implements CommandLineRunner {
     
     @Value("${api.secret.loex}")
     private String loexSecret;
+    
+    @Value("${api.base.url.bione}")
+    private String bioneBaseUrl;
+    
+    @Value("${api.key.bione}")
+    private String bioneApiKey;
+    
+    @Value("${api.secret.bione}")
+    private String bioneSecret;
     
     @Value(SPREAD_LOWLIMIT_MILLESIMAL)
     private int spreadLowLimitMillesimal;
@@ -112,32 +125,30 @@ class SpringContext implements CommandLineRunner {
     public void run(String... args) throws Exception {
         Workbench app = new Workbench(this);
 
-        BrokerApiRestClient client = BrokerApiClientFactory.newInstance(baseUrl, apiKey, secret).newRestClient();
-        BikunApiRestClient bikunClient = new BikunApiRestClient(bikunBaseUrl, bikunApiKey, bikunSecret);
-        LoexApiRestClient loexClient = new LoexApiRestClient(loexBaseUrl, loexApiKey, loexSecret);
+//        BrokerApiRestClient client = BrokerApiClientFactory.newInstance(baseUrl, apiKey, secret).newRestClient();
+//        BikunApiRestClient bikunClient = new BikunApiRestClient(bikunBaseUrl, bikunApiKey, bikunSecret);
+//        LoexApiRestClient loexClient = new LoexApiRestClient(loexBaseUrl, loexApiKey, loexSecret);
+        BioneApiRestClient bioneClient = new BioneApiRestClient(bioneBaseUrl, bioneApiKey, bioneSecret);
         
         List<JsonInstrument> jsonInstruments = instrumentJson.getSymbols();
-        // Map<String, >
-//        List<InstrumentArgs.InstrumentArg> params = instrumentArgs.getItems();
         List<Param> params = instrumentJson.getArgs();
-//        Map<String, Instrument> instrumentMap = new HashMap<String, Instrument>();
-//        Map<String, Param> instrumentArgsMap = new HashMap<String, Param>();
-//        for(JsonInstrument item : jsonInstruments) {
-//            String name = item.getName();
-//        }
+
         Map<String, Instrument> instrumentMap = jsonInstruments.stream().collect(Collectors.toMap(
                 JsonInstrument::getName, v -> new Instrument(v.getName(), v.getP(), v.getV(), v.getShowPrice())));
         Map<String, Param> instrumentArgsMap = params.stream()
                 .collect(Collectors.toMap(Param::getName, v -> v));
-        app.start(Source.Bhex, hedgeEntrys, instrumentMap, instrumentArgsMap, client);
-        app.startBikun(Source.Bikun, bikunHedgeEntrys, instrumentMap, instrumentArgsMap, bikunClient);
+        
+        app.startBione(Source.Bione, bioneHedgeEntrys, instrumentMap, instrumentArgsMap, bioneClient);
+        
+//        app.start(Source.Bhex, hedgeEntrys, instrumentMap, instrumentArgsMap, client);
+//        app.startBikun(Source.Bikun, bikunHedgeEntrys, instrumentMap, instrumentArgsMap, bikunClient);
         //loex要求停掉,开放时间不确定
 //        app.startLoex(Source.Loex, loexHedgeEntrys, instrumentMap, instrumentArgsMap, loexClient);
-        app.startOpenOrderTracker(Source.Bhex, instrumentMap.values().toArray(new Instrument[instrumentMap.size()]), client);
-        
-        Instrument ca = new Instrument(tringleInstruments.get(0).getName(), tringleInstruments.get(0).getP(), tringleInstruments.get(0).getV(), tringleInstruments.get(0).getShowPrice()); 
-        Instrument ab = new Instrument(tringleInstruments.get(1).getName(), tringleInstruments.get(1).getP(), tringleInstruments.get(1).getV(), tringleInstruments.get(1).getShowPrice());
-        Instrument cb = new Instrument(tringleInstruments.get(2).getName(), tringleInstruments.get(2).getP(), tringleInstruments.get(2).getV(), tringleInstruments.get(2).getShowPrice());
+//        app.startOpenOrderTracker(Source.Bhex, instrumentMap.values().toArray(new Instrument[instrumentMap.size()]), client);
+//        
+//        Instrument ca = new Instrument(tringleInstruments.get(0).getName(), tringleInstruments.get(0).getP(), tringleInstruments.get(0).getV(), tringleInstruments.get(0).getShowPrice()); 
+//        Instrument ab = new Instrument(tringleInstruments.get(1).getName(), tringleInstruments.get(1).getP(), tringleInstruments.get(1).getV(), tringleInstruments.get(1).getShowPrice());
+//        Instrument cb = new Instrument(tringleInstruments.get(2).getName(), tringleInstruments.get(2).getP(), tringleInstruments.get(2).getV(), tringleInstruments.get(2).getShowPrice());
 //        app.startOccupyInstrument(Source.Bhex, ca, ab, cb, client, instrumentArgsMap.get(ca.asString()), instrumentArgsMap.get(cb.asString()));
 
         // app.startHedgeInstrument(Source.Bhex, hntcbtc, buildConfigArgs(4000, 19000, 50000, 13390000), client);

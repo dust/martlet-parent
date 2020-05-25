@@ -73,6 +73,7 @@ public class BioneHedgeOrderExec extends Exec{
                     } else {
                         logger.warn(" {} submit buy newOrder failed(after sell {} ): {} {}", instrument.asString(),
                                 sellOrderId.toString(), quantityStr, priceStr);
+                        client.cancelOrder(instrument.asString(), String.valueOf(buyOrderId));
                     }
                 } else {
                     logger.warn(" {} submit sell newOrder failed: {}　{}", instrument.asString(), quantityStr, priceStr);
@@ -90,6 +91,7 @@ public class BioneHedgeOrderExec extends Exec{
                     } else {
                         logger.warn(" {} submit sell newOrder failed(after buy {} ): {} {}", instrument.asString(),
                                 buyOrderId.toString(), quantityStr, priceStr);
+                        client.cancelOrder(instrument.asString(), String.valueOf(sellOrderId));
                     }
                 } else {
                     logger.warn(" {} submit buy newOrder failed: {} {}", instrument.asString(), quantityStr, priceStr);

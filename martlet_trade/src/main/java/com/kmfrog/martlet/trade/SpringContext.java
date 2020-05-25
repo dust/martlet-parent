@@ -139,6 +139,7 @@ class SpringContext implements CommandLineRunner {
                 .collect(Collectors.toMap(Param::getName, v -> v));
         
         app.startBione(Source.Bione, bioneHedgeEntrys, instrumentMap, instrumentArgsMap, bioneClient);
+        app.startBioneOrderTracker(bioneHedgeEntrys, bioneClient);
         
 //        app.start(Source.Bhex, hedgeEntrys, instrumentMap, instrumentArgsMap, client);
 //        app.startBikun(Source.Bikun, bikunHedgeEntrys, instrumentMap, instrumentArgsMap, bikunClient);

@@ -1,8 +1,8 @@
 package com.kmfrog.martlet.feed.bione;
 
 import java.io.IOException;
+import java.net.URL;
 import java.security.MessageDigest;
-import java.security.spec.MGF1ParameterSpec;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,19 +10,14 @@ import java.util.Map;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.apache.commons.codec.binary.Base64;
-import org.checkerframework.common.reflection.qual.NewInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.DefaultJSONParser;
-import com.google.inject.spi.Message;
-import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.feed.BaseApiRestClient;
 
-import it.unimi.dsi.fastutil.Hash;
+import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -39,16 +34,26 @@ public class BioneApiRestClient extends BaseApiRestClient{
 
 	@Override
 	public JSONObject getDepth(String symbol) {
-		// TODO Auto-generated method stub
-		return null;
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("accessKey", this.apiKey);
+		params.put("market", formatSymbol(symbol));
+		
+		return doGet("/api/v2/depth", params);
 	}
 	
 	public JSONObject getAccount(String symbol) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("code", formatSymbol(symbol));
 		params.put("accessKey", this.apiKey);
+
+		return doGet("/api/v2/account/bill/:currencyCode", params);
+	}
+	
+	public JSONObject getAssets() {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("accessKey", this.apiKey);
 		
-		return doGet("/api/v2/account/bill/:currencyCode?", params);
+		return doGet("/api/v2/account/assets", params);
 	}
 	
 	public boolean cancelOrder(String symbol, String orderId) {
@@ -61,11 +66,13 @@ public class BioneApiRestClient extends BaseApiRestClient{
 		return true;
 	}
 	
-	public JSONObject getOrders(String symbol, int status) {
+	public JSONObject getOrders(String symbol, int status, int pageNo, int pageSize) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("accessKey", this.apiKey);
 		params.put("market", formatSymbol(symbol));
 		params.put("status", status); // 1未成交 2已成交 3已取消
+		params.put("pagenumber", pageNo);
+		params.put("pagesize", pageSize);
 		
 		return doGet("/api/v2/orders", params);
 	}
@@ -107,12 +114,13 @@ public class BioneApiRestClient extends BaseApiRestClient{
 		params.put("unitPrice", price);
 		
 		Response res = null;
+		DefaultJSONParser parser = null;
 		try {
 			res = doPost("/api/v2/order/create", params);
 			if(res.isSuccessful()) {
 				String str = res.body().string();
 				System.out.println(str);
-				DefaultJSONParser parser = new DefaultJSONParser(str);
+				parser = new DefaultJSONParser(str);
 				JSONObject root = parser.parseObject();
 				return root.getJSONObject("data").getLong("orderid");
 			} 
@@ -122,6 +130,7 @@ public class BioneApiRestClient extends BaseApiRestClient{
 			if(res != null) {
         		res.body().close();
         	}
+			parser.close();
 		}
 		
 		return null;
@@ -136,12 +145,13 @@ public class BioneApiRestClient extends BaseApiRestClient{
 		params.put("unitPrice", price);
 		
 		Response res = null;
+		DefaultJSONParser parser = null;
 		try {
 			res = doPost("/api/v2/order/create", params);
 			if(res.isSuccessful()) {
 				String str = res.body().string();
 				System.out.println(str);
-				DefaultJSONParser parser = new DefaultJSONParser(str);
+				parser = new DefaultJSONParser(str);
 				JSONObject root = parser.parseObject();
 				return root.getJSONObject("data").getLong("orderid");
 			} 
@@ -151,6 +161,7 @@ public class BioneApiRestClient extends BaseApiRestClient{
 			if(res != null) {
         		res.body().close();
         	}
+			parser.close();
 		}
 		
 		return null;
@@ -273,25 +284,29 @@ public class BioneApiRestClient extends BaseApiRestClient{
 				  .get()
 				  .addHeader("Content-Type", "application/x-www-form-urlencoded")
 				  .build();
-
+		
+		Response res = null;
+		DefaultJSONParser parser = null;
+		
 		try {
-			Response res =  client.newCall(request).execute();
+			res =  client.newCall(request).execute();
 			if(res.isSuccessful()) {
 				String msg = res.body().string();
 				System.out.println(msg);
-				DefaultJSONParser parser = new DefaultJSONParser(msg);
+				parser = new DefaultJSONParser(msg);
 				return parser.parseObject();
 			}else {
 				System.out.println(res.body().string());
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
-			
+			if(res != null) {
+				res.close();
+			}
+			parser.close();
 		}
 		return null;
-		
 	}
 	
 	private static String bytesToHex(byte[] md5Array) {
@@ -350,8 +365,5 @@ public class BioneApiRestClient extends BaseApiRestClient{
     		return symbol.replace(keyCoin, "_"+keyCoin);
     	}
     	return symbol;
-    }
-    
-    public static void main(String[] args) {
     }
 }

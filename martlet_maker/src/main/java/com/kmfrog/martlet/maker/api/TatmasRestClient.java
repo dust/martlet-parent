@@ -13,7 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.parser.DefaultJSONParser;
 import com.kmfrog.martlet.book.Side;
 
 import okhttp3.MediaType;
@@ -317,6 +319,38 @@ public class TatmasRestClient {
         }
         return String.format("%s/%s", symbol.substring(0, symbol.length() - 3),
                 symbol.substring(symbol.length() - 3));
+    }
+    
+    public void cancelOpenOrder(TatmasRestClient client, String apiKey, String secret, String symbol, Side side) {
+    	String txt = client.getOpenOrder(symbol, side, 1, 1, apiKey, secret);
+    	DefaultJSONParser parser = new DefaultJSONParser(txt);
+    	JSONObject txtJson = parser.parseObject();
+    	int totalElements = txtJson.getIntValue("totalElements");
+    	parser.close();
+    	int pageSize = 1000;
+    	int pageNo = (totalElements + 999)/ 1000;
+    	System.out.println(String.format("totalElements: %d  pageSize: %d  pageNo: %d", totalElements, pageSize, pageNo));
+    	for(int i=1; i<pageNo+1; i++) {
+    		String openOrderRet = client.getOpenOrder(symbol, side, 1, pageSize, apiKey, secret);
+    		JSONObject data = JSONObject.parseObject(openOrderRet);
+    		System.out.println(String.format("pageNo: %d  currentPN: %d pageSize: %d", pageNo, i, pageSize));
+//    		System.out.println(data);
+    		JSONArray ar = data.getJSONArray("content");
+//    		System.out.println(ar);
+    		long startMillis = System.currentTimeMillis();
+    		for(int j=0; j<ar.size(); j++) {
+    			JSONObject jb = ar.getJSONObject(j);
+//    			System.out.println(ar.getJSONObject(j).getLongValue("orderId"));
+//    			System.out.println(client.cancelOrder(jb.getLongValue("orderId"), apiKey, secret));
+    			client.cancelOrder(jb.getLongValue("orderId"), apiKey, secret);
+    			if(j%100 == 0 && j>0) {
+    				long difMillis = System.currentTimeMillis() - startMillis;
+    				long m = (totalElements - (i-1)*1000 - j)/100 * difMillis / 1000 / 60;
+    				System.out.println(String.format("%d is done   about %d minutes left", j, m));
+    				startMillis = System.currentTimeMillis();
+    			}
+    		}
+    	}
     }
 
     public static void main(String[] args) {

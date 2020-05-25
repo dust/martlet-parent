@@ -28,6 +28,7 @@ import com.kmfrog.martlet.trade.SpringContext;
 import com.kmfrog.martlet.trade.bikun.BikunApiRestClient;
 import com.kmfrog.martlet.trade.bikun.BikunInstrumentSoloDunk;
 import com.kmfrog.martlet.trade.bione.BioneInstrumentSoloDunk;
+import com.kmfrog.martlet.trade.bione.BioneOpenOrderTracker;
 import com.kmfrog.martlet.trade.config.InstrumentsJson.Param;
 import com.kmfrog.martlet.trade.exec.Exec;
 import com.kmfrog.martlet.trade.loex.LoexInstrumentSoloDunk;
@@ -62,6 +63,8 @@ public class Workbench implements Provider {
     final Map<Long, InstrumentTrade> instrumentTrades;
     /** 开放订单跟踪 **/
     OpenOrderTracker openOrderTracker;
+    /** Bione开放订单追踪 **/
+    BioneOpenOrderTracker bioneOpenOrderTracker;
     /** 深度数据流 **/
     final DepthFeed depthFeed;
     /** 实时成交数据流 **/
@@ -172,6 +175,11 @@ public class Workbench implements Provider {
     void startOpenOrderTracker(Source src, Instrument[] instruments, BrokerApiRestClient client) {
         openOrderTracker = new OpenOrderTracker(src, instruments, client, this);
         openOrderTracker.start();
+    }
+    
+    public void startBioneOrderTracker(String[] instruments, BioneApiRestClient client) {
+    	bioneOpenOrderTracker = new BioneOpenOrderTracker(instruments, client, this);
+    	bioneOpenOrderTracker.start();
     }
     
     public void startChaserInstrument(Source src, Instrument instrument, Param param, BrokerApiRestClient client) {
